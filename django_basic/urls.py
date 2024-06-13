@@ -15,11 +15,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from core_app.views import conversation_list_create, conversion_retrieve_update_destroy, answer_message
+from core_app.views import (conversation_list_create, conversion_retrieve_update_destroy, answer_message,
+                            system_prompt_list_create, system_prompt_retrieve_update_destroy)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("conversation/", conversation_list_create, name="conversation-list-create"),
     path("conversation/<int:pk>/", conversion_retrieve_update_destroy, name="conversation-retrieve-update-destroy"),
+
+    path("system-prompt/", system_prompt_list_create, name="system-prompt-list-create"),
+    path("system-prompt/<int:pk>/", system_prompt_retrieve_update_destroy, name="system-prompt-retrieve-update-destroy"),
+
     path("answer/", answer_message, name="answer-message")
 ]
