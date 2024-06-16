@@ -41,15 +41,15 @@ class AnswerMessage(generics.CreateAPIView):
 
 
     def post(self, request, *args, **kwargs):
+        data = request.data
+        message = data.get("message")
+        conversation_id = data.get("conversation_id")
         try:
-            data = request.data
-            conversation_id = data.get("conversation_id")
-            message = data.get("message")
             output_ai_message = get_message_from_chatbot(conversation_id, message)
 
-            return Response({"message": output_ai_message}, status=status.HTTP_200_OK)
+            return Response({"ai_message": output_ai_message, "human_message": message}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"message": "failed"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"ai_message": "Defined error", "human_message": message}, status=status.HTTP_400_BAD_REQUEST)
 
 answer_message = AnswerMessage.as_view()
