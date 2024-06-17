@@ -3,3 +3,4 @@ python-dotenv
 djangorestframework
 psycopg2-binary
 ca-vntl-helper==1.1.6
+wikipedia
