@@ -22,3 +22,8 @@ class SystemPrompt(models.Model):
         return self.character
 
 
+class Lecture(models.Model):
+    id = models.AutoField(primary_key=True)
+    subject = models.CharField(max_length=100)
+    chapter = models.CharField(max_length=100)
+    content = models.TextField()
