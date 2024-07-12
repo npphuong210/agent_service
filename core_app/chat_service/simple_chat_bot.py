@@ -55,6 +55,7 @@ def run_chatbot(input_text, chat_history, character="healthy-care", provider="go
     output_parser = StrOutputParser()
     chain = prompt | llm | output_parser
     output = chain.invoke({"input": input_text, "chat_history": chat_history})
+    ## load from agent executor
     return output
 
 @error_tracking_decorator
