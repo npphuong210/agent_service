@@ -98,5 +98,6 @@ Here are the API endpoints available in this project:
   - Endpoint to post queries for agent execution.
 
 ---
+READ test.REST: example test api
 
 Ensure that your server is running before attempting to access these endpoints
