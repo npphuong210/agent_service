@@ -80,11 +80,11 @@ def get_message_from_agent(conversation_id, user_message):
     )
     
     print("output_agent--------------------------")
-    pritn(response)
+    print(response)
 
     # update chat history
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
-    conversation_instance.chat_history.append({"message_type": "ai_message", "content": response}) 
+    conversation_instance.chat_history.append({"message_type": "ai_message", "content": response['output']}) 
     
     # save conversation instance
     conversation_instance.save()
