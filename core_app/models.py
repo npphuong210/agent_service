@@ -13,7 +13,6 @@ class Conversation(models.Model):
     def __str__(self):
         return f"{self.id}"
 
-
 class SystemPrompt(models.Model):
     id = models.AutoField(primary_key=True)
     character = models.CharField(max_length=100, unique=True)
@@ -21,9 +20,11 @@ class SystemPrompt(models.Model):
     def __str__(self):
         return self.character
 
-
 class Lecture(models.Model):
     id = models.AutoField(primary_key=True)
     subject = models.CharField(max_length=100)
     chapter = models.CharField(max_length=100)
     content = models.TextField()
+    
+    def __str__(self):
+        return f"{self.subject} - {self.chapter}"

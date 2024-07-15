@@ -1,0 +1,16 @@
+POST 127.0.0.1:8000/answer/
+Content-Type: application/json
+
+{
+    "conversation_id": "2",
+    "message": "I am looking for something to eat"
+}
+
+####
+POST http://127.0.0.1:8000/conversation/
+Content-Type: application/json
+
+{
+    "expert_name": "thien",
+    "gpt_model": "google"
+}

@@ -77,7 +77,7 @@ def get_message_from_chatbot(conversation_id, user_message):
     print(chat_history_dicts)
     chat_history = [convert_dict_to_template_message(chat_history_dict) for chat_history_dict in chat_history_dicts]
 
-    response = run_chatbot(user_message, chat_history,character=character, provider=provider)
+    response = run_chatbot(user_message, chat_history, character=character, provider=provider)
     # chat_history.append(HumanMessage(user_input))
     # chat_history.append(AIMessage(response))
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
@@ -87,5 +87,3 @@ def get_message_from_chatbot(conversation_id, user_message):
 
     return response
 
-if __name__ == "__main__":
-    main()
