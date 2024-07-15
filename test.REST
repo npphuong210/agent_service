@@ -1,3 +1,21 @@
+POST  http://127.0.0.1:8000/conversation/
+Content-Type: application/json
+
+{
+    "prompt_name": "teacher",
+    "gpt_model": "openai"
+}
+
+###
+POST  http://127.0.0.1:8000/system-prompt/
+Content-Type: application/json
+
+{
+    "character": "teacher",
+    "prompt": "....."
+}
+
+###
 POST http://127.0.0.1:8000/agent/
 Content-Type: application/json
 
@@ -5,7 +23,3 @@ Content-Type: application/json
     "conversation_id": "1",
     "message": "hello there"
 }
-
-####
-GET http://127.0.0.1:8000/conversation/
-Content-Type: application/json
