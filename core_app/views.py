@@ -6,7 +6,8 @@ from .models import Conversation, SystemPrompt, Lecture
 from .serializers import ConversationSerializer, SystemPromptSerializer, LectureSerializer
 from core_app.chat_service.simple_chat_bot import get_message_from_chatbot
 from core_app.chat_service.agent_basic import get_message_from_agent
-
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from ca_vntl_helper import error_tracking_decorator
 
 
@@ -53,38 +54,73 @@ lecture_retrieve_update_destroy = LectureRetrieveUpdateDestroy.as_view()
 
 
 class AgentMessage(generics.CreateAPIView):
-    serializer_class = []
-    
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["conversation_id", "message"],
+            properties={
+                "conversation_id": openapi.Schema(type=openapi.TYPE_INTEGER),
+                "message": openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        responses={
+            200: openapi.Response("Successful response", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+            400: "Bad Request",
+        },
+    )
     def post(self, request, *args, **kwargs):
         data = request.data
         message = data.get("message")
         conversation_id = data.get("conversation_id")
+<<<<<<< HEAD
         #print(message)
+=======
+>>>>>>> 900d86e (fix chat_history)
         try:
+            print("response success")
             output_ai_message = get_message_from_agent(conversation_id, message)
             print(output_ai_message)
             return Response({"ai_message": output_ai_message, "human_message": message}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"ai_message": "Defined error", "human_message": message}, status=status.HTTP_400_BAD_REQUEST)
         
-agent_message = AgentMessage.as_view()
+agent_answer_message = AgentMessage.as_view()
 
 
-class AnswerMessage(generics.CreateAPIView):
-    serializer_class = []
-
-
+class AgentAnswerMessage(generics.GenericAPIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["conversation_id", "message"],
+            properties={
+                "conversation_id": openapi.Schema(type=openapi.TYPE_INTEGER),
+                "message": openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        responses={
+            200: openapi.Response("Successful response", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+            400: "Bad Request",
+        },
+    )
     def post(self, request, *args, **kwargs):
-        data = request.data
-        message = data.get("message")
-        conversation_id = data.get("conversation_id")
         try:
+            print("response success")
+            conversation_id = request.data.get("conversation_id")
+            message = request.data.get("message")
+            
+            if not conversation_id or not message:
+                return Response(
+                    {"message": "conversation_id and message are required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             output_ai_message = get_message_from_chatbot(conversation_id, message)
-
-            return Response({"ai_message": output_ai_message, "human_message": message}, status=status.HTTP_200_OK)
-
+            return Response({"message": output_ai_message}, status=status.HTTP_200_OK)
+        
         except Exception as e:
-            return Response({"ai_message": "Defined error", "human_message": message}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "failed", "error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-answer_message = AnswerMessage.as_view()
-
+answer_message = AgentAnswerMessage.as_view()

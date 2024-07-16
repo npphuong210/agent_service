@@ -34,10 +34,11 @@ class QueryInput(BaseModel):
 def query_data_from_db_table(subject: str, chapter: str) -> str:
     """Get data from database table."""
     instance_qs = Lecture.objects.filter(subject=subject, chapter=chapter)
-    if not instance_qs.exist():
+    if not instance_qs.exists():
         return "Not Found"
     else:
         instance = instance_qs.first()
+        print(instance.content)
         return instance.content
         
 tools = [query_data_from_db_table]

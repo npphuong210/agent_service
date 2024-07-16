@@ -1,9 +1,18 @@
+<<<<<<< HEAD
 POST  http://127.0.0.1:8000/conversation/
 Content-Type: application/json
 
 {
     "prompt_name": "teacher",
     "gpt_model": "openai"
+=======
+POST http://127.0.0.1:8000/answer/
+Content-Type: application/json
+
+{
+    "conversation_id": 6,
+    "message": "who are you ?"
+>>>>>>> 900d86e (fix chat_history)
 }
 
 ###
@@ -11,6 +20,7 @@ POST  http://127.0.0.1:8000/system-prompt/
 Content-Type: application/json
 
 {
+<<<<<<< HEAD
     "character": "teacher",
     "prompt": "....."
 }
@@ -23,3 +33,8 @@ Content-Type: application/json
     "conversation_id": "1",
     "message": "hello there"
 }
+=======
+    "expert_name": "ethic",
+    "gpt_model": "openai"
+}
+>>>>>>> 900d86e (fix chat_history)

@@ -15,10 +15,23 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from rest_framework import permissions
 from core_app.views import (conversation_list_create, conversion_retrieve_update_destroy, 
-                            answer_message, agent_message, 
+                            answer_message, agent_answer_message, 
                             system_prompt_list_create, system_prompt_retrieve_update_destroy, 
                             lecture_list_create, lecture_retrieve_update_destroy)
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title="API",
+        default_version='v1',
+        description="API for chatbot",
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -32,6 +45,7 @@ urlpatterns = [
     path("lecture/", lecture_list_create, name="lecture-list-create"),
     path("lecture/<int:pk>/", lecture_retrieve_update_destroy, name="lecture-retrieve-update-destroy"),
 
-    path("agent/", agent_message, name="agent-message"),
-    #path("answer/", answer_message, name="answer-message")
+    path("agent/", agent_answer_message, name="agent-message"),
+    path("answer/", answer_message, name="answer-message"),
+    path("swagger/", schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

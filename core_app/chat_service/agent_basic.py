@@ -4,14 +4,25 @@ from langchain_core.messages import HumanMessage, AIMessage
 from core_app.chat_service.simple_chat_bot import load_llm_model
 from core_app.chat_service.tool_basic import tools
 from core_app.models import Conversation, SystemPrompt, Lecture
+from ca_vntl_helper import error_tracking_decorator
 
-def convert_dict_to_template_message(dict_message):
-    if dict_message["message_type"] == "human_message":
-        return HumanMessage(dict_message["content"])
-    elif dict_message["message_type"] == "ai_message":
-        return AIMessage(dict_message["content"])
-    else:
-        raise Exception("Message type not supported")
+def isEmpty(dictionary):
+    for element in dictionary:
+        if element:
+            return True
+        return False
+
+def convert_chat_dict_to_prompt(dict_message):
+    print(dict_message)
+    print("1")
+    if isEmpty(dict_message) == False:
+        if dict_message['message_type'] == 'human_message':
+            print("2")
+            return HumanMessage(dict_message['content'])
+        if dict_message['message_type'] == 'ai_message':
+            print("3")
+            return AIMessage(dict_message['content'])
+    return dict_message
 
 def run_lecture_agent(input, chat_history, character, provider):
     # prompt search information from wikipedia (tools)
@@ -26,8 +37,10 @@ def run_lecture_agent(input, chat_history, character, provider):
     
     # system prompt content
     system_prompt_content=f"""{system_prompt} \n
-                           You can call tool function 'query_data_from_db_table' to get information from database with input: 'query_data_from_db_table('subject', 'chapter')'"""
+                           You must use tool function 'query_data_from_db_table' to get information from database with input: 'query_data_from_db_table('subject', 'chapter')' If you don't know, answer you don't know. \n"""
 
+    print("system_prompt_content", system_prompt_content)
+    
     # create system prompt
     system_prompt = ChatPromptTemplate.from_messages(
         [
@@ -42,7 +55,7 @@ def run_lecture_agent(input, chat_history, character, provider):
     )
 
     # load llm model
-    llm = load_llm_model(provider="google")
+    llm = load_llm_model(provider)
 
     # create agent constructor
     agent = create_tool_calling_agent(llm, tools, system_prompt)
@@ -53,11 +66,12 @@ def run_lecture_agent(input, chat_history, character, provider):
     # invoke agent
     output = agent_executor.invoke({"input": input, "chat_history": []})
 
-    return output
+    return output['output']
 
-
+@error_tracking_decorator
 def get_message_from_agent(conversation_id, user_message):
     # get conversation instance
+    print("inside get_message_from_agent")
     conversation_instance_qs = Conversation.objects.filter(id=conversation_id)
     if not conversation_instance_qs.exists():
         raise Exception("Conversation id not found")
@@ -69,10 +83,13 @@ def get_message_from_agent(conversation_id, user_message):
 
     # get chat history
     chat_history_dicts = conversation_instance.chat_history
+    print("chat_history_dicts", chat_history_dicts)
     chat_history = [
-        convert_dict_to_template_message(chat_history_dict)
+        convert_chat_dict_to_prompt(chat_history_dict)
         for chat_history_dict in chat_history_dicts
     ]
+    print("-----------------------")
+    print(character, provider, chat_history)
 
     # run agent
     response = run_lecture_agent(

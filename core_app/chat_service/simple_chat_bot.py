@@ -10,6 +10,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from core_app.models import Conversation, SystemPrompt
 
 def convert_dict_to_template_message(dict_message):
+    print(dict_message)
     if dict_message["message_type"] == "human_message":
         return HumanMessage(dict_message["content"])
     elif dict_message["message_type"] == "ai_message":
@@ -74,8 +75,13 @@ def get_message_from_chatbot(conversation_id, user_message):
     character = conversation_instance.prompt_name
     provider = conversation_instance.gpt_model
     chat_history_dicts = conversation_instance.chat_history
-    print(chat_history_dicts)
-    chat_history = [convert_dict_to_template_message(chat_history_dict) for chat_history_dict in chat_history_dicts]
+    
+    if not chat_history_dicts:
+        print('chat_history is empty')
+        chat_history = []
+    else:
+        chat_history = [convert_dict_to_template_message(chat_history_dict) for chat_history_dict in chat_history_dicts]
+    #chat_history = [convert_dict_to_template_message(chat_history_dict) for chat_history_dict in chat_history_dicts]
 
     response = run_chatbot(user_message, chat_history, character=character, provider=provider)
     # chat_history.append(HumanMessage(user_input))

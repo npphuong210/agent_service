@@ -10,3 +10,8 @@ psycopg2
 langchain_openai
 langchain_google_genai
 langchain_community
+langchain-postgres
+django-rest-swagger
+drf-yasg
+python-dotenv
+setuptools
