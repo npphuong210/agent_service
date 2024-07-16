@@ -72,10 +72,6 @@ class AgentMessage(generics.CreateAPIView):
         data = request.data
         message = data.get("message")
         conversation_id = data.get("conversation_id")
-<<<<<<< HEAD
-        #print(message)
-=======
->>>>>>> 900d86e (fix chat_history)
         try:
             print("response success")
             output_ai_message = get_message_from_agent(conversation_id, message)
