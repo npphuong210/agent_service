@@ -13,14 +13,14 @@ def isEmpty(dictionary):
         return False
 
 def convert_chat_dict_to_prompt(dict_message):
-    print(dict_message)
-    print("1")
+    #print(dict_message)
+    #print("1")
     if isEmpty(dict_message) == False:
         if dict_message['message_type'] == 'human_message':
-            print("2")
+            #print("2")
             return HumanMessage(dict_message['content'])
         if dict_message['message_type'] == 'ai_message':
-            print("3")
+            #print("3")
             return AIMessage(dict_message['content'])
     return dict_message
 
@@ -39,7 +39,7 @@ def run_lecture_agent(input, chat_history, character, provider):
     system_prompt_content=f"""{system_prompt} \n
                            You must use tool function 'query_data_from_db_table' to get information from database with input: 'query_data_from_db_table('subject', 'chapter')' If you don't know, answer you don't know. \n"""
 
-    print("system_prompt_content", system_prompt_content)
+    #print("system_prompt_content", system_prompt_content)
     
     # create system prompt
     system_prompt = ChatPromptTemplate.from_messages(
@@ -83,25 +83,25 @@ def get_message_from_agent(conversation_id, user_message):
 
     # get chat history
     chat_history_dicts = conversation_instance.chat_history
-    print("chat_history_dicts", chat_history_dicts)
+    #print("chat_history_dicts", chat_history_dicts)
     chat_history = [
         convert_chat_dict_to_prompt(chat_history_dict)
         for chat_history_dict in chat_history_dicts
     ]
-    print("-----------------------")
-    print(character, provider, chat_history)
+    #print("-----------------------")
+    #print(character, provider, chat_history)
 
     # run agent
     response = run_lecture_agent(
         user_message, chat_history, character=character, provider=provider
     )
     
-    print("output_agent--------------------------")
-    print(response)
+    #print("output_agent--------------------------")
+    #print(response)
 
     # update chat history
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
-    conversation_instance.chat_history.append({"message_type": "ai_message", "content": response['output']}) 
+    conversation_instance.chat_history.append({"message_type": "ai_message", "content": response}) 
     
     # save conversation instance
     conversation_instance.save()
