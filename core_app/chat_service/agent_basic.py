@@ -78,22 +78,23 @@ def run_lecture_agent(input, chat_history, character, provider, conversation_ins
     system_prompt = system_prompt_instance.prompt
     
     knowledge = conversation_instance.knowledge
-    print(knowledge)
+    # print(knowledge)
     lecture_qs = Lecture.objects.all()
     subject = lecture_qs.values_list('subject', flat=True)
     chapter = lecture_qs.values_list('chapter', flat=True)
-
+    sub_prompt = "Bạn có thể lấy thông tin được lưu trong {knowledge} để trả lời, nếu {knowledge} rỗng hoặc thông tin trong {knowledge} không phù hợp để trả lời thì hãy sử dụng chức năng công cụ 'query_data_from_db_table' để lấy thông tin từ cơ sở dữ liệu với đầu vào: 'query_data_from_db_table('subject', 'chapter')'"
     system_prompt_content=f"""{system_prompt} 
                            Bạn sẽ truy cập danh sách được gợi ý sau: {subject}, {chapter} \n
                            Bạn sẽ hiểu nội dung câu hỏi và đưa ra subject và chapter chính xác hoặc gần đúng nhất trong database. \n
-                           Bạn có thể lấy thông tin được lưu trong {knowledge} để trả lời, nếu {knowledge} rỗng hoặc thông tin trong {knowledge} không phù hợp để trả lời thì hãy sử dụng chức năng công cụ 'query_data_from_db_table' để lấy thông tin từ cơ sở dữ liệu với đầu vào: 'query_data_from_db_table('subject', 'chapter')'
+                           {sub_prompt}
                            """
+    system_prompt_content = "......{knowledge}....."
     # You must use tool function 'query_data_from_db_table' to get information from database with input: 'query_data_from_db_table('subject', 'chapter')' If you don't know, answer you don't know. \n
     system_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt_content),
             MessagesPlaceholder(variable_name="chat_history"),
-            MessagesPlaceholder(variable_name="knowledge")
+            # MessagesPlaceholder(variable_name="knowledge")
             ("user", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ]
@@ -104,7 +105,7 @@ def run_lecture_agent(input, chat_history, character, provider, conversation_ins
     agent = create_tool_calling_agent(llm, tools, system_prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
     # Ensure knowledge is not None and pass it to invoke
-    output = agent_executor.invoke({"input": input, "chat_history": chat_history, "knowledge": knowledge or {}})
+    output = agent_executor.invoke({"input": input, "chat_history": chat_history, "knowledge": knowledge or ""})
     
     # Cập nhật knowledge trong instance của conversation
     knowledge_content = query_data_from_db_table(conversation_instance, subject, chapter)

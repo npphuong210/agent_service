@@ -9,7 +9,7 @@ class Conversation(models.Model):
     gpt_model = models.CharField(max_length=100) # provider
     chat_history = ArrayField(models.JSONField(), default=list) # {"message_type": "ai_message or human_message", "content": "hello"}
     meta_data = models.JSONField(default=dict, null=True, blank=True)
-    knowledge = models.JSONField(default=dict, blank=True)
+    knowledge = models.TextField(default="", blank=True, null=True)
 
     def __str__(self):
         return f"{self.id}"
