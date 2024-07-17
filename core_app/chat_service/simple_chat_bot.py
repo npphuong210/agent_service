@@ -1,6 +1,5 @@
 import os
 
-from ca_vntl_helper import error_tracking_decorator
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -59,7 +58,6 @@ def run_chatbot(input_text, chat_history, character="healthy-care", provider="go
     ## load from agent executor
     return output
 
-@error_tracking_decorator
 def get_message_from_chatbot(conversation_id, user_message):
     # user_input = user_message
     # chat_history
