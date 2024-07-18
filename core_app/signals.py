@@ -3,7 +3,7 @@ from django.dispatch import receiver
 from core_app.models import Lecture
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
 
-# Sử dụng một biến toàn cục để theo dõi cờ
+# Sử dụng một biến toàn cục để theo dõi 
 updating_embedding = False
 
 @receiver(post_save, sender=Lecture)

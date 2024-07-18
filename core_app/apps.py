@@ -7,3 +7,4 @@ class CoreAppConfig(AppConfig):
 
     def ready(self):
         import core_app.signals  # Import module signals
+        print("Signals connected")

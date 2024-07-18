@@ -63,7 +63,7 @@ def run_lecture_agent(input, chat_history, character, provider):
     # create agent executor
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-    input = f'subject: Văn học, chapter: người lái đò trên sông Đà \n {input}'
+    # input = f'subject: Văn học, chapter: người lái đò trên sông Đà \n {input}'
 
     # invoke agent
     output = agent_executor.invoke({"input": input, "chat_history": []})
