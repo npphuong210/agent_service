@@ -20,4 +20,5 @@ def insert_embedding_into_db(filter_dict):
         embedding = get_vector_from_embedding(text_content)
         instance.content_embedding = embedding
         instance.save()
+
         return instance.content_embedding

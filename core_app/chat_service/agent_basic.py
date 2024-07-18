@@ -35,8 +35,17 @@ def run_lecture_agent(input, chat_history, character, provider):
     system_prompt_instance = system_prompt_qs.first()
     system_prompt = system_prompt_instance.prompt
     
+    lecture_qs = Lecture.objects.all()
+    
+    #sub_prompt = "nếu lecture data: {lecture_data} chưa có thì thực hiện các lệnh bên dưới. nếu đã có thì sử dụng nó để trả lời."
+    
+    subject = lecture_qs.values_list('subject', flat=True)
+    chapter = lecture_qs.values_list('chapter', flat=True)
     # system prompt content
-    system_prompt_content=f"""{system_prompt} \n
+    system_prompt_content=f"""{system_prompt} 
+                           Bạn sẽ truy cập danh sách được gợi ý sau: {subject}, {chapter} \n
+                           Bạn sẽ hiểu nội dung câu hỏi và đưa ra subject và chapter chính xác hoặc gần đúng nhất trong database. \n
+                           
                            You must use tool function 'query_data_from_db_table' to get information from database with input: 'query_data_from_db_table('subject', 'chapter')' If you don't know, answer you don't know. \n"""
 
     #print("system_prompt_content", system_prompt_content)
@@ -63,8 +72,9 @@ def run_lecture_agent(input, chat_history, character, provider):
     # create agent executor
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-    # input = f'subject: Văn học, chapter: người lái đò trên sông Đà \n {input}'
-
+    #Lecture_data = Lecture.objects.filter(subject="vanhoc", chapter="tatden").first().content
+    
+    
     # invoke agent
     output = agent_executor.invoke({"input": input, "chat_history": []})
 

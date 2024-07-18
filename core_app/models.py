@@ -2,11 +2,10 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from pgvector.django import VectorField
 
-
-empty_vector = [0.0]*1536
-
 # Create your models here.
 
+# create a array that have dimension of 1536
+empty_vector = [0.0]*1536
 class Conversation(models.Model):
     id = models.AutoField(primary_key=True)
     prompt_name = models.CharField(max_length=100) # character name
@@ -30,7 +29,5 @@ class Lecture(models.Model):
     chapter = models.CharField(max_length=100)
     content = models.TextField()
     content_embedding = VectorField(dimensions=1536, default=empty_vector)
-
-    
     def __str__(self):
         return f"{self.subject} - {self.chapter}"
