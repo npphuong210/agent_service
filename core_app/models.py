@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
+from pgvector.django import VectorField
+
+
+empty_vector = [0.0]*1536
 
 # Create your models here.
 
@@ -25,6 +29,8 @@ class Lecture(models.Model):
     subject = models.CharField(max_length=100)
     chapter = models.CharField(max_length=100)
     content = models.TextField()
+    content_embedding = VectorField(dimensions=1536, default=empty_vector)
+
     
     def __str__(self):
         return f"{self.subject} - {self.chapter}"
