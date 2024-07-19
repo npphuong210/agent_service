@@ -21,6 +21,11 @@ class SystemPrompt(models.Model):
     def __str__(self):
         return self.character
 
+class Knowledge(models.Model):
+    id = models.AutoField(primary_key=True)
+    content = models.TextField(null=True, blank= True)
+    system_prompt = models.ForeignKey(SystemPrompt, on_delete=models.DO_NOTHING)
+    
 class Lecture(models.Model):
     id = models.AutoField(primary_key=True)
     subject = models.CharField(max_length=100)
