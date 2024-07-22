@@ -5,10 +5,14 @@ from rest_framework.response import Response
 from .models import Conversation, SystemPrompt, Lecture
 from .serializers import ConversationSerializer, SystemPromptSerializer, LectureSerializer
 from core_app.chat_service.simple_chat_bot import get_message_from_chatbot
-from core_app.chat_service.agent_basic import get_message_from_agent
+from core_app.chat_service.agent_basic import get_message_from_agent, get_streaming_response
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from ca_vntl_helper import error_tracking_decorator
+from rest_framework.decorators import api_view
+import asyncio
+from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
+from django.http import StreamingHttpResponse
 
 
 # Create CRUD API views here with Conversation models
@@ -119,3 +123,44 @@ class AgentAnswerMessage(generics.GenericAPIView):
             )
 
 answer_message = AgentAnswerMessage.as_view()
+
+
+class AgentAnswerMessageStream(generics.GenericAPIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["conversation_id", "message"],
+            properties={
+                "conversation_id": openapi.Schema(type=openapi.TYPE_INTEGER),
+                "message": openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        responses={
+            200: openapi.Response("Successful response", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+            400: "Bad Request",
+        },
+    )
+    def post(self, request, *args, **kwargs):
+        try:
+            print("response success")
+            conversation_id = request.data.get("conversation_id")
+            message = request.data.get("message")
+            
+            if not conversation_id or not message:
+                return Response(
+                    {"message": "conversation_id and message are required"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            ai_response_generator = get_streaming_response(conversation_id, message)
+            
+            ai_response = ai_response_generator['output']
+            return StreamingHttpResponse(str(ai_response), content_type="text/event-stream", status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            return Response(
+                {"message": "failed", "error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+streaming_message = AgentAnswerMessageStream.as_view()

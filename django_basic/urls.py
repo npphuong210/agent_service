@@ -19,7 +19,7 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
 from core_app.views import (conversation_list_create, conversion_retrieve_update_destroy, 
-                            answer_message, agent_answer_message, 
+                            answer_message, agent_answer_message, streaming_message, 
                             system_prompt_list_create, system_prompt_retrieve_update_destroy, 
                             lecture_list_create, lecture_retrieve_update_destroy)
 
@@ -47,5 +47,6 @@ urlpatterns = [
 
     path("agent/", agent_answer_message, name="agent-message"),
     path("answer/", answer_message, name="answer-message"),
+    path("streaming/", streaming_message, name="streaming-message"),
     path("swagger/", schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

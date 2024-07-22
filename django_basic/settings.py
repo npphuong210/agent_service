@@ -45,8 +45,11 @@ INSTALLED_APPS = [
     "core_app",
     "rest_framework",
     "rest_framework_swagger", # Django rest framework
-    "drf_yasg" # Yet another swagger generator
+    "drf_yasg", # Yet another swagger generator
+    "channels", # Django channels
 ]
+
+ASGI_APPLICATION = "django_basic.asgi.application"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

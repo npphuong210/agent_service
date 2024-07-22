@@ -7,6 +7,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.messages import HumanMessage, AIMessage
 
 from core_app.models import Conversation, SystemPrompt
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 def convert_dict_to_template_message(dict_message):
     print(dict_message)
@@ -24,7 +25,7 @@ def load_llm_model(provider="google"):
 
     elif provider == "openai":
         OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-        llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo")
+        llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo", streaming=True, callbacks=[StreamingStdOutCallbackHandler()])
     else:
         raise Exception("Provider not supported")
     return llm
