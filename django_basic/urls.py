@@ -37,13 +37,13 @@ urlpatterns = [
     path("admin/", admin.site.urls),
 
     path("conversation/", conversation_list_create, name="conversation-list-create"),
-    path("conversation/<int:pk>/", conversion_retrieve_update_destroy, name="conversation-retrieve-update-destroy"),
+    path("conversation/<uuid:pk>/", conversion_retrieve_update_destroy, name="conversation-retrieve-update-destroy"),
 
     path("system-prompt/", system_prompt_list_create, name="system-prompt-list-create"),
-    path("system-prompt/<int:pk>/", system_prompt_retrieve_update_destroy, name="system-prompt-retrieve-update-destroy"),
+    path("system-prompt/<uuid:pk>/", system_prompt_retrieve_update_destroy, name="system-prompt-retrieve-update-destroy"),
     
     path("lecture/", lecture_list_create, name="lecture-list-create"),
-    path("lecture/<int:pk>/", lecture_retrieve_update_destroy, name="lecture-retrieve-update-destroy"),
+    path("lecture/<uuid:pk>/", lecture_retrieve_update_destroy, name="lecture-retrieve-update-destroy"),
 
     path("agent/", agent_answer_message, name="agent-message"),
     path("answer/", answer_message, name="answer-message"),

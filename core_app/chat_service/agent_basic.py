@@ -168,19 +168,23 @@ def get_streaming_response(conversation_id, user_message):
     if not conversation_instance_qs.exists():
         raise Exception("Conversation id not found")
     conversation_instance = conversation_instance_qs.first()
-    character = conversation_instance.prompt_name
+    character = conversation_instance.character_id
     provider = conversation_instance.gpt_model
     
     # Lấy lịch sử trò chuyện
     chat_history_dicts = conversation_instance.chat_history or []
+    print(chat_history_dicts)
+    print("---------------------------------")
     
     if chat_history_dicts and isinstance(chat_history_dicts[0], dict) and not chat_history_dicts[0]:
         chat_history_dicts.pop(0)
-    
+    print(chat_history_dicts)
+    print("---------------------------------")
     chat_history = [
         convert_chat_dict_to_prompt(chat_history_dict)
         for chat_history_dict in chat_history_dicts
     ]
+    print(chat_history)
 
     system_prompt_qs = SystemPrompt.objects.filter(character=character)
     if not system_prompt_qs.exists():
@@ -233,7 +237,7 @@ def get_streaming_response(conversation_id, user_message):
 
     # create agent constructor
     agent = initialize_agent(
-        agent=AgentType.OPENAI_MULTI_FUNCTIONS,
+        agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
         tools=tools,
         llm=llm,
         verbose=True,
@@ -244,15 +248,11 @@ def get_streaming_response(conversation_id, user_message):
         "input": user_message,
         "chat_history": chat_history
         })
-    
-    print(output)
+        
+    conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
+    conversation_instance.chat_history.append({"message_type": "ai_message", "content": output['output']})
+    conversation_instance.save()
     return output
+
+
     
-# async def run_call(conversation_id, user_message, stream_it: AsyncIteratorCallbackHandler):
-#     agent, chat_history = get_streaming_response(conversation_id, user_message)
-#     agent.agent.llm_chain.llm.callbacks.append(stream_it)
-#     response = await agent.acall(inputs={
-#             "input": user_message,
-#             "chat_history": chat_history
-#         })
-#     return response
