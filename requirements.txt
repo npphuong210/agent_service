@@ -15,4 +15,4 @@ django-rest-swagger
 drf-yasg
 python-dotenv
 setuptools
-channels
+pgvector
