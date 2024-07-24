@@ -20,8 +20,7 @@ from drf_yasg import openapi
 from rest_framework import permissions
 from core_app.views import (conversation_list_create, conversion_retrieve_update_destroy, 
                             answer_message, agent_answer_message, streaming_message, 
-                            system_prompt_list_create, system_prompt_retrieve_update_destroy, 
-                            lecture_list_create, lecture_retrieve_update_destroy)
+                            system_prompt_list_create, system_prompt_retrieve_update_destroy)
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -42,8 +41,8 @@ urlpatterns = [
     path("system-prompt/", system_prompt_list_create, name="system-prompt-list-create"),
     path("system-prompt/<uuid:pk>/", system_prompt_retrieve_update_destroy, name="system-prompt-retrieve-update-destroy"),
     
-    path("lecture/", lecture_list_create, name="lecture-list-create"),
-    path("lecture/<uuid:pk>/", lecture_retrieve_update_destroy, name="lecture-retrieve-update-destroy"),
+    # path("lecture/", lecture_list_create, name="lecture-list-create"),
+    # path("lecture/<uuid:pk>/", lecture_retrieve_update_destroy, name="lecture-retrieve-update-destroy"),
 
     path("agent/", agent_answer_message, name="agent-message"),
     path("answer/", answer_message, name="answer-message"),

@@ -1,13 +1,13 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from core_app.models import Lecture, ExtractedData
+from core_app.models import ExternalKnowledge, InternalKnowledge
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
 
 # Sử dụng một biến toàn cục để theo dõi 
 updating_embedding = False
 
-@receiver(post_save, sender=Lecture)
-@receiver(post_save, sender=ExtractedData)
+@receiver(post_save, sender=ExternalKnowledge)
+@receiver(post_save, sender=InternalKnowledge)
 def update_content_embedding(sender, instance, **kwargs):
     global updating_embedding
 
@@ -17,12 +17,12 @@ def update_content_embedding(sender, instance, **kwargs):
 
     # Kiểm tra xem trường content có thay đổi hay không
     # Update the embedding based on the model
-    if isinstance(instance, Lecture) and instance.content:
+    if isinstance(instance, ExternalKnowledge) and instance.content:
         text_content = instance.content
         embedding = get_vector_from_embedding(text_content)
         instance.content_embedding = embedding
 
-    if isinstance(instance, ExtractedData):
+    if isinstance(instance, InternalKnowledge):
         if instance.summary:
             summary_embedding = get_vector_from_embedding(instance.summary)
             instance.summary_embedding = summary_embedding

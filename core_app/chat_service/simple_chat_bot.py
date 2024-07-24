@@ -8,6 +8,8 @@ from langchain_core.messages import HumanMessage, AIMessage
 
 from core_app.models import Conversation, SystemPrompt
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from core_app.chat_service.AgentCreator import run_chatbot
+
 
 def convert_dict_to_template_message(dict_message):
     print(dict_message)
@@ -45,20 +47,6 @@ def select_system_prompt(character="healthy-care"):
     ])
     return prompt
 
-def run_chatbot(input_text, chat_history, character="healthy-care", provider="google"):
-    # load llm
-    print("here")
-    llm = load_llm_model(provider)
-    print(llm)
-    # select prompt and character
-    prompt = select_system_prompt(character)
-    # init chain
-    output_parser = StrOutputParser()
-    chain = prompt | llm | output_parser
-    output = chain.invoke({"input": input_text, "chat_history": chat_history})
-    ## load from agent executor
-    return output
-
 def get_message_from_chatbot(conversation_id, user_message):
     # user_input = user_message
     # chat_history
@@ -71,8 +59,7 @@ def get_message_from_chatbot(conversation_id, user_message):
         raise Exception("Conversation id not found")
     conversation_instance = conversation_instance_qs.first()
 
-    character = conversation_instance.prompt_name
-    provider = conversation_instance.gpt_model
+    character = conversation_instance.agent.agent_name
     chat_history_dicts = conversation_instance.chat_history
     
     if not chat_history_dicts:
@@ -82,7 +69,7 @@ def get_message_from_chatbot(conversation_id, user_message):
         chat_history = [convert_dict_to_template_message(chat_history_dict) for chat_history_dict in chat_history_dicts]
     #chat_history = [convert_dict_to_template_message(chat_history_dict) for chat_history_dict in chat_history_dicts]
 
-    response = run_chatbot(user_message, chat_history, character=character, provider=provider)
+    response = run_chatbot(user_message, chat_history, character=character)
     # chat_history.append(HumanMessage(user_input))
     # chat_history.append(AIMessage(response))
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})

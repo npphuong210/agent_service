@@ -3,7 +3,7 @@ from langchain.agents import create_tool_calling_agent, AgentExecutor, AgentType
 from langchain_core.messages import HumanMessage, AIMessage
 from core_app.chat_service.simple_chat_bot import load_llm_model
 
-from core_app.models import Conversation, SystemPrompt, Lecture
+from core_app.models import Conversation, SystemPrompt, ExternalKnowledge
 from ca_vntl_helper import error_tracking_decorator
 import json
 import logging
@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 
 from langchain_community.tools import tool
 from langchain.pydantic_v1 import BaseModel, Field
-from core_app.models import Lecture, Conversation
+from core_app.models import ExternalKnowledge, Conversation
 from ca_vntl_helper import error_tracking_decorator
 import psycopg2
 import os
 from django.db import transaction
 
 #streaming 
-from channels.layers import get_channel_layer
+
 from asgiref.sync import async_to_sync
 import asyncio
 from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
@@ -37,7 +37,7 @@ def convert_chat_dict_to_prompt(dict_message):
             return AIMessage(dict_message['content'])
     return dict_message
 
-def run_lecture_agent(input, chat_history, character, provider, knowledge, conversation_instance):
+def run_lecture_agent(input, chat_history, character, provider, InternalKnowledge, conversation_instance):
     # prompt search information from wikipedia (tools)
     
     system_prompt_qs = SystemPrompt.objects.filter(character=character)
@@ -49,34 +49,34 @@ def run_lecture_agent(input, chat_history, character, provider, knowledge, conve
         # raise Exception("Conversation id not found")
     # conversation_instance = conversation_instance_qs.first()
 
-    # knowledge = conversation_instance.knowledge
+    # InternalKnowledge = conversation_instance.InternalKnowledge
     
     
     # get system prompt
     system_prompt_instance = system_prompt_qs.first()
     system_prompt = system_prompt_instance.prompt
 
-    lecture_qs = Lecture.objects.all()
+    lecture_qs = ExternalKnowledge.objects.all()
     subject = lecture_qs.values_list('subject', flat=True)
     chapter = lecture_qs.values_list('chapter', flat=True)
     
     # system prompt content
-    sub_prompt = """Bạn có thể lấy thông tin được lưu trong 'knowledge' để trả lời,
-    nếu 'knowledge' rỗng hoặc thông tin trong 'knowledge' không phù hợp để trả lời thì hãy sử dụng chức năng công cụ 'query_data_from_db_table' để lấy thông tin từ cơ sở dữ liệu với đầu vào: subject, chapter'
-    knowledge: {knowledge}
+    sub_prompt = """Bạn có thể lấy thông tin được lưu trong 'InternalKnowledge' để trả lời,
+    nếu 'InternalKnowledge' rỗng hoặc thông tin trong 'InternalKnowledge' không phù hợp để trả lời thì hãy sử dụng chức năng công cụ 'query_data_from_db_table' để lấy thông tin từ cơ sở dữ liệu với đầu vào: subject, chapter'
+    InternalKnowledge: {InternalKnowledge}
     """
     @tool("query_data_from_db_table", args_schema=QueryInput)
     
     def query_data_from_db_table(subject: str, chapter: str) -> str:
         """Get data from database table."""
-        instance_qs = Lecture.objects.filter(subject=subject, chapter=chapter)
+        instance_qs = ExternalKnowledge.objects.filter(subject=subject, chapter=chapter)
         if not instance_qs.exists():
             return "Not Found"
         else:
             instance = instance_qs.first()
             
             
-            conversation_instance.knowledge = instance.content  # Save changes to the database
+            conversation_instance.InternalKnowledge = instance.content  # Save changes to the database
             conversation_instance.save()
             return instance.content
             
@@ -109,14 +109,14 @@ def run_lecture_agent(input, chat_history, character, provider, knowledge, conve
     output = agent_executor.invoke({
             "input": input,
             "chat_history": chat_history,
-            'knowledge': knowledge,
+            'InternalKnowledge': InternalKnowledge,
             
         })
     
     conversation_instance.save()
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    updated_knowledge = output.get('knowledge', knowledge)
-    print(updated_knowledge)
+    updated_InternalKnowledge = output.get('InternalKnowledge', InternalKnowledge)
+    print(updated_InternalKnowledge)
     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     return output['output']
 
@@ -128,9 +128,9 @@ def get_message_from_agent(conversation_id, user_message):
     if not conversation_instance_qs.exists():
         raise Exception("Conversation id not found")
     conversation_instance = conversation_instance_qs.first()
-    #character = conversation_instance.prompt_name
+    character = conversation_instance.prompt_name
     provider = conversation_instance.gpt_model
-    knowledge = conversation_instance.knowledge
+    InternalKnowledge = conversation_instance.InternalKnowledge
  
     # Lấy lịch sử trò chuyện
     chat_history_dicts = conversation_instance.chat_history or []
@@ -145,7 +145,7 @@ def get_message_from_agent(conversation_id, user_message):
 
     # Chạy agent
     response = run_lecture_agent(
-        user_message, chat_history, character=character, provider=provider, knowledge=knowledge, conversation_instance = conversation_instance
+        user_message, chat_history, character=character, provider=provider, InternalKnowledge=InternalKnowledge, conversation_instance = conversation_instance
     )
         
     # Cập nhật lịch sử trò chuyện
@@ -190,25 +190,25 @@ def get_streaming_response(conversation_id, user_message):
     system_prompt_instance = system_prompt_qs.first()
     system_prompt = system_prompt_instance.prompt
 
-    lecture_qs = Lecture.objects.all()
+    lecture_qs = ExternalKnowledge.objects.all()
     subject = lecture_qs.values_list('subject', flat=True)
     chapter = lecture_qs.values_list('chapter', flat=True)
     
     # system prompt content
-    sub_prompt = """Bạn có thể lấy thông tin được lưu trong 'knowledge' để trả lời,
-    nếu 'knowledge' rỗng hoặc thông tin trong 'knowledge' không phù hợp để trả lời thì hãy sử dụng chức năng công cụ 'query_data_from_db_table' để lấy thông tin từ cơ sở dữ liệu với đầu vào: subject, chapter'
-    knowledge: 
+    sub_prompt = """Bạn có thể lấy thông tin được lưu trong 'InternalKnowledge' để trả lời,
+    nếu 'InternalKnowledge' rỗng hoặc thông tin trong 'InternalKnowledge' không phù hợp để trả lời thì hãy sử dụng chức năng công cụ 'query_data_from_db_table' để lấy thông tin từ cơ sở dữ liệu với đầu vào: subject, chapter'
+    InternalKnowledge: 
     """
     @tool("query_data_from_db_table", args_schema=QueryInput)
     
     def query_data_from_db_table(subject: str, chapter: str) -> str:
         """Get data from database table."""
-        instance_qs = Lecture.objects.filter(subject=subject, chapter=chapter)
+        instance_qs = ExternalKnowledge.objects.filter(subject=subject, chapter=chapter)
         if not instance_qs.exists():
             return "Not Found"
         else:
             instance = instance_qs.first()
-            # conversation_instance.knowledge = instance.content  # Save changes to the database
+            # conversation_instance.InternalKnowledge = instance.content  # Save changes to the database
             # conversation_instance.save()
             return instance.content
             

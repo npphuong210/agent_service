@@ -2,12 +2,10 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .models import Conversation, SystemPrompt, Lecture, ExtractedData
-from .serializers import ConversationSerializer, SystemPromptSerializer, LectureSerializer
+from .models import Conversation, SystemPrompt, ExternalKnowledge, InternalKnowledge
+from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer
 from core_app.chat_service.simple_chat_bot import get_message_from_chatbot
 from core_app.chat_service.agent_basic import get_message_from_agent, get_streaming_response, convert_chat_dict_to_prompt
-from core_app.chat_service.AgentCreator import run_chatbot
-from core_app.chat_service.agent_basic import get_message_from_agent
 from core_app.extract import extract
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
@@ -47,18 +45,18 @@ class SystemPromptRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 system_prompt_retrieve_update_destroy = SystemPromptRetrieveUpdateDestroy.as_view()
 
 
-# create CRUD API views here with Lecture models
+# create CRUD API views here with ExternalKnowledge models
 class LecutureListCreate(generics.ListCreateAPIView):
-    queryset = Lecture.objects.all()
-    serializer_class = LectureSerializer
+    queryset = ExternalKnowledge.objects.all()
+    serializer_class = ExternalKnowledgeSerializer
 
-lecture_list_create = LecutureListCreate.as_view()
+ExternalKnowledge_list_create = LecutureListCreate.as_view()
 
-class LectureRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Lecture.objects.all()
-    serializer_class = LectureSerializer
+class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ExternalKnowledge.objects.all()
+    serializer_class = ExternalKnowledgeSerializer
 
-lecture_retrieve_update_destroy = LectureRetrieveUpdateDestroy.as_view() 
+ExternalKnowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view() 
 
 
 class AgentMessage(generics.CreateAPIView):
@@ -87,13 +85,13 @@ class AgentMessage(generics.CreateAPIView):
             # return Response({"ai_message": output_ai_message, "human_message": message}, status=status.HTTP_200_OK)
 
             # Get response from AI
-            ai_response = get_message_from_agent(conversation_id, message)
+            ai_response = get_message_from_chatbot(conversation_id, message)
 
             # Extract information from AI response and user message
             extracted_info = extract(ai_response, message)
 
             # Save the extracted information to the database
-            extracted_data = ExtractedData(
+            extracted_data = InternalKnowledge(
                 summary=extracted_info['summary'],
                 hashtags=" ".join(extracted_info['hashtags']),
                 message_output=extracted_info['message_output']
@@ -132,7 +130,7 @@ class AgentAnswerMessage(generics.GenericAPIView):
             print("response success")
             conversation_id = request.data.get("conversation_id")
             message = request.data.get("message")
-            
+            print(conversation_id, message)
             if not conversation_id or not message:
                 return Response(
                     {"message": "conversation_id and message are required"},
@@ -140,7 +138,7 @@ class AgentAnswerMessage(generics.GenericAPIView):
                 )
             
             conversation_instance_qs = Conversation.objects.filter(id=conversation_id)
-
+            print(conversation_instance_qs)
             if not conversation_instance_qs.exists():
                 return Response(
                     {"message": "conversation_id not found"},
@@ -159,8 +157,9 @@ class AgentAnswerMessage(generics.GenericAPIView):
                 convert_chat_dict_to_prompt(chat_history_dict)
                 for chat_history_dict in chat_history_dicts
                     ]
-
-            output_ai_message = run_chatbot(message, chat_history)
+            print(chat_history)
+            print(message)
+            output_ai_message = get_message_from_chatbot(conversation_id, message)
 
             conversation_instance.chat_history.append({"message_type": "human_message", "content": message})
             conversation_instance.chat_history.append({"message_type": "ai_message", "content": output_ai_message})
