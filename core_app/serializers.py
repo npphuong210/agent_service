@@ -1,8 +1,8 @@
 from rest_framework import serializers
-
 from .models import Conversation, SystemPrompt, Lecture
 
 class ConversationSerializer(serializers.ModelSerializer):
+    chat_history = serializers.ListField(child=serializers.DictField(), required=False, allow_empty=True)
     class Meta:
         model = Conversation
         fields = '__all__'
