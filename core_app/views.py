@@ -10,6 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
 from django.http import StreamingHttpResponse
+import asyncio
 
 
 # Create CRUD API views here with Conversation models
@@ -149,11 +150,33 @@ class AgentAnswerMessageStream(generics.GenericAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            ai_response_generator = get_streaming_response(conversation_id, message)
+            # ai_response_generator = get_streaming_response(conversation_id, message)
             
-            ai_response = ai_response_generator['output']
+            # ai_response = ai_response_generator['output']
             
-            return StreamingHttpResponse(str(ai_response), content_type="text/event-stream", status=status.HTTP_200_OK)
+            agent_executor, chat_history = get_streaming_response(conversation_id, message)
+            
+            async def on_chat_model_stream():
+                num_events = 0
+                async for event in agent_executor.astream_events({'input': message, 'chat_history': chat_history}, 
+                    version="v1",
+                ):
+                    if event['event'] == 'on_chat_model_stream':
+                        
+                        if event['data']['chunk'].content == "":
+                            continue
+                        #print("--", event['data']['chunk'].content, "--")
+                        yield event['data']['chunk'].content
+        
+                    
+            #asyncio.run(on_chat_model_stream())
+    
+            
+            # def generate_stream():
+            #     async for ai_response in get_streaming_response(conversation_id, message):
+            #         yield ai_response
+            
+            return StreamingHttpResponse(on_chat_model_stream(), content_type="text/event-stream", status=status.HTTP_200_OK)
         
         except Exception as e:
             return Response(

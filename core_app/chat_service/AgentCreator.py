@@ -71,11 +71,14 @@ class AgentCreator:
                 Actual Output: (Write the main content here)
                 Summary: (Summarize the main content in one sentence)
                 Hashtag: (Create some hashtags that captures the essence of the content)"
+                if you can not summarize the content, you can write the content in the summary section.
                 Example
-                    Question: The impact of remote work on productivity
-                    Actual Output: The shift to remote work has significantly altered the dynamics of workplace productivity. While some employees report higher levels of efficiency and better work-life balance, others struggle with distractions and isolation. Companies are investing in new tools and technologies to support remote teams, fostering collaboration and communication. Overall, the impact on productivity varies widely among different industries and individual circumstances.
-                    Summary: Remote work's impact on productivity varies, with some finding increased efficiency and others facing challenges.
-                    Hashtag: #RemoteWorkEffect #ProductivityImpact #WorkplaceDynamics ,....."
+                    When user's input: The impact of remote work on productivity
+                    your output should be:
+                    format:
+                    - Actual Output: The shift to remote work has significantly altered the dynamics of workplace productivity. While some employees report higher levels of efficiency and better work-life balance, others struggle with distractions and isolation. Companies are investing in new tools and technologies to support remote teams, fostering collaboration and communication. Overall, the impact on productivity varies widely among different industries and individual circumstances.
+                    - Summary: Remote work's impact on productivity varies, with some finding increased efficiency and others facing challenges.
+                    - Hashtag: #RemoteWorkEffect #ProductivityImpact #WorkplaceDynamics ,....."
         """
         return system_prompt_template
     
@@ -93,8 +96,6 @@ class AgentCreator:
         llm = self.load_llm()
         tools = self.load_tools()
         agent_runnable = create_tool_calling_agent(llm, tools, system_prompt)   
-        print("----------------------")
-        print(system_prompt)
         return agent_runnable, tools
 
     def create_agent_executor(self):
@@ -108,7 +109,7 @@ class AgentCreator:
         return output['output']
 
 @error_tracking_decorator
-def run_chatbot(input_text, chat_history, agent_role="literature"):
+def run_chatbot(input_text, chat_history, agent_role="friend"):
     # load from db
     # use agent_role to get => agent_name, llm_type, prompt_content, tools
     

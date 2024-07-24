@@ -128,7 +128,7 @@ def get_message_from_agent(conversation_id, user_message):
     if not conversation_instance_qs.exists():
         raise Exception("Conversation id not found")
     conversation_instance = conversation_instance_qs.first()
-    character = conversation_instance.prompt_name
+    #character = conversation_instance.prompt_name
     provider = conversation_instance.gpt_model
     knowledge = conversation_instance.knowledge
  
@@ -173,18 +173,15 @@ def get_streaming_response(conversation_id, user_message):
     
     # Lấy lịch sử trò chuyện
     chat_history_dicts = conversation_instance.chat_history or []
-    print(chat_history_dicts)
-    print("---------------------------------")
+
     
     if chat_history_dicts and isinstance(chat_history_dicts[0], dict) and not chat_history_dicts[0]:
         chat_history_dicts.pop(0)
-    print(chat_history_dicts)
-    print("---------------------------------")
+
     chat_history = [
         convert_chat_dict_to_prompt(chat_history_dict)
         for chat_history_dict in chat_history_dicts
     ]
-    print(chat_history)
 
     system_prompt_qs = SystemPrompt.objects.filter(character=character)
     if not system_prompt_qs.exists():
@@ -200,7 +197,7 @@ def get_streaming_response(conversation_id, user_message):
     # system prompt content
     sub_prompt = """Bạn có thể lấy thông tin được lưu trong 'knowledge' để trả lời,
     nếu 'knowledge' rỗng hoặc thông tin trong 'knowledge' không phù hợp để trả lời thì hãy sử dụng chức năng công cụ 'query_data_from_db_table' để lấy thông tin từ cơ sở dữ liệu với đầu vào: subject, chapter'
-    knowledge: {knowledge}
+    knowledge: 
     """
     @tool("query_data_from_db_table", args_schema=QueryInput)
     
@@ -236,23 +233,42 @@ def get_streaming_response(conversation_id, user_message):
     llm = load_llm_model(provider)
 
     # create agent constructor
-    agent = initialize_agent(
-        agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-        tools=tools,
-        llm=llm,
-        verbose=True,
-        return_intermediate_results=False
-    )
+    # agent = initialize_agent(
+    #     agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+    #     tools=tools,
+    #     llm=llm,
+    #     verbose=True,
+    #     return_intermediate_results=False
+    # )
     
-    output = agent.invoke({
-        "input": user_message,
-        "chat_history": chat_history
-        })
+    # output = agent.invoke({
+    #     "input": user_message,
+    #     "chat_history": chat_history
+    #     })
+    
+    agent = create_tool_calling_agent(llm, tools, system_prompt)
+    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, return_intermediate_results=False)
+
+    
+    # async def on_chat_model_stream():
+    #     num_events = 0
+    #     async for event in agent_executor.astream_events({'input': user_message, 'chat_history': chat_history}, 
+    #         version="v1",
+    #     ):
+    #         if event['event'] == 'on_chat_model_stream':
+    #             a = event['data']['chunk'].content
+    #             print(event['data']['chunk'].content)
+   
+            
+    #asyncio.run(on_chat_model_stream())
         
-    conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
-    conversation_instance.chat_history.append({"message_type": "ai_message", "content": output['output']})
-    conversation_instance.save()
-    return output
+     
+     
+        
+    # conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
+    # conversation_instance.chat_history.append({"message_type": "ai_message", "content": output['output']})
+    # conversation_instance.save()
+    return agent_executor, chat_history
 
 
     
