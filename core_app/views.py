@@ -2,13 +2,15 @@ from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.response import Response
 
-from .models import Conversation, SystemPrompt, Lecture
+from .models import Conversation, SystemPrompt, Lecture, ExtractedData
 from .serializers import ConversationSerializer, SystemPromptSerializer, LectureSerializer
 from core_app.chat_service.simple_chat_bot import get_message_from_chatbot
 from core_app.chat_service.agent_basic import get_message_from_agent
+from core_app.extract import extract
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from ca_vntl_helper import error_tracking_decorator
+import re
 
 
 # Create CRUD API views here with Conversation models
@@ -73,10 +75,31 @@ class AgentMessage(generics.CreateAPIView):
         message = data.get("message")
         conversation_id = data.get("conversation_id")
         try:
-            print("response success")
-            output_ai_message = get_message_from_agent(conversation_id, message)
-            print(output_ai_message)
-            return Response({"ai_message": output_ai_message, "human_message": message}, status=status.HTTP_200_OK)
+            # print("response success")
+            # output_ai_message = get_message_from_agent(conversation_id, message)
+            # print(output_ai_message)
+            # return Response({"ai_message": output_ai_message, "human_message": message}, status=status.HTTP_200_OK)
+        
+            # Get response from AI
+            ai_response = get_message_from_agent(conversation_id, message)
+            
+            # Extract information from AI response and user message
+            extracted_info = extract(ai_response, message)
+            
+            # Save the extracted information to the database
+            extracted_data = ExtractedData(
+                summary=extracted_info['summary'],
+                hashtags=" ".join(extracted_info['hashtags']),
+                message_output=extracted_info['message_output']
+            )
+            extracted_data.save()
+            
+            return Response({
+                "ai_message": ai_response,
+                "human_message": message,
+                "summary": extracted_info['summary'],
+                "hashtags": extracted_info['hashtags']
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"ai_message": "Defined error", "human_message": message}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -100,7 +123,7 @@ class AgentAnswerMessage(generics.GenericAPIView):
     )
     def post(self, request, *args, **kwargs):
         try:
-            print("response success")
+            # print("response success")
             conversation_id = request.data.get("conversation_id")
             message = request.data.get("message")
             

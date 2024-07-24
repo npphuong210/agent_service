@@ -31,3 +31,15 @@ class Lecture(models.Model):
     content_embedding = VectorField(dimensions=1536, default=empty_vector)
     def __str__(self):
         return f"{self.subject} - {self.chapter}"
+    
+class ExtractedData(models.Model):
+    id = models.AutoField(primary_key=True)
+    summary = models.TextField()
+    hashtags = models.TextField()
+    message_output = models.TextField()
+    summary_embedding = VectorField(dimensions=1536, default=empty_vector)
+    hashtags_embedding = VectorField(dimensions=1536, default=empty_vector)
+
+
+    def __str__(self):
+        return f"{self.summary} - {self.hashtags}"
