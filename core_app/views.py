@@ -5,12 +5,14 @@ from rest_framework.response import Response
 from .models import Conversation, SystemPrompt, Lecture
 from .serializers import ConversationSerializer, SystemPromptSerializer, LectureSerializer
 from core_app.chat_service.simple_chat_bot import get_message_from_chatbot
-from core_app.chat_service.agent_basic import get_message_from_agent, get_streaming_response
+from core_app.chat_service.agent_basic import get_message_from_agent, get_streaming_response, convert_chat_dict_to_prompt
+from core_app.chat_service.AgentCreator import run_chatbot
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
 from django.http import StreamingHttpResponse
 import asyncio
+from asgiref.sync import sync_to_async
 
 
 # Create CRUD API views here with Conversation models
@@ -111,7 +113,32 @@ class AgentAnswerMessage(generics.GenericAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            output_ai_message = get_message_from_chatbot(conversation_id, message)
+            conversation_instance_qs = Conversation.objects.filter(id=conversation_id)
+            
+            if not conversation_instance_qs.exists():
+                return Response(
+                    {"message": "conversation_id not found"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            conversation_instance = conversation_instance_qs.first()
+            
+                # Lấy lịch sử trò chuyện
+            chat_history_dicts = conversation_instance.chat_history or []
+            
+            if chat_history_dicts and isinstance(chat_history_dicts[0], dict) and not chat_history_dicts[0]:
+                chat_history_dicts.pop(0)
+                
+            
+            chat_history = [
+                convert_chat_dict_to_prompt(chat_history_dict)
+                for chat_history_dict in chat_history_dicts
+                    ]
+            
+            output_ai_message = run_chatbot(message, chat_history)
+            
+            conversation_instance.chat_history.append({"message_type": "human_message", "content": message})
+            conversation_instance.chat_history.append({"message_type": "ai_message", "content": output_ai_message})
+            conversation_instance.save()
             return Response({"message": output_ai_message}, status=status.HTTP_200_OK)
         
         except Exception as e:
@@ -150,32 +177,27 @@ class AgentAnswerMessageStream(generics.GenericAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # ai_response_generator = get_streaming_response(conversation_id, message)
-            
-            # ai_response = ai_response_generator['output']
-            
-            agent_executor, chat_history = get_streaming_response(conversation_id, message)
+            agent_executor, chat_history, conversation_instance = get_streaming_response(conversation_id, message)
             
             async def on_chat_model_stream():
-                num_events = 0
+                final_event = None
                 async for event in agent_executor.astream_events({'input': message, 'chat_history': chat_history}, 
                     version="v1",
                 ):
+
                     if event['event'] == 'on_chat_model_stream':
                         
                         if event['data']['chunk'].content == "":
                             continue
                         #print("--", event['data']['chunk'].content, "--")
                         yield event['data']['chunk'].content
-        
-                    
-            #asyncio.run(on_chat_model_stream())
+                    if event["event"] == 'on_chain_end':
+                        final_event = event["data"]["output"]
+                
+                await sync_to_async(conversation_instance.chat_history.append)({"message_type": "human_message", "content": message})
+                await sync_to_async(conversation_instance.chat_history.append)({"message_type": "ai_message", "content": final_event['output']})
+                await sync_to_async(conversation_instance.save)()
     
-            
-            # def generate_stream():
-            #     async for ai_response in get_streaming_response(conversation_id, message):
-            #         yield ai_response
-            
             return StreamingHttpResponse(on_chat_model_stream(), content_type="text/event-stream", status=status.HTTP_200_OK)
         
         except Exception as e:

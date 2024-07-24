@@ -232,43 +232,10 @@ def get_streaming_response(conversation_id, user_message):
 
     llm = load_llm_model(provider)
 
-    # create agent constructor
-    # agent = initialize_agent(
-    #     agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-    #     tools=tools,
-    #     llm=llm,
-    #     verbose=True,
-    #     return_intermediate_results=False
-    # )
-    
-    # output = agent.invoke({
-    #     "input": user_message,
-    #     "chat_history": chat_history
-    #     })
-    
     agent = create_tool_calling_agent(llm, tools, system_prompt)
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, return_intermediate_results=False)
 
-    
-    # async def on_chat_model_stream():
-    #     num_events = 0
-    #     async for event in agent_executor.astream_events({'input': user_message, 'chat_history': chat_history}, 
-    #         version="v1",
-    #     ):
-    #         if event['event'] == 'on_chat_model_stream':
-    #             a = event['data']['chunk'].content
-    #             print(event['data']['chunk'].content)
-   
-            
-    #asyncio.run(on_chat_model_stream())
-        
-     
-     
-        
-    # conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
-    # conversation_instance.chat_history.append({"message_type": "ai_message", "content": output['output']})
-    # conversation_instance.save()
-    return agent_executor, chat_history
+    return agent_executor, chat_history, conversation_instance
 
 
     
