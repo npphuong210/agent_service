@@ -34,7 +34,7 @@ def query_data_from_wikipedia(query: str) -> str:
 
 
 tool_mapping = {
-    "query_data_from_db_table": query_data_from_wikipedia
+    "query_data_from_wikipedia": query_data_from_wikipedia
 }
 
 
@@ -104,18 +104,10 @@ class AgentCreator:
         return output['output']
 
 @error_tracking_decorator
-def run_chatbot(input_text, chat_history, agent_role="friend"):
-    # load from db
-    # use agent_role to get => agent_name, llm_type, prompt_content, tools
-    agent_instance_qs = Agent.objects.filter(agent_name=agent_role)
-    if not agent_instance_qs.exists():
-        raise Exception("Agent not found")
-    agent_instance = agent_instance_qs.first()
+def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_content="" , user_tools=[]):
 
-    system_prompt_content = agent_instance.prompt.prompt_content
-    tools = agent_instance.tools
-    llm_type = agent_instance.llm
-    agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=system_prompt_content, tools=tools)
-    print(chat_history)
+    agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=prompt_content, tools=user_tools)
+    
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
+    
     return output_message

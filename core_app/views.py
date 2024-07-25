@@ -1,20 +1,11 @@
-from django.shortcuts import render
 from rest_framework import generics, status
 from rest_framework.response import Response
-
 from .models import Conversation, SystemPrompt, ExternalKnowledge, InternalKnowledge
 from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer
-from core_app.chat_service.simple_chat_bot import get_message_from_chatbot
-from core_app.chat_service.agent_basic import get_message_from_agent, get_streaming_response, convert_chat_dict_to_prompt
+from core_app.chat_service.AgentMessage import get_message_from_agent
 from core_app.extract import extract
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from langchain.callbacks.streaming_aiter import AsyncIteratorCallbackHandler
-from django.http import StreamingHttpResponse
-import asyncio
-from asgiref.sync import sync_to_async
-from ca_vntl_helper import error_tracking_decorator
-import re
 
 
 # Create CRUD API views here with Conversation models
@@ -65,7 +56,7 @@ class AgentMessage(generics.CreateAPIView):
             type=openapi.TYPE_OBJECT,
             required=["conversation_id", "message"],
             properties={
-                "conversation_id": openapi.Schema(type=openapi.TYPE_INTEGER),
+                "conversation_id": openapi.Schema(type=openapi.TYPE_STRING, format="uuid"),
                 "message": openapi.Schema(type=openapi.TYPE_STRING),
             },
         ),
@@ -79,13 +70,9 @@ class AgentMessage(generics.CreateAPIView):
         message = data.get("message")
         conversation_id = data.get("conversation_id")
         try:
-            # print("response success")
-            # output_ai_message = get_message_from_agent(conversation_id, message)
-            # print(output_ai_message)
-            # return Response({"ai_message": output_ai_message, "human_message": message}, status=status.HTTP_200_OK)
 
             # Get response from AI
-            ai_response = get_message_from_chatbot(conversation_id, message)
+            ai_response = get_message_from_agent(conversation_id, message)
 
             # Extract information from AI response and user message
             extracted_info = extract(ai_response, message)
@@ -109,126 +96,60 @@ class AgentMessage(generics.CreateAPIView):
         
 agent_answer_message = AgentMessage.as_view()
 
+# class AgentAnswerMessageStream(generics.GenericAPIView):
+#     @swagger_auto_schema(
+#         request_body=openapi.Schema(
+#             type=openapi.TYPE_OBJECT,
+#             required=["conversation_id", "message"],
+#             properties={
+#                 "conversation_id": openapi.Schema(type=openapi.TYPE_STRING, format="uuid"),
+#                 "message": openapi.Schema(type=openapi.TYPE_STRING),
+#             },
+#         ),
+#         responses={
+#             200: openapi.Response("Successful response", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+#             400: "Bad Request",
+#         },
+#     )
+#     def post(self, request, *args, **kwargs):
+#         try:
+#             print("response success")
+#             conversation_id = request.data.get("conversation_id")
+#             message = request.data.get("message")
 
-class AgentAnswerMessage(generics.GenericAPIView):
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=["conversation_id", "message"],
-            properties={
-                "conversation_id": openapi.Schema(type=openapi.TYPE_STRING, format="uuid"),
-                "message": openapi.Schema(type=openapi.TYPE_STRING),
-            },
-        ),
-        responses={
-            200: openapi.Response("Successful response", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
-            400: "Bad Request",
-        },
-    )
-    def post(self, request, *args, **kwargs):
-        try:
-            print("response success")
-            conversation_id = request.data.get("conversation_id")
-            message = request.data.get("message")
-            print(conversation_id, message)
-            if not conversation_id or not message:
-                return Response(
-                    {"message": "conversation_id and message are required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            conversation_instance_qs = Conversation.objects.filter(id=conversation_id)
-            print(conversation_instance_qs)
-            if not conversation_instance_qs.exists():
-                return Response(
-                    {"message": "conversation_id not found"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            conversation_instance = conversation_instance_qs.first()
+#             if not conversation_id or not message:
+#                 return Response(
+#                     {"message": "conversation_id and message are required"},
+#                     status=status.HTTP_400_BAD_REQUEST
+#                 )
 
-                # Lấy lịch sử trò chuyện
-            chat_history_dicts = conversation_instance.chat_history or []
+#             agent_executor, chat_history, conversation_instance = get_streaming_response(conversation_id, message)
 
-            if chat_history_dicts and isinstance(chat_history_dicts[0], dict) and not chat_history_dicts[0]:
-                chat_history_dicts.pop(0)
+#             async def on_chat_model_stream():
+#                 final_event = None
+#                 async for event in agent_executor.astream_events({'input': message, 'chat_history': chat_history},
+#                     version="v1",
+#                 ):
 
+#                     if event['event'] == 'on_chat_model_stream':
 
-            chat_history = [
-                convert_chat_dict_to_prompt(chat_history_dict)
-                for chat_history_dict in chat_history_dicts
-                    ]
-            print(chat_history)
-            print(message)
-            output_ai_message = get_message_from_chatbot(conversation_id, message)
+#                         if event['data']['chunk'].content == "":
+#                             continue
+#                         #print("--", event['data']['chunk'].content, "--")
+#                         yield event['data']['chunk'].content
+#                     if event["event"] == 'on_chain_end':
+#                         final_event = event["data"]["output"]
 
-            conversation_instance.chat_history.append({"message_type": "human_message", "content": message})
-            conversation_instance.chat_history.append({"message_type": "ai_message", "content": output_ai_message})
-            conversation_instance.save()
-            return Response({"message": output_ai_message}, status=status.HTTP_200_OK)
-        
-        except Exception as e:
-            return Response(
-                {"message": "failed", "error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+#                 await sync_to_async(conversation_instance.chat_history.append)({"message_type": "human_message", "content": message})
+#                 await sync_to_async(conversation_instance.chat_history.append)({"message_type": "ai_message", "content": final_event['output']})
+#                 await sync_to_async(conversation_instance.save)()
 
-answer_message = AgentAnswerMessage.as_view()
+#             return StreamingHttpResponse(on_chat_model_stream(), content_type="text/event-stream", status=status.HTTP_200_OK)
 
+#         except Exception as e:
+#             return Response(
+#                 {"message": "failed", "error": str(e)},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
 
-class AgentAnswerMessageStream(generics.GenericAPIView):
-    @swagger_auto_schema(
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            required=["conversation_id", "message"],
-            properties={
-                "conversation_id": openapi.Schema(type=openapi.TYPE_STRING, format="uuid"),
-                "message": openapi.Schema(type=openapi.TYPE_STRING),
-            },
-        ),
-        responses={
-            200: openapi.Response("Successful response", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
-            400: "Bad Request",
-        },
-    )
-    def post(self, request, *args, **kwargs):
-        try:
-            print("response success")
-            conversation_id = request.data.get("conversation_id")
-            message = request.data.get("message")
-
-            if not conversation_id or not message:
-                return Response(
-                    {"message": "conversation_id and message are required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            agent_executor, chat_history, conversation_instance = get_streaming_response(conversation_id, message)
-
-            async def on_chat_model_stream():
-                final_event = None
-                async for event in agent_executor.astream_events({'input': message, 'chat_history': chat_history},
-                    version="v1",
-                ):
-
-                    if event['event'] == 'on_chat_model_stream':
-
-                        if event['data']['chunk'].content == "":
-                            continue
-                        #print("--", event['data']['chunk'].content, "--")
-                        yield event['data']['chunk'].content
-                    if event["event"] == 'on_chain_end':
-                        final_event = event["data"]["output"]
-
-                await sync_to_async(conversation_instance.chat_history.append)({"message_type": "human_message", "content": message})
-                await sync_to_async(conversation_instance.chat_history.append)({"message_type": "ai_message", "content": final_event['output']})
-                await sync_to_async(conversation_instance.save)()
-
-            return StreamingHttpResponse(on_chat_model_stream(), content_type="text/event-stream", status=status.HTTP_200_OK)
-
-        except Exception as e:
-            return Response(
-                {"message": "failed", "error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-streaming_message = AgentAnswerMessageStream.as_view()
+# streaming_message = AgentAnswerMessageStream.as_view()
