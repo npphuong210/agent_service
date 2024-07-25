@@ -21,6 +21,8 @@ from rest_framework import permissions
 from core_app.views import (conversation_list_create, conversion_retrieve_update_destroy,  
                             system_prompt_list_create, system_prompt_retrieve_update_destroy,
                             ExternalKnowledge_list_create, ExternalKnowledge_retrieve_update_destroy,
+                            Agent_list_create, Agent_retrieve_update_destroy,
+                            AgentTool_list_create, AgentTool_retrieve_update_destroy,
                             agent_answer_message)
 
 schema_view = get_schema_view(
@@ -44,8 +46,13 @@ urlpatterns = [
     
     path("external-knowledge/", ExternalKnowledge_list_create, name="external-knowledge-list-create"),
     path("external-knowledge/<uuid:pk>/", ExternalKnowledge_retrieve_update_destroy, name="external-knowledge-retrieve-update-destroy"),
+    
+    path("agent/", Agent_list_create, name="agent-list-create"),
+    path("agent/<uuid:pk>/", Agent_retrieve_update_destroy, name="agent-retrieve-update-destroy"),
+    path("agent-tool/", AgentTool_list_create, name="agent-tool-list-create"),
+    path("agent-tool/<uuid:pk>/", AgentTool_retrieve_update_destroy, name="agent-tool-retrieve-update-destroy"),
 
     #path("streaming/", streaming_message, name="streaming-message"),
-    path("agent/", agent_answer_message, name="agent-answer-message"),
+    path("answer/", agent_answer_message, name="agent-answer-message"),
     path("swagger/", schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

@@ -1,7 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .models import Conversation, SystemPrompt, ExternalKnowledge, InternalKnowledge
-from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer
+from .models import Conversation, SystemPrompt, ExternalKnowledge, InternalKnowledge, Agent, AgentTool
+from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer, AgentSerializer, AgentToolSerializer
 from core_app.chat_service.AgentMessage import get_message_from_agent
 from core_app.extract import extract
 from drf_yasg.utils import swagger_auto_schema
@@ -49,7 +49,33 @@ class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIVi
 
 ExternalKnowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view() 
 
+# create CRUD API views here with Agent models
+class AgentListCreate(generics.ListCreateAPIView):
+    queryset = Agent.objects.all()
+    serializer_class = AgentSerializer
 
+Agent_list_create = AgentListCreate.as_view()
+
+class AgentRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Agent.objects.all()
+    serializer_class = AgentSerializer
+
+Agent_retrieve_update_destroy = AgentRetrieveUpdateDestroy.as_view()
+
+# create CRUD API views here with AgentTool models
+class AgentToolListCreate(generics.ListCreateAPIView):
+    queryset = AgentTool.objects.all()
+    serializer_class = AgentToolSerializer
+    
+AgentTool_list_create = AgentToolListCreate.as_view()
+
+class AgentToolRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = AgentTool.objects.all()
+    serializer_class = AgentToolSerializer
+
+AgentTool_retrieve_update_destroy = AgentToolRetrieveUpdateDestroy.as_view()
+    
+    
 class AgentMessage(generics.CreateAPIView):
     @swagger_auto_schema(
         request_body=openapi.Schema(
