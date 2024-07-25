@@ -49,6 +49,9 @@ class ExternalKnowledge(models.Model):
     chapter = models.CharField(max_length=100)
     content = models.TextField()
     content_embedding = VectorField(dimensions=1536, default=empty_vector)
+    subject_embedding = VectorField(dimensions=1536, default=empty_vector)
+    chapter_embedding = VectorField(dimensions=1536, default=empty_vector)
+
     def __str__(self):
         return f"{self.subject} - {self.chapter}"
 
