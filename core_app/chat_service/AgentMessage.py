@@ -5,7 +5,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage
 from core_app.models import Conversation
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from core_app.chat_service.AgentCreator import run_chatbot
+from core_app.chat_service.AgentCreator import run_chatbot, AgentCreator
 
 def load_llm_model(provider="google"):
     if provider == "google":
@@ -62,7 +62,6 @@ def get_message_from_agent(conversation_id, user_message):
     response = run_chatbot(
         user_message, chat_history, agent_role=role, llm_type=llm, prompt_content=prompt_content, user_tools=user_tools)
         
-    print(response, "response")
     # Cập nhật lịch sử trò chuyện
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
     conversation_instance.chat_history.append({"message_type": "ai_message", "content": response})
@@ -71,3 +70,38 @@ def get_message_from_agent(conversation_id, user_message):
     conversation_instance.save()
         
     return response
+
+
+def get_streaming_agent_instance(conversation_id):
+
+    conversation_instance_qs = Conversation.objects.filter(id=conversation_id)
+    
+    if not conversation_instance_qs.exists():
+        raise Exception("Conversation id not found")
+    
+    conversation_instance = conversation_instance_qs.first()
+    
+    role = conversation_instance.agent.agent_name
+    
+    llm = conversation_instance.agent.llm
+    
+    prompt_content = conversation_instance.agent.prompt.prompt_content
+    
+    user_tools = conversation_instance.agent.tools
+ 
+    chat_history_dicts = conversation_instance.chat_history or []
+    
+    if chat_history_dicts and isinstance(chat_history_dicts[0], dict) and not chat_history_dicts[0]:
+        chat_history_dicts.pop(0)
+    
+    chat_history = [
+        convert_chat_dict_to_prompt(chat_history_dict)
+        for chat_history_dict in chat_history_dicts
+    ]
+
+    agent_instance = AgentCreator(agent_name=role, llm_type=llm, prompt_content=prompt_content, tools=user_tools)
+
+    return agent_instance.create_agent_executor(), chat_history, conversation_instance
+
+
+    
