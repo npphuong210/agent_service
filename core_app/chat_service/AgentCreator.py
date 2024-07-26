@@ -1,93 +1,9 @@
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
-from langchain_core.messages import HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI
-from core_app.models import Conversation, SystemPrompt, ExternalKnowledge, Agent, InternalKnowledge
-import json
-from langchain_community.tools import tool, WikipediaQueryRun
-from langchain.pydantic_v1 import BaseModel, Field
 from ca_vntl_helper import error_tracking_decorator
 import os
-from langchain_community.tools import WikipediaQueryRun, tool
-from langchain_community.utilities import WikipediaAPIWrapper
-from langchain.pydantic_v1 import BaseModel, Field
-import requests
-from typing import Any
-from pgvector.django import L2Distance
-from core_app.embedding.embedding_by_openai import get_vector_from_embedding
-
-def InsertEmbeddingIntoDB(input_data):
-    return None
-
-def GetVectorFromEmbedding(input_data):
-    return None
-
-def GetEmbeddingFromDB(input_data):
-    return None
-
-wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
-
-class QueryInput(BaseModel):
-    query: str = Field(description="query to look up on wikipedia")
-
-@tool("query_data_from_wikipedia", args_schema=QueryInput)
-def query_data_from_wikipedia(query: str) -> str:
-    """Get data from wikipedia."""
-    output = WikipediaAPIWrapper().run(query)
-    return output
-
-class RequestInput(BaseModel):
-    url: str = Field(description="URL to request from")
-    type: str = Field(description="GET or POST")
-    
-@tool("request_data_from_url", args_schema=RequestInput)
-def request_data_from_url(url: str, type: str) -> str:
-    """Request data from a URL."""
-    try:
-        if type.upper() == "GET":
-            response = requests.get(url)
-        elif type.upper() == "POST":
-            response = requests.post(url)
-        else:
-            return f"Invalid request type: {type}. Use 'GET' or 'POST'."
-        
-        response.raise_for_status()  # Raise an error for bad status codes
-        return response.text
-    except requests.RequestException as e:
-        return f"An error occurred: {e}"
-
-class HashTagInput(BaseModel):
-    hashtags: str = Field(description="Hashtags to find similar hashtags")
-
-@tool("query_internal_knowledge", args_schema=HashTagInput)
-def query_internal_knowledge(hashtags: str) -> str:
-    """Find similar hashtags and return a summary"""
-    try:
-        hashtags_embedding = get_vector_from_embedding(hashtags)
-        internal_knowledge_qs = InternalKnowledge.objects.annotate(
-            distance=L2Distance("hashtags_embedding", hashtags_embedding)
-        ).order_by("distance")[:1]
-        
-        # Check if similar hashtags were found
-        if not internal_knowledge_qs:
-            return "No similar hashtags found."
-            
-        # Generate a summary of the matching entries
-        summaries = [internal_knowledge.summary for internal_knowledge in internal_knowledge_qs]
-        summary_output = "Similar hashtags found:\n" + "\n".join(summaries)
-        
-        print(summary_output)
-        
-        return summary_output
-    except Exception as e:
-        return f"An error occurred: {e}"
-
-
-tool_mapping = {
-    "query_data_from_wikipedia": query_data_from_wikipedia,
-    "request_data_from_url": request_data_from_url,
-    "query_internal_knowledge": query_internal_knowledge
-}
+from core_app.chat_service.agent_tool import tool_mapping
 
 
 class AgentCreator:
@@ -111,12 +27,13 @@ class AgentCreator:
                     - Summary: Remote work's impact on productivity varies, with some finding increased efficiency and others facing challenges.
                     - Hashtag: #RemoteWorkEffect #ProductivityImpact #WorkplaceDynamics ,....."
         """
+
     def load_tools(self):
         tools = []
         for tool_str in self.tools_str:
             tools.append(tool_mapping[tool_str])
         return tools
-    
+
     def load_llm(self):
         if self.llm_type == "openai":
             OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -155,11 +72,12 @@ class AgentCreator:
         output = agent_exec.invoke({"input": user_message, "chat_history": chat_history})
         return output['output']
 
-@error_tracking_decorator
-def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_content="" , user_tools=[]):
 
-    agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=prompt_content, tools=user_tools)
-    
+@error_tracking_decorator
+def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_content="", user_tools=[]):
+    agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=prompt_content,
+                                  tools=user_tools)
+
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
-    
+
     return output_message
