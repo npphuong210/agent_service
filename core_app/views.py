@@ -37,17 +37,17 @@ system_prompt_retrieve_update_destroy = SystemPromptRetrieveUpdateDestroy.as_vie
 
 
 # create CRUD API views here with ExternalKnowledge models
-class LecutureListCreate(generics.ListCreateAPIView):
+class ExternalListCreate(generics.ListCreateAPIView):
     queryset = ExternalKnowledge.objects.all()
     serializer_class = ExternalKnowledgeSerializer
 
-ExternalKnowledge_list_create = LecutureListCreate.as_view()
+external_knowledge_list_create = ExternalListCreate.as_view()
 
 class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = ExternalKnowledge.objects.all()
     serializer_class = ExternalKnowledgeSerializer
 
-ExternalKnowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view() 
+external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
 
 # create CRUD API views here with Agent models
 class AgentListCreate(generics.ListCreateAPIView):

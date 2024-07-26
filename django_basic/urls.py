@@ -20,7 +20,7 @@ from drf_yasg import openapi
 from rest_framework import permissions
 from core_app.views import (conversation_list_create, conversion_retrieve_update_destroy,  
                             system_prompt_list_create, system_prompt_retrieve_update_destroy,
-                            ExternalKnowledge_list_create, ExternalKnowledge_retrieve_update_destroy,
+                            external_knowledge_list_create, external_knowledge_retrieve_update_destroy,
                             Agent_list_create, Agent_retrieve_update_destroy,
                             AgentTool_list_create, AgentTool_retrieve_update_destroy,
                             agent_answer_message)
@@ -44,8 +44,8 @@ urlpatterns = [
     path("system-prompt/", system_prompt_list_create, name="system-prompt-list-create"),
     path("system-prompt/<uuid:pk>/", system_prompt_retrieve_update_destroy, name="system-prompt-retrieve-update-destroy"),
     
-    path("external-knowledge/", ExternalKnowledge_list_create, name="external-knowledge-list-create"),
-    path("external-knowledge/<uuid:pk>/", ExternalKnowledge_retrieve_update_destroy, name="external-knowledge-retrieve-update-destroy"),
+    path("external-knowledge/", external_knowledge_list_create, name="external-knowledge-list-create"),
+    path("external-knowledge/<uuid:pk>/", external_knowledge_retrieve_update_destroy, name="external-knowledge-retrieve-update-destroy"),
     
     path("agent/", Agent_list_create, name="agent-list-create"),
     path("agent/<uuid:pk>/", Agent_retrieve_update_destroy, name="agent-retrieve-update-destroy"),
