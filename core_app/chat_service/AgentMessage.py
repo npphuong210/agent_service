@@ -68,6 +68,7 @@ def get_message_from_agent(conversation_id, user_message):
     ]
 
     # Chạy agent
+    print("run_chatbot")
     response = run_chatbot(
         user_message, chat_history, agent_role=role, llm_type=llm, prompt_content=prompt_content, user_tools=user_tools)
         
