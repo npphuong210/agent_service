@@ -40,33 +40,37 @@ def request_data_from_url(url: str, type: str) -> str:
     except requests.RequestException as e:
         return f"An error occurred: {e}"
 
-
 class HashTagInput(BaseModel):
     hashtags: str = Field(description="Hashtags to find similar hashtags")
-
+    query: str = Field(description="if hashtags are not found in the database, use this query to find similar summaries")
 
 @tool("query_internal_knowledge", args_schema=HashTagInput)
-def query_internal_knowledge(hashtags: str) -> str:
-    """Find similar hashtags and return a summary"""
+def query_internal_knowledge(hashtags: str, query: str) -> str:
+    """Find similar hashtags and return a summary. if not found, use the query to find similar summaries."""
     try:
         hashtags_embedding = get_vector_from_embedding(hashtags)
         internal_knowledge_qs = InternalKnowledge.objects.annotate(
             distance=L2Distance("hashtags_embedding", hashtags_embedding)
         ).order_by("distance")[:1]
-
+        
         # Check if similar hashtags were found
         if not internal_knowledge_qs:
-            return "No similar hashtags found."
-
+            query_embedding = get_vector_from_embedding(query)
+            internal_knowledge_qs = InternalKnowledge.objects.annotate(
+                distance=L2Distance("summary_embedding", query_embedding)
+            ).order_by("distance")[:1]
+            summaries = [internal_knowledge.summary for internal_knowledge in internal_knowledge_qs]
+            summary_output = "Similar hashtags found:\n" + "\n".join(summaries)
+            return summary_output
+            
         # Generate a summary of the matching entries
         summaries = [internal_knowledge.summary for internal_knowledge in internal_knowledge_qs]
         summary_output = "Similar hashtags found:\n" + "\n".join(summaries)
-
-        print(summary_output)
-
         return summary_output
+    
     except Exception as e:
         return f"An error occurred: {e}"
+
 
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,

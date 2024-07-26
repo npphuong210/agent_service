@@ -23,7 +23,7 @@ from core_app.views import (conversation_list_create, conversion_retrieve_update
                             external_knowledge_list_create, external_knowledge_retrieve_update_destroy,
                             Agent_list_create, Agent_retrieve_update_destroy,
                             AgentTool_list_create, AgentTool_retrieve_update_destroy,
-                            agent_answer_message)
+                            agent_answer_message, agent_answer_message_stream)
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -52,7 +52,7 @@ urlpatterns = [
     path("agent-tool/", AgentTool_list_create, name="agent-tool-list-create"),
     path("agent-tool/<uuid:pk>/", AgentTool_retrieve_update_destroy, name="agent-tool-retrieve-update-destroy"),
 
-    #path("streaming/", streaming_message, name="streaming-message"),
+    path("streaming/", agent_answer_message_stream, name="agent-answer-message-stream"),
     path("answer/", agent_answer_message, name="agent-answer-message"),
     path("swagger/", schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]

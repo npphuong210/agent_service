@@ -3,8 +3,8 @@ from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_openai import ChatOpenAI
 from ca_vntl_helper import error_tracking_decorator
 import os
-from core_app.chat_service.agent_tool import tool_mapping
-
+from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from .agent_tool import tool_mapping
 
 class AgentCreator:
     def __init__(self, agent_name: str, llm_type: str, prompt_content: str, tools: list[str]):
@@ -37,7 +37,7 @@ class AgentCreator:
     def load_llm(self):
         if self.llm_type == "openai":
             OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-            llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo", streaming=True)
+            llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo", streaming=True, callbacks=[StreamingStdOutCallbackHandler()])
         else:
             raise Exception("LLM type not supported")
         return llm
