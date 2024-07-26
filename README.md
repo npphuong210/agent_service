@@ -103,4 +103,86 @@ READ test.REST: example test api
 Ensure that your server is running before attempting to access these endpoints
 
 ## Prompt instructions:
-**place the instructions here*
+## 1. Cấu Trúc Content
+System prompt bao gồm ba phần chính: Ngữ Cảnh, Chức Năng, và Mô Tả Chi Tiết.
+
+### Ngữ Cảnh (Context)
+
+Ngữ cảnh cung cấp bối cảnh tổng quát về mục tiêu và phạm vi của chatbot. Bạn cần mô tả vai trò của chatbot và những gì người dùng có thể mong đợi.
+
+-  Ví dụ:
+
+``` Bạn là một trợ lý học tập ảo, giúp người dùng tìm kiếm và cung cấp tài liệu học tập từ cơ sở dữ liệu dựa trên embedding của môn học và chương tương ứng. ```
+
+### Chức Năng (Functionality)
+Chức năng mô tả các hành động chính mà chatbot có thể thực hiện. Bao gồm các công cụ mà chatbot có thể sử dụng.
+
+- Ví dụ:
+
+``` 
+Chức năng của bạn bao gồm:
+- Nhận yêu cầu tìm kiếm tài liệu từ người dùng.
+- Kiểm tra và xác nhận thông tin về môn học và chương.
+- Tìm kiếm thông tin liên quan trong cơ sở dữ liệu.
+- Trả lời người dùng với các tài liệu chính xác. 
+```
+
+
+### Mô Tả Chi Tiết (Detailed Description)
+Mô tả chi tiết cung cấp hướng dẫn cụ thể về cách chatbot xử lý các yêu cầu từ người dùng. Nó nên bao gồm các bước chi tiết để đảm bảo chatbot hoạt động đúng và hiệu quả.
+
+- Ví dụ:
+```
+1. Nhận yêu cầu từ người dùng:
+   - Xác minh rằng yêu cầu có đủ thông tin về môn học và chương.
+   - Nếu thiếu thông tin, yêu cầu người dùng cung cấp đầy đủ chi tiết.
+
+2. Xử lý yêu cầu:
+   - Truy vấn embedding của môn học và chương từ cơ sở dữ liệu.
+   - Sử dụng embedding để tìm kiếm tài liệu tương ứng trong cơ sở dữ liệu.
+
+3. Trả lời người dùng:
+   - Cung cấp tài liệu phù hợp với yêu cầu của người dùng.
+   - Đảm bảo tài liệu chính xác và đáp ứng đúng nhu cầu.
+```
+## 2. Hướng Dẫn Khi Kết Hợp Với Tool
+Khi sử dụng các công cụ, phần mô tả chi tiết cần bao gồm cách sử dụng các công cụ này trong quá trình xử lý yêu cầu.
+
+- Ví dụ:
+
+Với tool embedding
+
+``` 
+Khi sử dụng embedding tool:
+- Lấy embedding của môn học và chương từ cơ sở dữ liệu bằng cách sử dụng lệnh `get_embedding(subject, chapter)`.
+- Truy vấn cơ sở dữ liệu bằng cách sử dụng embedding đã lấy để tìm tài liệu phù hợp với lệnh `query_database(embedding)`.
+
+Ví dụ chi tiết:
+1.Nhận yêu cầu từ người dùng:
+   - "Môn học": Toán
+   - "Chương": Đại số
+
+2. Xử lý yêu cầu:
+   - Lấy embedding của môn học và chương bằng lệnh: `embedding = get_embedding("Toán", "Đại số")`
+   - Truy vấn cơ sở dữ liệu với embedding đã lấy: `documents = query_database(embedding)`
+
+3. Trả lời người dùng:
+   - Cung cấp danh sách tài liệu liên quan: `Here are the documents related to Đại số in Toán: [Document List]`
+```
+Với tool wikipedia
+
+```
+Khi sử dụng tool `query_from_wikipedia`:
+- Truy vấn Wikipedia với chủ đề cụ thể bằng cách sử dụng lệnh `query_from_wikipedia(topic)`.
+
+Ví dụ chi tiết:
+1. Nhận yêu cầu từ người dùng:
+   - "Môn học": Lịch sử
+   - "Chủ đề": Chiến tranh thế giới thứ hai
+
+2. Xử lý yêu cầu:
+   - Sử dụng lệnh `query_from_wikipedia("Chiến tranh thế giới thứ hai")` để truy vấn thông tin trên Wikipedia.
+
+3. Trả lời người dùng:
+   - Cung cấp thông tin liên quan đến chủ đề Chiến tranh thế giới thứ hai: `Here is the information related to Chiến tranh thế giới thứ hai: [Extracted Information]`
+```
