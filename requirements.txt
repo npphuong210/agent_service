@@ -16,3 +16,4 @@ drf-yasg
 python-dotenv
 setuptools
 pgvector
+duckduckgo-search

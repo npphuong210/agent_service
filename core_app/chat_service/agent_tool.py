@@ -1,10 +1,22 @@
 from core_app.models import InternalKnowledge
-from langchain_community.tools import WikipediaQueryRun, tool
+from langchain_community.tools import WikipediaQueryRun, tool, DuckDuckGoSearchRun
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain.pydantic_v1 import BaseModel, Field
 import requests
 from pgvector.django import L2Distance
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
+
+
+duckduckgosearch = DuckDuckGoSearchRun()
+
+class DuckDuckGoSearchInput(BaseModel):
+    query: str = Field(description="query to search on duckduckgo")
+    
+@tool("search_data_from_duckduckgo", args_schema=DuckDuckGoSearchInput)
+def search_data_from_duckduckgo(query: str) -> str:
+    """Search data from duckduckgo."""
+    output = duckduckgosearch.run(query)
+    return output
 
 wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
 
@@ -74,6 +86,7 @@ def query_internal_knowledge(hashtags: str, query: str) -> str:
 
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
+    "search_data_from_duckduckgo": search_data_from_duckduckgo,
     "request_data_from_url": request_data_from_url,
     "query_internal_knowledge": query_internal_knowledge
 }
