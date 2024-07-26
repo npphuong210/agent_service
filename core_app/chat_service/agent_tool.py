@@ -83,10 +83,26 @@ def query_internal_knowledge(hashtags: str, query: str) -> str:
     except Exception as e:
         return f"An error occurred: {e}"
 
+class QueryDatabase(BaseModel):
+    subject: str = Field(description="subject to look up on table database")
+    chapter: str = Field(description="chapter to look up on table database")
+ 
+@tool("query_external_knowledge", args_schema=QueryDatabase)
+def query_external_knowledge(subject: str, chapter: str) -> str:
+    """Get data from external knowledge table."""
+    instance_qs = ExternalKnowledge.objects.filter(subject=subject, chapter=chapter)
+    if not instance_qs.exists():
+        return "Not Found"
+    else:
+        instance = instance_qs.first()
+        print(instance.content)
+        return instance.content
+ 
 
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
     "search_data_from_duckduckgo": search_data_from_duckduckgo,
     "request_data_from_url": request_data_from_url,
-    "query_internal_knowledge": query_internal_knowledge
+    "query_internal_knowledge": query_internal_knowledge,
+    "query_external_knowledge": query_external_knowledge
 }
