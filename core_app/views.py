@@ -9,6 +9,7 @@ from drf_yasg import openapi
 from django.http import StreamingHttpResponse
 from asgiref.sync import sync_to_async
 from langchain.agents import AgentExecutor
+import asyncio
 
 
 # Create CRUD API views here with Conversation models
@@ -155,17 +156,19 @@ class AgentAnswerMessageStream(generics.GenericAPIView):
             agent_executor, chat_history, conversation_instance = get_streaming_agent_instance(conversation_id)
 
             async def on_chat_model_stream():
+                
                 final_event = None
+                
                 async for event in agent_executor.astream_events({'input': message, 'chat_history': chat_history},
                     version="v1",
                 ):
 
                     if event['event'] == 'on_chat_model_stream':
 
-                        if event['data']['chunk'].content == "":
-                            continue
-                        #print("--", event['data']['chunk'].content, "--")
-                        yield event['data']['chunk'].content
+                        # if event['data']['chunk'].content == "":
+                        #     continue
+                        print(f"data: {event['data']['chunk'].content} \n\n")
+                        yield f"data: {event['data']['chunk'].content} \n\n"
                     if event["event"] == 'on_chain_end':
                         final_event = event["data"]["output"]
 
@@ -173,7 +176,10 @@ class AgentAnswerMessageStream(generics.GenericAPIView):
                 await sync_to_async(conversation_instance.chat_history.append)({"message_type": "ai_message", "content": final_event['output']})
                 await sync_to_async(conversation_instance.save)()
 
-            return StreamingHttpResponse(on_chat_model_stream(), content_type="text/event-stream", status=status.HTTP_200_OK)
+            response = StreamingHttpResponse(on_chat_model_stream(), content_type="text/event-stream", status=status.HTTP_200_OK)
+            response["Cache-Control"] = "no-cache"
+            
+            return response
 
         except Exception as e:
             return Response(
