@@ -101,3 +101,6 @@ Here are the API endpoints available in this project:
 READ test.REST: example test api
 
 Ensure that your server is running before attempting to access these endpoints
+
+## Prompt instructions:
+**place the instructions here*
