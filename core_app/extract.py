@@ -24,11 +24,13 @@ def extract(ai_response: str, user_message: str) -> dict:
 
     summary_embedding = get_vector_from_embedding(summary)
     hashtags_embedding = get_vector_from_embedding(combined_hashtags_str)
-    
+    # remove str after "Summary:"
+    cut_message = ai_response.split("Summary:")[0]
+    print("cut_message", cut_message)
     return {
         'summary': summary,
         'hashtags': combined_hashtags,
-        'message_output': ai_response,
+        'message_output': cut_message,
         'summary_embedding': summary_embedding,
         'hashtags_embedding': hashtags_embedding
     }

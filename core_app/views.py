@@ -126,7 +126,7 @@ class AgentMessage(generics.CreateAPIView):
             extracted_data.save()
 
             return Response({
-                "ai_message": ai_response,
+                "ai_message": extracted_info['message_output'],
                 "human_message": message,
                 "summary": extracted_info['summary'],
                 "hashtags": extracted_info['hashtags']
