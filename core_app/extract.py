@@ -26,6 +26,7 @@ def extract(ai_response: str, user_message: str) -> dict:
     hashtags_embedding = get_vector_from_embedding(combined_hashtags_str)
     # remove str after "Summary:"
     cut_message = ai_response.split("Summary:")[0]
+    cut_message = cut_message.split(" Actual Output:")[1]
     print("cut_message", cut_message)
     return {
         'summary': summary,

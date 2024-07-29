@@ -114,23 +114,7 @@ class AgentMessage(generics.CreateAPIView):
             # Get response from AI
             ai_response = get_message_from_agent(conversation_id, message)
 
-            # Extract information from AI response and user message
-            extracted_info = extract(ai_response, message)
-
-            # Save the extracted information to the database
-            extracted_data = InternalKnowledge(
-                summary=extracted_info['summary'],
-                hashtags=" ".join(extracted_info['hashtags']),
-                message_output=extracted_info['message_output']
-            )
-            extracted_data.save()
-
-            return Response({
-                "ai_message": extracted_info['message_output'],
-                "human_message": message,
-                "summary": extracted_info['summary'],
-                "hashtags": extracted_info['hashtags']
-            }, status=status.HTTP_200_OK)
+            return Response(ai_response, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"ai_message": "Defined error", "human_message": message}, status=status.HTTP_400_BAD_REQUEST)
         
