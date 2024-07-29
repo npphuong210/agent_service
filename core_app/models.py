@@ -1,9 +1,10 @@
 import uuid
-
+from django.conf import settings
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from pgvector.django import VectorField
 from django.utils import timezone
+import pytz
 
 # Create your models here.
 
@@ -16,6 +17,15 @@ class CommonModel(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True, db_index=True)
+    
+    def save(self, *args, **kwargs):
+        utc7 = pytz.timezone('Asia/Ho_Chi_Minh')
+        if not self.created_at:
+            self.created_at = timezone.now()
+        self.updated_at = timezone.now()
+        self.created_at = self.created_at.astimezone(utc7)
+        self.updated_at = self.updated_at.astimezone(utc7)
+        super(CommonModel, self).save(*args, **kwargs)
         
 # expose
 class SystemPrompt(CommonModel):
