@@ -3,9 +3,10 @@ import os
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage
-from core_app.models import Conversation
+from core_app.models import Conversation, InternalKnowledge
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from core_app.chat_service.AgentCreator import run_chatbot, AgentCreator
+from core_app.extract import extract
 
 def load_llm_model(provider="google"):
     if provider == "google":
@@ -68,6 +69,24 @@ def get_message_from_agent(conversation_id, user_message):
 
     # Lưu đối tượng Conversation
     conversation_instance.save()
+    
+    extracted_info = extract(response, user_message)
+
+    # Save the extracted information to the database
+    extracted_data = InternalKnowledge(
+                summary=extracted_info['summary'],
+                hashtags=" ".join(extracted_info['hashtags']),
+                message_output=extracted_info['message_output']
+            )
+    
+    extracted_data.save()
+    
+    response = {
+        "ai_message": extracted_info['message_output'],
+        "human_message": user_message,
+        "summary": extracted_info['summary'],
+        "hashtags": extracted_info['hashtags']
+    }
         
     return response
 
