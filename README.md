@@ -66,23 +66,6 @@ Here are the API endpoints available in this project:
 - **Manage Database:** `http://127.0.0.1:8000/admin/`
   - Access the Django admin panel to manage the database and other admin tasks.
 
-### Conversation Management
-
-- **Manage Conversations:** `http://127.0.0.1:8000/conversation/`
-  - Endpoint to manage conversations.
-  - **Get a Single Conversation:** `http://127.0.0.1:8000/conversation/{id}/`
-    - Replace `{id}` with the ID of the specific conversation.
-  - **Post a Conversation:**
-    - Send a POST request with the following JSON structure:
-    ```json
-    {
-      "prompt_name": "",
-      "gpt_model": "",
-      "chat_history": "", // Optional
-      "metadata": "" // Optional
-    }
-    ```
-
 ### System Prompt Management
 
 - **Manage System Prompts:** `http://127.0.0.1:8000/system-prompt/`
@@ -92,11 +75,42 @@ Here are the API endpoints available in this project:
   - **Post a System Prompt:**
     - System prompts must be managed via the admin panel.
 
-### Agent Queries
+### External Knowledge ( Database )
+- ** User Database:** `http://127.0.0.1:8000/admin/core_app/externalknowledge/`
+  - Endpoint to User Database.
+  - **Post an External Knowledge:**
+    - External Knowledge must be managed via the admin panel.
 
-- **Post Query for Agent Execution:** `http://127.0.0.1:8000/agent`
-  - Endpoint to post queries for agent execution.
+### Agent tools
+- **Mange Agent Tools:** `http://127.0.0.1:8000/admin/core_app/agenttool/`
+  - Endpoint to Agent Tools.
+  - **Post Agent tools:**
+    - Agent tools must be managed via the admin panel.
 
+ ### Agent
+ - **Mange Agents:** `http://127.0.0.1:8000/admin/core_app/agent/`
+  - Endpoint to Agents.
+  - **Post Agents:**
+    - Agents must be managed via the admin panel
+
+### Conversation Management
+
+- **Manage Conversations:** `http://127.0.0.1:8000/conversation/`
+  - Endpoint to manage conversations.
+  - **Get a Single Conversation:** `http://127.0.0.1:8000/conversation/{id}/`
+    - Replace `{id}` with the ID of the specific conversation.
+
+### Answer Mangement
+
+- **Answer**: `http://127.0.0.1:8000/answer/`
+  - Endpoint to manage Answer
+  - **Post an Answer:** `http://127.0.0.1:8000/answer/`
+  - Send a POST request with the following JSON structure:
+    ```json
+    {
+      "conversation_id": "",
+      "message": "",
+    }
 ---
 READ test.REST: example test api
 
