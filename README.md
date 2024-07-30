@@ -88,7 +88,7 @@ Here are the API endpoints available in this project:
     ```json
     {
       "prompt_name": "",
-      "prompt_content": "",
+      "prompt_content": ""
     }
     ---
     ```
@@ -103,9 +103,8 @@ Here are the API endpoints available in this project:
     {
       "subject": "",
       "chapter": "",
-      "content": "",
+      "content": ""
     }
-    ---
     ```
 
 ### Agent tools
@@ -122,7 +121,6 @@ Here are the API endpoints available in this project:
     ],
     "description": ""
   }
-  ---
   ```
 
 ### Agent
@@ -143,8 +141,6 @@ Here are the API endpoints available in this project:
   }
   ```
 
----
-
 ### Conversation Management
 
 - **Manage Conversations:** `http://127.0.0.1:8000/conversation/`
@@ -156,9 +152,8 @@ Here are the API endpoints available in this project:
     ```json
     {
       "agent": "", \\id
-      "chat_history": [], \\ [{"", ""}]
+      "chat_history": [] \\[{"", ""}]
     }
-    ---
     ```
 
 ### Answer Mangement
@@ -170,9 +165,8 @@ Here are the API endpoints available in this project:
     ```json
     {
       "conversation_id": "",
-      "message": "",
+      "message": ""
     }
-    ---
     ```
 
 ### Streaming Mangement
@@ -184,9 +178,8 @@ Here are the API endpoints available in this project:
     ```json
     {
       "conversation_id": "",
-      "message": "",
+      "message": ""
     }
-    ---
     ```
 
 ### Flow
