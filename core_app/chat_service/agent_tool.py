@@ -1,4 +1,4 @@
-from core_app.models import InternalKnowledge
+from core_app.models import InternalKnowledge, ExternalKnowledge
 from langchain_community.tools import WikipediaQueryRun, tool, DuckDuckGoSearchRun
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain.pydantic_v1 import BaseModel, Field
