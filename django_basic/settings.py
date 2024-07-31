@@ -30,7 +30,9 @@ DEBUG = True
 # load environment variables
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 
 # Application definition
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_swagger", # Django rest framework
     "drf_yasg", # Yet another swagger generator
+    "corsheaders",
 ]
 
 ASGI_APPLICATION = "django_basic.asgi.application"
@@ -58,6 +61,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = "django_basic.urls"
