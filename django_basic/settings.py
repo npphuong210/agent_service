@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "rest_framework_swagger", # Django rest framework
     "drf_yasg", # Yet another swagger generator
     "corsheaders",
+    "corsheaders",
 ]
 
 ASGI_APPLICATION = "django_basic.asgi.application"
@@ -61,8 +62,16 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'corsheaders.middleware.CorsMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
 ]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",  # URL của frontend React
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
 
 ROOT_URLCONF = "django_basic.urls"
 
