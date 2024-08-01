@@ -2,7 +2,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
-from pgvector.django import VectorField
+from pgvector.django import VectorField, HnswIndex
 from django.utils import timezone
 import pytz
 
@@ -73,6 +73,33 @@ class ExternalKnowledge(CommonModel):
     subject_embedding = VectorField(dimensions=1536, default=empty_vector)
     chapter_embedding = VectorField(dimensions=1536, default=empty_vector)
 
+    
+    class Meta:
+        indexes = [
+            HnswIndex(
+                name='content_embedding_hnsw_idx',
+                fields=['content_embedding'],
+                m=16,
+                ef_construction=64,
+                opclasses=['vector_l2_ops']
+            ),
+            HnswIndex(
+                name='subject_embedding_hnsw_idx',
+                fields=['subject_embedding'],
+                m=16,
+                ef_construction=64,
+                opclasses=['vector_l2_ops']
+            ),
+            HnswIndex(
+                name='chapter_embedding_hnsw_idx',
+                fields=['chapter_embedding'],
+                m=16,
+                ef_construction=64,
+                opclasses=['vector_l2_ops']
+            )
+        ]
+    
+
     def __str__(self):
         return f"{self.subject} - {self.chapter}"
 
@@ -83,6 +110,25 @@ class InternalKnowledge(CommonModel):
     message_output = models.TextField()
     summary_embedding = VectorField(dimensions=1536, default=empty_vector)
     hashtags_embedding = VectorField(dimensions=1536, default=empty_vector)
+    
+    
+    class Meta:
+        indexes = [
+            HnswIndex(
+                name='summary_embedding_hnsw_idx',
+                fields=['summary_embedding'],
+                m=16,
+                ef_construction=64,
+                opclasses=['vector_l2_ops']
+            ),
+            HnswIndex(
+                name='hashtags_embedding_hnsw_idx',
+                fields=['hashtags_embedding'],
+                m=16,
+                ef_construction=64,
+                opclasses=['vector_l2_ops']
+            )
+        ]
 
     def __str__(self):
         return f"{self.summary} - {self.hashtags}"

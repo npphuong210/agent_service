@@ -5,7 +5,7 @@ from langchain.pydantic_v1 import BaseModel, Field
 import requests
 from pgvector.django import L2Distance
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
-
+from django.db import connection
 
 duckduckgosearch = DuckDuckGoSearchRun()
 
@@ -95,14 +95,67 @@ def query_external_knowledge(subject: str, chapter: str) -> str:
         return "Not Found"
     else:
         instance = instance_qs.first()
-        print(instance.content)
+        #print(instance.content)
         return instance.content
+    
+def hybrid_search_for_internal(query_text, query_vector, k=60):
+
+    sql = """
+    WITH semantic_search AS (
+        SELECT id, RANK () OVER (ORDER BY summary_embedding <=> %(query_vector)s::vector) AS rank
+        FROM core_app_internalknowledge
+        ORDER BY summary_embedding <=> %(query_vector)s::vector
+        LIMIT 20
+    ),
+    keyword_search AS (
+        SELECT id, RANK () OVER (ORDER BY ts_rank_cd(to_tsvector('english', summary), query) DESC), summary
+        FROM core_app_internalknowledge, plainto_tsquery('english', %(query_text)s) query
+        WHERE to_tsvector('english', summary) @@ query
+        ORDER BY ts_rank_cd(to_tsvector('english', summary), query) DESC
+        LIMIT 20
+    )
+        
+    SELECT
+      COALESCE(semantic_search.id, keyword_search.id) AS id,    
+      summary,
+      COALESCE(1.0 / (%(k)s + semantic_search.rank), 0.0) +
+      COALESCE(1.0 / (%(k)s + keyword_search.rank), 0.0) AS score
+    FROM semantic_search
+    FULL OUTER JOIN keyword_search ON semantic_search.id = keyword_search.id
+    ORDER BY score DESC
+    LIMIT 5
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(sql, {'query_text': query_text, 'query_vector': query_vector, 'k': k})
+        results = cursor.fetchall()
+    return results
+  
+class HybridSreachInput(BaseModel):
+    query_text: str = Field(description="user's query to search ")
+    
+@tool("hybrid_search_db", args_schema=HybridSreachInput)
+def hybrid_search_db(query_text: str) -> str:
+    """use user query and embedding query to search"""
+    embedding_query = get_vector_from_embedding(query_text)
+    result = hybrid_search_for_internal(query_text, embedding_query)
+    return result[0][1]
+    
  
 
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
     "search_data_from_duckduckgo": search_data_from_duckduckgo,
-    "request_data_from_url": request_data_from_url,
+    "request_data_from_furl": request_data_from_url,
     "query_internal_knowledge": query_internal_knowledge,
-    "query_external_knowledge": query_external_knowledge
+    "query_external_knowledge": query_external_knowledge,
+    "hybrid_search_db": hybrid_search_db,
+    
 }
+
+
+# output = hybrid_search_for_external("khổ đầu tiên trong thờ vùng mỏ", get_vector_from_embedding("khổ đầu tiên trong thơ vùng mỏ"))
+
+# for row in output:
+#     print('document:', row[1], 'RRF score:', row[2])
+#     print(row)
