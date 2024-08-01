@@ -21,8 +21,11 @@ def load_llm_model(provider="google"):
     return llm
 
 def convert_chat_dict_to_prompt(dict_message):
+    print(dict_message)
     if isinstance(dict_message, dict) and 'message_type' in dict_message and 'content' in dict_message:
         if dict_message['message_type'] == 'human_message':
+            if dict_message['content'] == None:
+                return HumanMessage("")
             return HumanMessage(dict_message['content'])
         elif dict_message['message_type'] == 'ai_message':
             if dict_message['content'] == None:

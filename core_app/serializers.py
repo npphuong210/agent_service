@@ -5,7 +5,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     chat_history = serializers.ListField(child=serializers.DictField(), required=False, allow_empty=True)
     class Meta:
         model = Conversation
-        fields = ['agent', 'chat_history']
+        fields = ['id', 'agent', 'chat_history']
 
 class SystemPromptSerializer(serializers.ModelSerializer):
     class Meta:
