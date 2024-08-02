@@ -14,15 +14,13 @@ import asyncio
 
 # Create CRUD API views here with Conversation models
 class ConversationListCreate(generics.ListCreateAPIView):
-    queryset = Conversation.objects.all()
-    #queryset = Conversation.objects.all().order_by('-updated_at')
+    queryset = Conversation.objects.all().order_by('-updated_at')
     serializer_class = ConversationSerializer
 
 conversation_list_create = ConversationListCreate.as_view()
 
 class ConversationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Conversation.objects.all()
-    #queryset = Conversation.objects.all().order_by('-updated_at')
+    queryset = Conversation.objects.all().order_by('-updated_at')
     serializer_class = ConversationSerializer
 
 conversion_retrieve_update_destroy = ConversationRetrieveUpdateDestroy.as_view()
@@ -30,15 +28,13 @@ conversion_retrieve_update_destroy = ConversationRetrieveUpdateDestroy.as_view()
 
 # create CRUD API views here with SystemPrompt models
 class SystemPromptListCreate(generics.ListCreateAPIView):
-    queryset = SystemPrompt.objects.all()
-    #queryset = SystemPrompt.objects.all().order_by('-updated_at')
+    queryset = SystemPrompt.objects.all().order_by('-updated_at')
     serializer_class = SystemPromptSerializer
 
 system_prompt_list_create = SystemPromptListCreate.as_view()
 
 class SystemPromptRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = SystemPrompt.objects.all()
-    #queryset = SystemPrompt.objects.all().order_by('-updated_at')
+    queryset = SystemPrompt.objects.all().order_by('-updated_at')
     serializer_class = SystemPromptSerializer
 
 system_prompt_retrieve_update_destroy = SystemPromptRetrieveUpdateDestroy.as_view()
@@ -46,45 +42,39 @@ system_prompt_retrieve_update_destroy = SystemPromptRetrieveUpdateDestroy.as_vie
 
 # create CRUD API views here with ExternalKnowledge models
 class ExternalListCreate(generics.ListCreateAPIView):
-    queryset = ExternalKnowledge.objects.all()
-    #queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
+    queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
 
 external_knowledge_list_create = ExternalListCreate.as_view()
 
 class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = ExternalKnowledge.objects.all()
-    #queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
+    queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
 
 external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
 
 # create CRUD API views here with Agent models
 class AgentListCreate(generics.ListCreateAPIView):
-    queryset = Agent.objects.all()
-    #queryset = Agent.objects.all().order_by('-updated_at')
+    queryset = Agent.objects.all().order_by('-updated_at')
     serializer_class = AgentSerializer
 
 Agent_list_create = AgentListCreate.as_view()
 
 class AgentRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Agent.objects.all()
-    #queryset = Agent.objects.all().order_by('-updated_at')
+    queryset = Agent.objects.all().order_by('-updated_at')
     serializer_class = AgentSerializer
 
 Agent_retrieve_update_destroy = AgentRetrieveUpdateDestroy.as_view()
 
 # create CRUD API views here with AgentTool models
 class AgentToolListCreate(generics.ListCreateAPIView):
-    queryset = AgentTool.objects.all()
-    #queryset = AgentTool.objects.all().order_by('-updated_at')
+    queryset = AgentTool.objects.all().order_by('-updated_at')
     serializer_class = AgentToolSerializer
     
 AgentTool_list_create = AgentToolListCreate.as_view()
 
 class AgentToolRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = AgentTool.objects.all()
-    #queryset = AgentTool.objects.all().order_by('-updated_at')
+    queryset = AgentTool.objects.all().order_by('-updated_at')
     serializer_class = AgentToolSerializer
 
 AgentTool_retrieve_update_destroy = AgentToolRetrieveUpdateDestroy.as_view()
@@ -113,24 +103,8 @@ class AgentMessage(generics.CreateAPIView):
 
             # Get response from AI
             ai_response = get_message_from_agent(conversation_id, message)
-
-            # Extract information from AI response and user message
-            extracted_info = extract(ai_response, message)
-
-            # Save the extracted information to the database
-            extracted_data = InternalKnowledge(
-                summary=extracted_info['summary'],
-                hashtags=" ".join(extracted_info['hashtags']),
-                message_output=extracted_info['message_output']
-            )
-            extracted_data.save()
-
-            return Response({
-                "ai_message": extracted_info['message_output'],
-                "human_message": message,
-                "summary": extracted_info['summary'],
-                "hashtags": extracted_info['hashtags']
-            }, status=status.HTTP_200_OK)
+            
+            return Response(ai_response, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"ai_message": "Defined error", "human_message": message}, status=status.HTTP_400_BAD_REQUEST)
         

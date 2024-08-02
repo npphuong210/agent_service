@@ -3,9 +3,10 @@ import os
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, AIMessage
-from core_app.models import Conversation
+from core_app.models import Conversation, InternalKnowledge
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from core_app.chat_service.AgentCreator import run_chatbot, AgentCreator
+from core_app.extract import extract
 
 def load_llm_model(provider="google"):
     if provider == "google":
@@ -46,6 +47,7 @@ def get_message_from_agent(conversation_id, user_message):
     prompt_content = conversation_instance.agent.prompt.prompt_content
     
     user_tools = conversation_instance.agent.tools
+
  
     chat_history_dicts = conversation_instance.chat_history or []
     
@@ -61,16 +63,33 @@ def get_message_from_agent(conversation_id, user_message):
     print("run_chatbot")
     response = run_chatbot(
         user_message, chat_history, agent_role=role, llm_type=llm, prompt_content=prompt_content, user_tools=user_tools)
-        
     # Cập nhật lịch sử trò chuyện
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
     conversation_instance.chat_history.append({"message_type": "ai_message", "content": response})
 
     # Lưu đối tượng Conversation
     conversation_instance.save()
-        
-    return response
+    
+    extracted_info = extract(response, user_message)
 
+    # Save the extracted information to the database
+    extracted_data = InternalKnowledge(
+                summary=extracted_info['summary'],
+                hashtags=" ".join(extracted_info['hashtags']),
+                message_output=extracted_info['message_output']
+            )
+    
+    extracted_data.save()
+    
+    response = {
+        "ai_message": extracted_info['message_output'],
+        "human_message": user_message,
+        "summary": extracted_info['summary'],
+        "hashtags": extracted_info['hashtags']
+    }
+        
+
+    return response
 
 def get_streaming_agent_instance(conversation_id):
 
