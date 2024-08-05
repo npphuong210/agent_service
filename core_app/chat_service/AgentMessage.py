@@ -63,11 +63,9 @@ def get_message_from_agent(conversation_id, user_message):
     print("run_chatbot")
     response = run_chatbot(
         user_message, chat_history, agent_role=role, llm_type=llm, prompt_content=prompt_content, user_tools=user_tools)
-    # Cập nhật lịch sử trò chuyện
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
     conversation_instance.chat_history.append({"message_type": "ai_message", "content": response})
 
-    # Lưu đối tượng Conversation
     conversation_instance.save()
     
     extracted_info = extract(response, user_message)

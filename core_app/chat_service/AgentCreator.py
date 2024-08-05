@@ -6,6 +6,7 @@ import os
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from .agent_tool import tool_mapping
 from core_app.models import ExternalKnowledge
+from .FormatChain import format_chain
 class AgentCreator:
     def __init__(self, agent_name: str, llm_type: str, prompt_content: str, tools: list[str]):
         self.agent_name = agent_name
@@ -20,29 +21,13 @@ class AgentCreator:
 
 
         self.hidden_prompt = f"""
-                # OBJECTIVE #
                 All answer, summary and hashtags must be in Vietnamese. \n
                 Must use these tools to get information and only use 1 tool. Don't make things up. \n
                 Being flexible between using the tools 'query_internal_knowledge' and 'query_external_knowledge' based on the purpose of the tools is key to success.\n
-                In case the question has never been asked before or unlikely related to the past questions, you are given a list of {subject} and {chapter} to choose from, you can use the 'query_external_knowledge' tool to get the information from the external knowledge table.\n
+                In case the question has never been asked before or not related to the past questions, you are given a list of {subject} and {chapter} to choose from, you can use the 'query_external_knowledge' tool to get the information from the external knowledge table.\n
                 In case the question has been asked before or likely related to the past questions, you can use the 'query_internal_knowledge' tool to get the information from the internal knowledge table and use that information.\n
                 If i ask: 'What question/problem did i just ask before ?' or something similar, you can trace back the last question using the 'trace_back' tool.\n
-                Please strictly follow the format below to answer the question, summarize this output in one sentence and create some relevant hashtags. Ensure the summary and hashtag accurately reflect the content of the output.\n
-                ###########################
-                # ANSWER FORMAT #
-                Question: user's question
-                Actual answer: (Write the main content here)
-                Summary: (Summarize the main content in one sentence)
-                Hashtag: (Create some hashtags that captures the essence of the content)"
-                ###########################
-                # EXAMPLE #
-                    When user's input: The impact of remote work on productivity
-                    Your output should be:
-                    Format:
-                    - Actual answer: The shift to remote work has significantly altered the dynamics of workplace productivity. While some employees report higher levels of efficiency and better work-life balance, others struggle with distractions and isolation. Companies are investing in new tools and technologies to support remote teams, fostering collaboration and communication. Overall, the impact on productivity varies widely among different industries and individual circumstances.
-                    - Summary: Remote work's impact on productivity varies, with some finding increased efficiency and others facing challenges.
-                    - Hashtag: #RemoteWorkEffect #ProductivityImpact #WorkplaceDynamics ,....."
-        """
+                """
 
     def load_tools(self):
         tools = []
@@ -83,17 +68,17 @@ class AgentCreator:
         agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
         return agent_executor
 
-    def get_message_from_agent(self, user_message, chat_history):
+    async def get_message_from_agent(self, user_message, chat_history):
         agent_exec = self.create_agent_executor()
-        output = agent_exec.invoke({"input": user_message, "chat_history": chat_history})
+        output = await agent_exec.ainvoke({"input": user_message, "chat_history": chat_history})
         return output['output']
 
 
 @error_tracking_decorator
-def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_content="", user_tools=[]):
+async def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_content="", user_tools=[]):
     agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=prompt_content,
                                   tools=user_tools)
 
-    output_message = agent_instance.get_message_from_agent(input_text, chat_history)
-
-    return output_message
+    output_message = await agent_instance.get_message_from_agent(input_text, chat_history)
+    format_output = await format_chain(output_message)
+    return format_output

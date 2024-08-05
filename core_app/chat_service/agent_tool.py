@@ -61,23 +61,22 @@ def query_internal_knowledge(query: str) -> str:
     try:
         embedded = get_vector_from_embedding(query)
         internal_knowledge_qs = InternalKnowledge.objects.annotate(
-            distance=L2Distance("hashtags_embedding", embedded)
+            distance=L2Distance("summary_embedding", embedded)
         ).order_by("distance")[:1]
         
-        # Check if similar hashtags were found
-        if not internal_knowledge_qs:
-            # query_embedding = get_vector_from_embedding(query)
-            internal_knowledge_qs = InternalKnowledge.objects.annotate(
-                distance=L2Distance("summary_embedding", embedded)
-            ).order_by("distance")[:1]
-            summaries = [internal_knowledge.summary for internal_knowledge in internal_knowledge_qs]
-            summary_output = "Similar summary found:\n" + "\n".join(summaries)
-            return summary_output
+        # # Check if similar hashtags were found
+        # if not internal_knowledge_qs:
+        #     # query_embedding = get_vector_from_embedding(query)
+        #     internal_knowledge_qs = InternalKnowledge.objects.annotate(
+        #         distance=L2Distance("summary_embedding", embedded)
+        #     ).order_by("distance")[:1]
+        #     summaries = [internal_knowledge.summary for internal_knowledge in internal_knowledge_qs]
+        #     summary_output = "Similar summary found:\n" + "\n".join(summaries)
+        #     return summary_output
             
         # Generate a summary of the matching entries
         summaries = [internal_knowledge.summary for internal_knowledge in internal_knowledge_qs]
-        hastags = [internal_knowledge.hashtags for internal_knowledge in internal_knowledge_qs]
-        summary_output = "Similar hashtags found:\n" + "\n".join(hastags) + "\n\n" + "Similar summary found:\n" + "\n".join(summaries)
+        summary_output = "Similar summary found:\n" + "\n".join(summaries)
         return summary_output
     
     except Exception as e:
@@ -96,7 +95,6 @@ def query_external_knowledge(subject: str, chapter: str) -> str:
         return "Not Found"
     else:
         instance = instance_qs.first()
-        print(instance.content)
         return instance.content
 class TraceBackInput(BaseModel):
     query: str = Field(description="use this query to find similar user question")
