@@ -12,6 +12,18 @@ services:
     ports:
       - "5432:5432"
 
+  db-init:
+    image: postgres:16
+    depends_on:
+      - db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    command: >
+      bash -c "sleep 10;
+               psql -U ${DB_USERNAME} -d ${DB_NAME} -h db -c 'CREATE EXTENSION vector;'"
+
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000
@@ -21,6 +33,7 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - db-init
     environment:
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
