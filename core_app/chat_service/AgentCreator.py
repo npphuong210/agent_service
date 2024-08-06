@@ -4,10 +4,9 @@ from langchain_openai import ChatOpenAI
 from ca_vntl_helper import error_tracking_decorator
 import os
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from .agent_tool import tool_mapping, hybrid_search_for_external, hybrid_search_internal_db
+from .agent_tool import tool_mapping, retrieve_documents_with_rrf
 from langchain_core.output_parsers import StrOutputParser
-from core_app.embedding.embedding_by_openai import get_vector_from_embedding
-from collections import defaultdict
+
 
 class AgentCreator:
     def __init__(self, agent_name: str, llm_type: str, prompt_content: str, tools: list[str]):
@@ -35,6 +34,7 @@ class AgentCreator:
         tools = []
         for tool_str in self.tools_str:
             tools.append(tool_mapping[tool_str])
+        
         return tools
 
     def load_llm(self):
@@ -95,40 +95,20 @@ class AgentCreator:
 
 @error_tracking_decorator
 def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_content="", user_tools=[]):
+        
     agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=prompt_content,
                                   tools=user_tools)
-
-    output_message = agent_instance.get_message_from_agent(input_text, chat_history)
+    
+    top_knowledge = retrieve_documents_with_rrf(agent_instance, input_text)
+    
+    context = "".join([content for content, _ in top_knowledge])
+    
+    enhanced_input = f"according to the knowledge base, {context}. {input_text}"
+    
+    
+    output_message = agent_instance.get_message_from_agent(enhanced_input, chat_history)
 
     return output_message
 
-
-def retrieve_documents(original_query, top_k=10):
-    chain = AgentCreator(agent_name="chatbot", llm_type="openai", prompt_content="Hello! How can I assist you today?", tools=[])
-    list_query = chain.create_multi_queries(original_query)
-    
-    all_results = []
-    for query in list_query:
-        query_embedding = get_vector_from_embedding(query)
-        results = hybrid_search_for_external(query, query_embedding, top_k)
-        all_results.extend(results)
-    
-    result_dict = defaultdict(list)
-    for result in all_results:
-        doc_id, content, similarity = result
-        result_dict[doc_id].append(similarity)
-    
-    combined_results = []
-    for doc_id, similarities in result_dict.items():
-        avg_similarity = sum(similarities) / len(similarities)
-        combined_results.append((doc_id, avg_similarity, content))
-    
-    combined_results.sort(key=lambda x: x[1], reverse=True)
-    
-    top_k_combined_results = combined_results[:top_k]
-    
-    return top_k_combined_results
-
-
-agent = AgentCreator(agent_name="chatbot", llm_type="openai", prompt_content="Hello! How can I assist you today?", tools=[])
-print(agent.create_multi_queries("What is the capital of France?"))
+# agent = AgentCreator(agent_name="chatbot", llm_type="openai", prompt_content="Hello! How can I assist you today?", tools=[])
+# print(agent.create_multi_queries("What is the capital of France?"))
