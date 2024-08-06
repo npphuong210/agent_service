@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Cài đặt các dependencies cần thiết cho việc build psycopg2
 RUN apt-get update \
-    && apt-get install -y gcc python3-dev libpq-dev \
+    && apt-get install -y gcc python3-dev libpq-dev postgresql-client \
     && apt-get clean
 
 # Cài đặt các dependencies
