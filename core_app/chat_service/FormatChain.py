@@ -1,7 +1,5 @@
 from langchain_openai import ChatOpenAI
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.output_parsers import StrOutputParser
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 import os
 from langchain_core.prompts import PromptTemplate

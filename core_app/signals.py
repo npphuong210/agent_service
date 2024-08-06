@@ -11,13 +11,9 @@ updating_embedding = False
 def update_content_embedding(sender, instance, **kwargs):
     global updating_embedding
 
-    # Kiểm tra xem việc lưu instance có phải do signal kích hoạt hay không
     if updating_embedding:
         return
 
-    # Kiểm tra xem trường content có thay đổi hay không
-    # Update the embedding based on the model
-    # Check which fields need to be updated
     if isinstance(instance, ExternalKnowledge):
         if instance.content:
             text_content = instance.content

@@ -21,12 +21,16 @@ class AgentCreator:
 
 
         self.hidden_prompt = f"""
-                All answer must be in Vietnamese.
-                Must use these tools to get information and only use 1 tool. Don't make things up. \n
-                Being flexible between using the tools 'query_internal_knowledge' and 'query_external_knowledge' based on the purpose of the tools is key to success.\n
+                All answer must be in Vietnamese.\n
+                If you can use the information from the chat_history to answer, you don't need to use the tools. If not, must use these tools to get information and only use 1 tool. Don't make things up. \n
+                Being flexible between using the tools 'query_internal_knowledge', 'query_external_knowledge' and 'trace_back' based on the use case of the tools is key to success.\n
+                Use case for 'query_external_knowledge':
                 In case the question has never been asked before or not related to the past questions, you are given a list of {subject} and {chapter} to choose from, you can use the 'query_external_knowledge' tool to get the information from the external knowledge table.\n
-                In case the question has been asked before or likely related to the past questions, you can use the 'query_internal_knowledge' tool to get the information from the internal knowledge table and use that information.\n
-                If i ask: 'What question/problem did i just ask before ?' or something similar, you can trace back the last question using the 'trace_back' tool.\n
+                Use case for 'query_internal_knowledge': 
+                1/ If the question has been asked before or so similar to the past questions, you will answer the question exactly the same as the past question.\n
+                2/ If the question is likely related to the past questions, you will get the information from the internal knowledge table and use that information to help answer the question.\n
+                Use case of 'trace_back':
+                If i ask about what did i ask before or something similar, you can use the 'trace_back' tool to get the information from the past conversation and answer the question.\n                
                 """
 
     def load_tools(self):
