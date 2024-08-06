@@ -16,12 +16,6 @@ def extract(ai_response: str, user_message: str) -> dict:
     if summary_match:
         summary = summary_match.group(1).strip()
 
-    # Extract hashtags from AI response
-    hashtags_pattern = re.compile(r'Hashtag:\s*(.*?)$', re.DOTALL)
-    hashtags_match = hashtags_pattern.search(ai_response)
-    if hashtags_match:
-        ai_hashtags = [f"#{tag.strip()}" for tag in hashtags_match.group(1).strip().split('#') if tag.strip()]
-
     # Extract hashtags from the user message
     user_hashtags = [f"#{tag.strip()}" for tag in re.findall(r"#(\w+)", user_message)]
 

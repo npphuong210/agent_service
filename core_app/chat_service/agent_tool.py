@@ -64,17 +64,6 @@ def query_internal_knowledge(query: str) -> str:
             distance=L2Distance("summary_embedding", embedded)
         ).order_by("distance")[:1]
         
-        # # Check if similar hashtags were found
-        # if not internal_knowledge_qs:
-        #     # query_embedding = get_vector_from_embedding(query)
-        #     internal_knowledge_qs = InternalKnowledge.objects.annotate(
-        #         distance=L2Distance("summary_embedding", embedded)
-        #     ).order_by("distance")[:1]
-        #     summaries = [internal_knowledge.summary for internal_knowledge in internal_knowledge_qs]
-        #     summary_output = "Similar summary found:\n" + "\n".join(summaries)
-        #     return summary_output
-            
-        # Generate a summary of the matching entries
         summaries = [internal_knowledge.summary for internal_knowledge in internal_knowledge_qs]
         summary_output = "Similar summary found:\n" + "\n".join(summaries)
         return summary_output

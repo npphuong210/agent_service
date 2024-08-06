@@ -4,9 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 import os
-
-
-
+from langchain_core.prompts import PromptTemplate
 
 def load_llm_model(provider="openai"):
     if provider == "openai":
@@ -16,40 +14,24 @@ def load_llm_model(provider="openai"):
         raise Exception("LLM type not supported")
     return llm
 
-
-def format_prompt():
-    hashtag_schema = ResponseSchema(
-        name="hashtag",
-        description="The hashtag suitable with the question and answer, limited to 4 hashtags.",
-    )
-    summary_schema = ResponseSchema(
-        name="summary",
-        description="Brief summary of the answer, limited to one sentence.",
-    )
-    format_schema = [hashtag_schema, summary_schema]
-    output_parser = StructuredOutputParser.from_response_schemas(format_schema)
+def format_chain(input_text, provider="openai"):
+    response_schemas = [
+        ResponseSchema(name="Summary", description="Brief summary of the input, limited to one sentence."),
+    ]
+    output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
     response_format = output_parser.get_format_instructions()
 
-    system_prompt = """
-                    Generate summary and hashtags based on the actual output. \n
-                    Strictly follow the format to generate the output. Remember: Always follow format, no matter what happens.\n
-                    """
-    format_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", system_prompt),
-            ("user", "{input}"),
-            ("system", response_format),
-        ]
+    template = "All summary must be in Vietnamese. Generate summary of the input. Strictly follow the format to generate the output. Remember: Always follow format, no matter what happens.\n{response_format}\n{input}"
+    format_prompt = PromptTemplate(
+        template = template,
+        input_variables=["input"],
+        partial_variables={"response_format": response_format},
     )
-    return format_prompt
-
-async def format_chain(input_text, provider="openai"):
     try:
         llm = load_llm_model(provider)
-        prompt = format_prompt()
-        output_parser = StrOutputParser()
-        chain = llm|prompt|output_parser
-        output = await chain.ainvoke({'input': input_text})
-        return output
+        chain = format_prompt|llm|output_parser
+        output = chain.invoke({'input': input_text})
+        response_output = f"Summary: {output['Summary']}"
+        return response_output
     except Exception as e:
         return f"An error occurred: {e}"

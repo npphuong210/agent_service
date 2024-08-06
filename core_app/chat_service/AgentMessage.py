@@ -73,7 +73,6 @@ def get_message_from_agent(conversation_id, user_message):
     # Save the extracted information to the database
     extracted_data = InternalKnowledge(
                 summary=extracted_info['summary'],
-                hashtags=" ".join(extracted_info['hashtags']),
                 message_output=extracted_info['message_output']
             )
     
@@ -83,7 +82,6 @@ def get_message_from_agent(conversation_id, user_message):
         "ai_message": extracted_info['message_output'],
         "human_message": user_message,
         "summary": extracted_info['summary'],
-        "hashtags": extracted_info['hashtags']
     }
         
 
