@@ -51,11 +51,10 @@ def request_data_from_url(url: str, type: str) -> str:
     except requests.RequestException as e:
         return f"An error occurred: {e}"
 
-class HashTagInput(BaseModel):
-    # hashtags: str = Field(description="Hashtags to find similar hashtags")
+class SummaryInput(BaseModel):
     query: str = Field(description="use this query to find similar summaries")
 
-@tool("query_internal_knowledge", args_schema=HashTagInput)
+@tool("query_internal_knowledge", args_schema=SummaryInput)
 def query_internal_knowledge(query: str) -> str:
     """Find similar a summary information by a query string"""
     try:

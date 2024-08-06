@@ -61,30 +61,25 @@ def get_message_from_agent(conversation_id, user_message):
 
     # Chạy agent
     print("run_chatbot")
-    response = run_chatbot(
+    output_message, format_output = run_chatbot(
         user_message, chat_history, agent_role=role, llm_type=llm, prompt_content=prompt_content, user_tools=user_tools)
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
-    conversation_instance.chat_history.append({"message_type": "ai_message", "content": response})
+    conversation_instance.chat_history.append({"message_type": "ai_message", "content": output_message})
 
     conversation_instance.save()
     
-    extracted_info = extract(response, user_message)
-
+    extracted_info = extract(format_output, user_message)
     # Save the extracted information to the database
-    extracted_data = InternalKnowledge(
-                summary=extracted_info['summary'],
-                message_output=extracted_info['message_output']
-            )
+    extracted_data = InternalKnowledge(summary=extracted_info['summary'], question=user_message)
     
     extracted_data.save()
     
     response = {
-        "ai_message": extracted_info['message_output'],
+        "ai_message": output_message,
         "human_message": user_message,
         "summary": extracted_info['summary'],
     }
         
-
     return response
 
 def get_streaming_agent_instance(conversation_id):

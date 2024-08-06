@@ -34,14 +34,11 @@ def insert_embedding_into_db(model_class, filter_dict):
                 chapter_embedding = get_vector_from_embedding(instance.chapter)
                 instance.chapter_embedding = chapter_embedding
 
-        # Update summary and hashtags embeddings for InternalKnowledge
+        # Update summary embeddings for InternalKnowledge
         if isinstance(instance, InternalKnowledge):
             if instance.summary:
                 summary_embedding = get_vector_from_embedding(instance.summary)
                 instance.summary_embedding = summary_embedding
-            if instance.hashtags:
-                hashtags_embedding = get_vector_from_embedding(instance.hashtags)
-                instance.hashtags_embedding = hashtags_embedding
 
         instance.save()
         return {
@@ -49,7 +46,6 @@ def insert_embedding_into_db(model_class, filter_dict):
             'subject_embedding': subject_embedding if isinstance(instance, ExternalKnowledge) and instance.subject else None,
             'chapter_embedding': chapter_embedding if isinstance(instance, ExternalKnowledge) and instance.chapter else None,
             'summary_embedding': summary_embedding if isinstance(instance, InternalKnowledge) and instance.summary else None,
-            'hashtags_embedding': hashtags_embedding if isinstance(instance, InternalKnowledge) and instance.hashtags else None,
         }
 
 

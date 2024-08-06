@@ -34,10 +34,6 @@ def update_content_embedding(sender, instance, **kwargs):
         if instance.summary:
             summary_embedding = get_vector_from_embedding(instance.summary)
             instance.summary_embedding = summary_embedding
-        if instance.hashtags:
-            hashtags_embedding = get_vector_from_embedding(instance.hashtags)
-            instance.hashtags_embedding = hashtags_embedding
-
     # Save the instance and avoid recursion
     try:
         updating_embedding = True

@@ -80,8 +80,6 @@ def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_
                                   tools=user_tools)
 
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
-    print(output_message)
     format_output = format_chain(output_message)
-    print("______________________________")
-    print(format_output)
+
     return output_message, format_output
