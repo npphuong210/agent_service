@@ -9,6 +9,8 @@ from django.db import connection
 duckduckgosearch = DuckDuckGoSearchRun()
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from collections import defaultdict
+from core_app.chat_service import AgentCreator
 
 
 
@@ -157,10 +159,10 @@ def hybrid_search_for_external(query_text, query_vector, k=20):
         LIMIT 20
     ),
     keyword_search AS (
-        SELECT id, RANK () OVER (ORDER BY ts_rank_cd(to_tsvector('vietnamese', content), query) DESC), content
-        FROM core_app_externalknowledge, plainto_tsquery('vietnamese', %(query_text)s) query
-        WHERE to_tsvector('vietnamese', content) @@ query
-        ORDER BY ts_rank_cd(to_tsvector('vietnamese', content), query) DESC
+        SELECT id, RANK () OVER (ORDER BY ts_rank_cd(to_tsvector('english', content), query) DESC), content
+        FROM core_app_externalknowledge, plainto_tsquery('english', %(query_text)s) query
+        WHERE to_tsvector('english', content) @@ query
+        ORDER BY ts_rank_cd(to_tsvector('english', content), query) DESC
         LIMIT 20
     )
         
@@ -191,8 +193,51 @@ def hybrid_search_external_db(query_text: str) -> str:
         full_text += str(content[1]) + "\n"
     return full_text
 
+def vector_search(query: str, top_k: int):
+    embedded = get_vector_from_embedding(query)
+    knowledge_qs = ExternalKnowledge.objects.annotate(
+        distance=L2Distance("content_embedding", embedded)
+        ).order_by("distance")[:top_k]
+    results = [(knowledge.content, rank) for rank, knowledge in enumerate(knowledge_qs)]
+    return results
+
+def reciprocal_rank_fusion(rankings, k=60):
+    from collections import defaultdict
+    
+    # Initialize a default dictionary to hold the aggregated scores
+    score_dict = defaultdict(float)
+    
+    # Iterate over each ranked list
+    for ranking in rankings:
+        for rank, (doc, _) in enumerate(ranking):
+            score_dict[doc] += 1.0 / (k + rank + 1)
+    
+    # Sort documents by their aggregated scores in descending order
+    sorted_docs = sorted(score_dict.items(), key=lambda item: item[1], reverse=True)
+    
+    return sorted_docs
 
 
+def retrieve_documents_with_rrf(agent_creator, original_query, top_k=2, num_queries=5):
+    similar_queries = agent_creator.create_multi_queries(original_query)
+    similar_queries.append(f"original query. {original_query}")
+    
+    all_rankings = []
+    for query in similar_queries[:num_queries]:
+        results = vector_search(query, top_k)
+        all_rankings.append(results)
+    
+    combined_results = reciprocal_rank_fusion(all_rankings)
+    
+    top_k_combined_results = combined_results[:top_k]
+    
+    return top_k_combined_results
+
+# original_query = "What is the capital of France?"
+# top_k_results = retrieve_documents_with_rrf(original_query)
+
+# for content, score in top_k_results:
+#     print(f"Content: {content}, Score: {score}")
 
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
