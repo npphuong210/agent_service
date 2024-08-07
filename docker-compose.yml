@@ -10,10 +10,10 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5499:5432"
+      - "5432:5432"
 
   db-init:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     depends_on:
       - db
     environment:
@@ -39,7 +39,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: localhost
+      DB_HOST: db  # Use 'db' instead of 'localhost'
       DB_PORT: 5432
 
 volumes:
