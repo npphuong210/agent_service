@@ -102,11 +102,16 @@ def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_
     top_knowledge = retrieve_documents_with_rrf(agent_instance, input_text)
     
     context = "".join([content for content, _ in top_knowledge])
+    print(context)
     
-    enhanced_input = f"according to the knowledge base, {context}. {input_text}"
+    input_text = f"according to the knowledge base, {context}. \n question: {input_text}"
+    
+    print("\n-----------------------------------")
+    print("input_text", input_text)
+    print("-----------------------------------\n")
     
     
-    output_message = agent_instance.get_message_from_agent(enhanced_input, chat_history)
+    output_message = agent_instance.get_message_from_agent(input_text, chat_history)
 
     return output_message
 

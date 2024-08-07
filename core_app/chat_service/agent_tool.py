@@ -11,6 +11,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from collections import defaultdict
 from core_app.chat_service import AgentCreator
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 
 
 
@@ -193,11 +195,12 @@ def hybrid_search_external_db(query_text: str) -> str:
         full_text += str(content[1]) + "\n"
     return full_text
 
-def vector_search(query: str, top_k: int):
+
+def vector_search(query: str):
     embedded = get_vector_from_embedding(query)
     knowledge_qs = ExternalKnowledge.objects.annotate(
         distance=L2Distance("content_embedding", embedded)
-        ).order_by("distance")[:top_k]
+        ).order_by("distance")[:3]
     results = [(knowledge.content, rank) for rank, knowledge in enumerate(knowledge_qs)]
     return results
 
@@ -218,13 +221,13 @@ def reciprocal_rank_fusion(rankings, k=60):
     return sorted_docs
 
 
-def retrieve_documents_with_rrf(agent_creator, original_query, top_k=2, num_queries=5):
+def retrieve_documents_with_rrf(agent_creator, original_query, top_k=3, num_queries=5):
     similar_queries = agent_creator.create_multi_queries(original_query)
-    similar_queries.append(f"original query. {original_query}")
+    similar_queries.append(f"\noriginal query. {original_query}")
     
     all_rankings = []
     for query in similar_queries[:num_queries]:
-        results = vector_search(query, top_k)
+        results = vector_search(query)
         all_rankings.append(results)
     
     combined_results = reciprocal_rank_fusion(all_rankings)
@@ -239,13 +242,34 @@ def retrieve_documents_with_rrf(agent_creator, original_query, top_k=2, num_quer
 # for content, score in top_k_results:
 #     print(f"Content: {content}, Score: {score}")
 
+
+# def create_decomposition_qeury(user_input):
+#     template = """You are a helpful assistant that generates multiple sub-questions related to an input question. \n
+#     The goal is to break down the input into a set of sub-problems / sub-questions that can be answers in isolation. \n
+#     Generate multiple search queries related to: {question} \n
+#     Output (3 queries):"""
+#     prompt_decomposition = ChatPromptTemplate.from_template(template)
+        
+#     llm = self.load_llm()
+        
+#     generate_queries_decomposition = ( 
+#         prompt_decomposition 
+#         | llm 
+#         | StrOutputParser() 
+#         | (lambda x: x.split("\n"))
+#     )
+        
+#     return generate_queries_decomposition.invoke({"question": user_input})
+
+
+
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
     "search_data_from_duckduckgo": search_data_from_duckduckgo,
     "request_data_from_url": request_data_from_url,
     "query_internal_knowledge": query_internal_knowledge,
     "query_external_knowledge": query_external_knowledge,
-    "hybrid_search_db": hybrid_search_internal_db,
+    "hybrid_search_internal_db": hybrid_search_internal_db,
     "hybrid_search_external_db": hybrid_search_external_db
     
 }
