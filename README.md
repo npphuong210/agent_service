@@ -188,6 +188,38 @@ Add sysprompt -> Agent tool -> Agent -> Conversation.
 
 Ensure that your server is running before attempting to access these endpoints
 
+version: '3.11'
+
+To run the start_project.sh script using Git Bash in the integrated terminal of Visual Studio Code (VS Code), follow these steps:
+
+## Prerequisites:
+- Make sure Docker and Docker Compose are installed on your system. You can check this by running:
+
+``` 
+docker --version
+docker-compose --version 
+```
+
+- Navigate to the directory where start_project.sh is located and make the script executable:
+```
+chmod +x start_project.sh
+```
+
+## Running the Script in Git Bash:
+
+Navigate to the Project Directory:
+
+Use the `cd` command to navigate to the directory where your `start_project.sh` script is located.
+
+Make the script executable (if not already done)
+```
+chmod +x start_project.sh
+```
+
+Run the script:
+```
+./start_project.sh
+```
 ## Prompt instructions:
 
 ## 1. Cấu Trúc Content
