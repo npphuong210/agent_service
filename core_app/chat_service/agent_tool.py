@@ -3,17 +3,12 @@ from langchain_community.tools import WikipediaQueryRun, tool, DuckDuckGoSearchR
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain.pydantic_v1 import BaseModel, Field
 import requests
-from pgvector.django import L2Distance
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
 from django.db import connection
-duckduckgosearch = DuckDuckGoSearchRun()
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from collections import defaultdict
-from core_app.chat_service import AgentCreator
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
+from pgvector.django import L2Distance
 
+
+duckduckgosearch = DuckDuckGoSearchRun()
 
 
 class DuckDuckGoSearchInput(BaseModel):
@@ -104,7 +99,7 @@ def query_external_knowledge(subject: str, chapter: str) -> str:
         #print(instance.content)
         return instance.content
     
-def hybrid_search_for_internal(query_text, query_vector, k=20):
+def hybrid_search_for_internal(query_text, query_vector, language, k=20):
 
     sql = """
     WITH semantic_search AS (
@@ -114,10 +109,10 @@ def hybrid_search_for_internal(query_text, query_vector, k=20):
         LIMIT 20
     ),
     keyword_search AS (
-        SELECT id, RANK () OVER (ORDER BY ts_rank_cd(to_tsvector('vietnamese', summary), query) DESC), summary
-        FROM core_app_internalknowledge, plainto_tsquery('vietnamese', %(query_text)s) query
-        WHERE to_tsvector('vietnamese', summary) @@ query
-        ORDER BY ts_rank_cd(to_tsvector('vietnamese', summary), query) DESC
+        SELECT id, RANK () OVER (ORDER BY ts_rank_cd(to_tsvector(%(language)s, summary), query) DESC), summary
+        FROM core_app_internalknowledge, plainto_tsquery(%(language)s, %(query_text)s) query
+        WHERE to_tsvector(%(language)s, summary) @@ query
+        ORDER BY ts_rank_cd(to_tsvector(%(language)s, summary), query) DESC
         LIMIT 20
     )
         
@@ -133,25 +128,26 @@ def hybrid_search_for_internal(query_text, query_vector, k=20):
     """
 
     with connection.cursor() as cursor:
-        cursor.execute(sql, {'query_text': query_text, 'query_vector': query_vector, 'k': k})
+        cursor.execute(sql, {'query_text': query_text, 'query_vector': query_vector, "language" : language,'k': k})
         results = cursor.fetchall()
     return results
   
 class HybridSreachInput(BaseModel):
     query_text: str = Field(description="user's query to search ")
+    language: str = Field(description="language to search")
     
 @tool("hybrid_search_internal_db", args_schema=HybridSreachInput)
-def hybrid_search_internal_db(query_text: str) -> str:
+def hybrid_search_internal_db(query_text: str, language: str) -> str:
     """use user query and embedding query to search"""
     embedding_query = get_vector_from_embedding(query_text)
-    result = hybrid_search_for_internal(query_text, embedding_query)
+    result = hybrid_search_for_internal(query_text, embedding_query, language)
     full_text = ""
     for content in result:
         full_text += str(content[1]) + "\n"
     return full_text
 
 
-def hybrid_search_for_external(query_text, query_vector, k=20):
+def hybrid_search_for_external(query_text, query_vector, language, k=20):
 
     sql = """
     WITH semantic_search AS (
@@ -162,9 +158,9 @@ def hybrid_search_for_external(query_text, query_vector, k=20):
     ),
     keyword_search AS (
         SELECT id, RANK () OVER (ORDER BY ts_rank_cd(to_tsvector('english', content), query) DESC), content
-        FROM core_app_externalknowledge, plainto_tsquery('english', %(query_text)s) query
-        WHERE to_tsvector('english', content) @@ query
-        ORDER BY ts_rank_cd(to_tsvector('english', content), query) DESC
+        FROM core_app_externalknowledge, plainto_tsquery(%(language)s, %(query_text)s) query
+        WHERE to_tsvector(%(language)s, content) @@ query
+        ORDER BY ts_rank_cd(to_tsvector(%(language)s, content), query) DESC
         LIMIT 20
     )
         
@@ -180,86 +176,20 @@ def hybrid_search_for_external(query_text, query_vector, k=20):
     """
 
     with connection.cursor() as cursor:
-        cursor.execute(sql, {'query_text': query_text, 'query_vector': query_vector, 'k': k})
+        cursor.execute(sql, {'query_text': query_text, 'query_vector': query_vector, "language": language , 'k': k})
         results = cursor.fetchall()
     return results
 
 
 @tool("hybrid_search_external_db", args_schema=HybridSreachInput)
-def hybrid_search_external_db(query_text: str) -> str:
+def hybrid_search_external_db(query_text: str, language: str) -> str:
     """use user query and embedding query to search"""
     embedding_query = get_vector_from_embedding(query_text)
-    result = hybrid_search_for_external(query_text, embedding_query)
+    result = hybrid_search_for_external(query_text, embedding_query, language)
     full_text = ""
     for content in result:
         full_text += str(content[1]) + "\n"
     return full_text
-
-
-def vector_search(query: str):
-    embedded = get_vector_from_embedding(query)
-    knowledge_qs = ExternalKnowledge.objects.annotate(
-        distance=L2Distance("content_embedding", embedded)
-        ).order_by("distance")[:3]
-    results = [(knowledge.content, rank) for rank, knowledge in enumerate(knowledge_qs)]
-    return results
-
-def reciprocal_rank_fusion(rankings, k=60):
-    from collections import defaultdict
-    
-    # Initialize a default dictionary to hold the aggregated scores
-    score_dict = defaultdict(float)
-    
-    # Iterate over each ranked list
-    for ranking in rankings:
-        for rank, (doc, _) in enumerate(ranking):
-            score_dict[doc] += 1.0 / (k + rank + 1)
-    
-    # Sort documents by their aggregated scores in descending order
-    sorted_docs = sorted(score_dict.items(), key=lambda item: item[1], reverse=True)
-    
-    return sorted_docs
-
-
-def retrieve_documents_with_rrf(agent_creator, original_query, top_k=3, num_queries=5):
-    similar_queries = agent_creator.create_multi_queries(original_query)
-    similar_queries.append(f"\noriginal query. {original_query}")
-    
-    all_rankings = []
-    for query in similar_queries[:num_queries]:
-        results = vector_search(query)
-        all_rankings.append(results)
-    
-    combined_results = reciprocal_rank_fusion(all_rankings)
-    
-    top_k_combined_results = combined_results[:top_k]
-    
-    return top_k_combined_results
-
-# original_query = "What is the capital of France?"
-# top_k_results = retrieve_documents_with_rrf(original_query)
-
-# for content, score in top_k_results:
-#     print(f"Content: {content}, Score: {score}")
-
-
-# def create_decomposition_qeury(user_input):
-#     template = """You are a helpful assistant that generates multiple sub-questions related to an input question. \n
-#     The goal is to break down the input into a set of sub-problems / sub-questions that can be answers in isolation. \n
-#     Generate multiple search queries related to: {question} \n
-#     Output (3 queries):"""
-#     prompt_decomposition = ChatPromptTemplate.from_template(template)
-        
-#     llm = self.load_llm()
-        
-#     generate_queries_decomposition = ( 
-#         prompt_decomposition 
-#         | llm 
-#         | StrOutputParser() 
-#         | (lambda x: x.split("\n"))
-#     )
-        
-#     return generate_queries_decomposition.invoke({"question": user_input})
 
 
 
@@ -273,10 +203,3 @@ tool_mapping = {
     "hybrid_search_external_db": hybrid_search_external_db
     
 }
-
-
-# output = hybrid_search_for_external("khổ đầu tiên trong thờ vùng mỏ", get_vector_from_embedding("khổ đầu tiên trong thơ vùng mỏ"))
-
-# for row in output:
-#     print('document:', row[1], 'RRF score:', row[2])
-#     print(row)

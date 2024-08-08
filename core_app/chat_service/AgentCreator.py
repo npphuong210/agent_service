@@ -4,8 +4,9 @@ from langchain_openai import ChatOpenAI
 from ca_vntl_helper import error_tracking_decorator
 import os
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from .agent_tool import tool_mapping, retrieve_documents_with_rrf
+from .agent_tool import tool_mapping
 from langchain_core.output_parsers import StrOutputParser
+from core_app.external.external_tool import retrieve_documents_with_rrf
 
 
 class AgentCreator:
@@ -14,21 +15,21 @@ class AgentCreator:
         self.llm_type = llm_type
         self.prompt_content = prompt_content
         self.tools_str = tools
-        self.hidden_prompt = """ """
-        #         "Generate an output on the given question. Then, summarize this output in one sentence and create a relevant hashtag. Ensure the summary and hashtag accurately reflect the content of the output.
-        #         question: user's question
-        #         Actual Output: (Write the main content here)
-        #         Summary: (Summarize the main content in one sentence)
-        #         Hashtag: (Create some hashtags that captures the essence of the content)"
-        #         if you can not summarize the content, you can write the content in the summary section.
-        #         Example
-        #             When user's input: The impact of remote work on productivity
-        #             your output should be:
-        #             format:
-        #             - Actual Output: The shift to remote work has significantly altered the dynamics of workplace productivity. While some employees report higher levels of efficiency and better work-life balance, others struggle with distractions and isolation. Companies are investing in new tools and technologies to support remote teams, fostering collaboration and communication. Overall, the impact on productivity varies widely among different industries and individual circumstances.
-        #             - Summary: Remote work's impact on productivity varies, with some finding increased efficiency and others facing challenges.
-        #             - Hashtag: #RemoteWorkEffect #ProductivityImpact #WorkplaceDynamics ,....."
-        # """
+        self.hidden_prompt = """
+                "Generate an output on the given question. Then, summarize this output in one sentence and create a relevant hashtag. Ensure the summary and hashtag accurately reflect the content of the output.
+                question: user's question
+                Actual Output: (Write the main content here)
+                Summary: (Summarize the main content in one sentence)
+                Hashtag: (Create some hashtags that captures the essence of the content)"
+                if you can not summarize the content, you can write the content in the summary section.
+                Example
+                    When user's input: The impact of remote work on productivity
+                    your output should be:
+                    format:
+                    - Actual Output: The shift to remote work has significantly altered the dynamics of workplace productivity. While some employees report higher levels of efficiency and better work-life balance, others struggle with distractions and isolation. Companies are investing in new tools and technologies to support remote teams, fostering collaboration and communication. Overall, the impact on productivity varies widely among different industries and individual circumstances.
+                    - Summary: Remote work's impact on productivity varies, with some finding increased efficiency and others facing challenges.
+                    - Hashtag: #RemoteWorkEffect #ProductivityImpact #WorkplaceDynamics ,....."
+        """
 
     def load_tools(self):
         tools = []
@@ -73,7 +74,12 @@ class AgentCreator:
             | (lambda x: x.split("\n"))
         )
         
-        return generate_queries.invoke({"question": user_input})
+        similar_queries =  generate_queries.invoke({"question": user_input})
+        
+        similar_queries.append(f"\noriginal query. {user_input}")
+        
+        return similar_queries
+        
 
     def create_agent_runnable(self):
         system_prompt = self.create_system_prompt_template()
@@ -99,21 +105,14 @@ def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_
     agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=prompt_content,
                                   tools=user_tools)
     
-    top_knowledge = retrieve_documents_with_rrf(agent_instance, input_text)
+    multi_queries = agent_instance.create_multi_queries(input_text)
+    
+    top_knowledge = retrieve_documents_with_rrf(multi_queries)
     
     context = "".join([content for content, _ in top_knowledge])
-    print(context)
     
     input_text = f"according to the knowledge base, {context}. \n question: {input_text}"
-    
-    print("\n-----------------------------------")
-    print("input_text", input_text)
-    print("-----------------------------------\n")
-    
     
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
 
     return output_message
-
-# agent = AgentCreator(agent_name="chatbot", llm_type="openai", prompt_content="Hello! How can I assist you today?", tools=[])
-# print(agent.create_multi_queries("What is the capital of France?"))
