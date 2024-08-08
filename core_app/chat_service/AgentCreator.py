@@ -36,6 +36,7 @@ class AgentCreator:
         for tool_str in self.tools_str:
             tools.append(tool_mapping[tool_str])
         
+        
         return tools
 
     def load_llm(self):
@@ -102,6 +103,7 @@ class AgentCreator:
 @error_tracking_decorator
 def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_content="", user_tools=[]):
         
+        
     agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=prompt_content,
                                   tools=user_tools)
     
@@ -116,3 +118,6 @@ def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
 
     return output_message
+
+# agent = AgentCreator(agent_name="chatbot", llm_type="openai", prompt_content="Hello! How can I assist you today?", tools=[])
+# print(agent.create_multi_queries("What is the capital of France?"))

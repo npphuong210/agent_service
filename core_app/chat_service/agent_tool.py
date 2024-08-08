@@ -197,6 +197,7 @@ tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
     "search_data_from_duckduckgo": search_data_from_duckduckgo,
     "request_data_from_url": request_data_from_url,
+    "request_data_from_url": request_data_from_url,
     "query_internal_knowledge": query_internal_knowledge,
     "query_external_knowledge": query_external_knowledge,
     "hybrid_search_internal_db": hybrid_search_internal_db,
