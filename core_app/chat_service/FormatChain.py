@@ -14,7 +14,7 @@ def load_llm_model(provider="openai"):
 
 def format_chain(input_text, provider="openai"):
     response_schemas = [
-        ResponseSchema(name="Summary", description="Brief summary of the input, limited to one sentence."),
+        ResponseSchema(name="Summary", description="Brief summary of the input and the question."),
     ]
     output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
     response_format = output_parser.get_format_instructions()
@@ -29,7 +29,7 @@ def format_chain(input_text, provider="openai"):
         llm = load_llm_model(provider)
         chain = format_prompt|llm|output_parser
         output = chain.invoke({'input': input_text})
-        response_output = f"Summary: {output['Summary']}"
+        response_output = f"{output['Summary']}"
         return response_output
     except Exception as e:
         return f"An error occurred: {e}"

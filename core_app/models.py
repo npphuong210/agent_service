@@ -116,13 +116,6 @@ class InternalKnowledge(CommonModel):
                 ef_construction=64,
                 opclasses=['vector_l2_ops']
             ),
-            HnswIndex(
-                name='hashtags_embedding_hnsw_idx',
-                fields=['hashtags_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_l2_ops']
-            )
         ]
     def __str__(self):
         return f"{self.summary}"

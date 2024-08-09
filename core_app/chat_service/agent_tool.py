@@ -160,7 +160,7 @@ tool_mapping = {
     "request_data_from_furl": request_data_from_url,
     "query_internal_knowledge": query_internal_knowledge,
     "query_external_knowledge": query_external_knowledge,
-    "trace_back": trace_back
+    "trace_back": trace_back,
     "hybrid_search_db": hybrid_search_db,
 
 }
