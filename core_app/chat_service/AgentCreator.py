@@ -16,21 +16,21 @@ class AgentCreator:
         self.llm_type = llm_type
         self.prompt_content = prompt_content
         self.tools_str = tools
-        self.hidden_prompt = """
-                "Generate an output on the given question. Then, summarize this output in one sentence and create a relevant hashtag. Ensure the summary and hashtag accurately reflect the content of the output.
-                question: user's question
-                Actual Output: (Write the main content here)
-                Summary: (Summarize the main content in one sentence)
-                Hashtag: (Create some hashtags that captures the essence of the content)"
-                if you can not summarize the content, you can write the content in the summary section.
-                Example
-                    When user's input: The impact of remote work on productivity
-                    your output should be:
-                    format:
-                    - Actual Output: The shift to remote work has significantly altered the dynamics of workplace productivity. While some employees report higher levels of efficiency and better work-life balance, others struggle with distractions and isolation. Companies are investing in new tools and technologies to support remote teams, fostering collaboration and communication. Overall, the impact on productivity varies widely among different industries and individual circumstances.
-                    - Summary: Remote work's impact on productivity varies, with some finding increased efficiency and others facing challenges.
-                    - Hashtag: #RemoteWorkEffect #ProductivityImpact #WorkplaceDynamics ,....."
-        """
+        self.hidden_prompt = """"""
+        #         "Generate an output on the given question. Then, summarize this output in one sentence and create a relevant hashtag. Ensure the summary and hashtag accurately reflect the content of the output.
+        #         question: user's question
+        #         Actual Output: (Write the main content here)
+        #         Summary: (Summarize the main content in one sentence)
+        #         Hashtag: (Create some hashtags that captures the essence of the content)"
+        #         if you can not summarize the content, you can write the content in the summary section.
+        #         Example
+        #             When user's input: The impact of remote work on productivity
+        #             your output should be:
+        #             format:
+        #             - Actual Output: The shift to remote work has significantly altered the dynamics of workplace productivity. While some employees report higher levels of efficiency and better work-life balance, others struggle with distractions and isolation. Companies are investing in new tools and technologies to support remote teams, fostering collaboration and communication. Overall, the impact on productivity varies widely among different industries and individual circumstances.
+        #             - Summary: Remote work's impact on productivity varies, with some finding increased efficiency and others facing challenges.
+        #             - Hashtag: #RemoteWorkEffect #ProductivityImpact #WorkplaceDynamics ,....."
+        # """
 
     def load_tools(self):
         tools = []
@@ -41,7 +41,8 @@ class AgentCreator:
     def load_llm(self):
         if self.llm_type == "openai":
             OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-            llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo", streaming=True, callbacks=[StreamingStdOutCallbackHandler()])
+            #llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo", streaming=True, callbacks=[StreamingStdOutCallbackHandler()])
+            llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo")
         else:
             raise Exception("LLM type not supported")
         return llm
@@ -58,6 +59,7 @@ class AgentCreator:
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
             ])
         return system_prompt
+    
     
     def create_multi_queries(self, user_input):
         template = """You are an AI language model assistant. Your task is to generate five 

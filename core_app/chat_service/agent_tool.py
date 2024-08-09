@@ -6,6 +6,7 @@ import requests
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
 from django.db import connection
 from pgvector.django import L2Distance
+from langchain.agents import Tool
 
 
 duckduckgosearch = DuckDuckGoSearchRun()
@@ -192,16 +193,23 @@ def hybrid_search_external_db(query_text: str, language: str) -> str:
     return full_text
 
 
+class NoOpInput(BaseModel):
+    info: str = Field(description="Information to process")
+
+@tool("noop_tool", args_schema=NoOpInput)
+def noop_tool(info: str) -> str:
+    """just return the intact info"""
+    return info
 
 
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
     "search_data_from_duckduckgo": search_data_from_duckduckgo,
     "request_data_from_url": request_data_from_url,
-    "request_data_from_url": request_data_from_url,
     "query_internal_knowledge": query_internal_knowledge,
     "query_external_knowledge": query_external_knowledge,
     "hybrid_search_internal_db": hybrid_search_internal_db,
-    "hybrid_search_external_db": hybrid_search_external_db
+    "hybrid_search_external_db": hybrid_search_external_db,
+    "noop_tool": noop_tool,
     
 }
