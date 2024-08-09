@@ -5,28 +5,33 @@ from ca_vntl_helper import error_tracking_decorator
 import os
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from .agent_tool import tool_mapping
-
+from core_app.models import ExternalKnowledge
+from .FormatChain import format_chain
 class AgentCreator:
     def __init__(self, agent_name: str, llm_type: str, prompt_content: str, tools: list[str]):
         self.agent_name = agent_name
         self.llm_type = llm_type
         self.prompt_content = prompt_content
         self.tools_str = tools
-        self.hidden_prompt = """ 
-                "Generate an output on the given question. Then, summarize this output in one sentence and create a relevant hashtag. Ensure the summary and hashtag accurately reflect the content of the output.
-                question: user's question
-                Actual Output: (Write the main content here)
-                Summary: (Summarize the main content in one sentence)
-                Hashtag: (Create some hashtags that captures the essence of the content)"
-                if you can not summarize the content, you can write the content in the summary section.
-                Example
-                    When user's input: The impact of remote work on productivity
-                    your output should be:
-                    format:
-                    - Actual Output: The shift to remote work has significantly altered the dynamics of workplace productivity. While some employees report higher levels of efficiency and better work-life balance, others struggle with distractions and isolation. Companies are investing in new tools and technologies to support remote teams, fostering collaboration and communication. Overall, the impact on productivity varies widely among different industries and individual circumstances.
-                    - Summary: Remote work's impact on productivity varies, with some finding increased efficiency and others facing challenges.
-                    - Hashtag: #RemoteWorkEffect #ProductivityImpact #WorkplaceDynamics ,....."
-        """
+
+        lecture_qs = ExternalKnowledge.objects.all()
+        
+        subject = lecture_qs.values_list('subject', flat=True)
+        chapter = lecture_qs.values_list('chapter', flat=True)
+
+
+        self.hidden_prompt = f"""
+                All answer must be in Vietnamese.\n
+                If you can use the information from the chat_history to answer, you don't need to use the tools. If not, must use these tools to get information and only use 1 tool. Don't make things up. \n
+                Being flexible between using the tools 'query_internal_knowledge', 'query_external_knowledge' and 'trace_back' based on the use case of the tools is key to success.\n
+                Use case for 'query_external_knowledge':
+                In case the question has never been asked before or not related to the past questions, you are given a list of {subject} and {chapter} to choose from, you can use the 'query_external_knowledge' tool to get the information from the external knowledge table.\n
+                Use case for 'query_internal_knowledge': 
+                1/ If the question has been asked before or so similar to the past questions, you will answer the question exactly the same as the past question.\n
+                2/ If the question is likely related to the past questions, you will get the information from the internal knowledge table and use that information to help answer the question.\n
+                Use case of 'trace_back':
+                If i ask about what did i ask before or something similar, you can use the 'trace_back' tool to get the information from the past conversation and answer the question.\n                
+                """
 
     def load_tools(self):
         tools = []
@@ -37,14 +42,14 @@ class AgentCreator:
     def load_llm(self):
         if self.llm_type == "openai":
             OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-            llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo", streaming=True, callbacks=[StreamingStdOutCallbackHandler()])
+            llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo", streaming=True, callbacks=[StreamingStdOutCallbackHandler()], temperature=0 )
         else:
             raise Exception("LLM type not supported")
         return llm
 
     def create_system_prompt_template(self):
 
-        system_prompt_content = self.prompt_content + "\n following the format below to generate the output. Remember: always follow format No matter what happens.\n" + self.hidden_prompt
+        system_prompt_content = self.prompt_content + "\n following the format below to generate the output. Remember: Always follow format, no matter what happens.\n" + self.hidden_prompt
 
         system_prompt = ChatPromptTemplate.from_messages(
             [
@@ -79,5 +84,6 @@ def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_
                                   tools=user_tools)
 
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
+    format_output = format_chain(output_message)
 
-    return output_message
+    return output_message, format_output
