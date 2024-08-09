@@ -193,6 +193,7 @@ def hybrid_search_external_db(query_text: str, language: str) -> str:
 
 
 
+
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
     "search_data_from_duckduckgo": search_data_from_duckduckgo,

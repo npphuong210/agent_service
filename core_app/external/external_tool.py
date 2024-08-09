@@ -1,6 +1,11 @@
 from core_app.models import ExternalKnowledge
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
 from pgvector.django import L2Distance
+from typing import Literal
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field
+from langchain_openai import ChatOpenAI
+import os
 
 
 def vector_search(query: str):
@@ -46,6 +51,15 @@ def retrieve_documents_with_rrf(similar_queries, top_k=3):
 
 # for content, score in top_k_results:
 #     print(f"Content: {content}, Score: {score}")
+
+
+class RouteQuery(BaseModel):
+    """ Route a user query to the mmost relevant data source """
+    
+    datasource: Literal["external", "your_knowledge"] = Field(
+        ...,
+        description="The data source to route the query to",
+    )
 
 
 # def create_decomposition_qeury(user_input):

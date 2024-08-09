@@ -6,7 +6,8 @@ import os
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from .agent_tool import tool_mapping
 from langchain_core.output_parsers import StrOutputParser
-from core_app.external.external_tool import retrieve_documents_with_rrf
+from core_app.external.external_tool import retrieve_documents_with_rrf, RouteQuery
+from langchain.agents.agent import AgentOutputParser
 
 
 class AgentCreator:
@@ -35,8 +36,6 @@ class AgentCreator:
         tools = []
         for tool_str in self.tools_str:
             tools.append(tool_mapping[tool_str])
-        
-        
         return tools
 
     def load_llm(self):
@@ -75,24 +74,59 @@ class AgentCreator:
             | (lambda x: x.split("\n"))
         )
         
-        similar_queries =  generate_queries.invoke({"question": user_input})
+        decision = self.database_router(user_input)
         
-        similar_queries.append(f"\noriginal query. {user_input}")
+        if decision.datasource == "external":
+            print("Routing to external data source")
+            similar_queries =  generate_queries.invoke({"question": user_input})
+            
+            similar_queries.append(f"\noriginal query. {user_input}")
         
-        return similar_queries
-        
+            top_knowledge = retrieve_documents_with_rrf(similar_queries)
+    
+            context = "".join([content for content, _ in top_knowledge])
+            
+            print("context", context, "\n-----")
+    
+            input_text = f"according to the knowledge base, {context}. \n question: {user_input}"
+            
+            return input_text
 
+        else:
+            print("Routing to your knowledge base")
+            return user_input
+
+    def database_router(self, user_input):
+        template = """You are an expert at routing a user question to the appropriate data source.
+        Based on the question is referring to, route it to the relevant data source.
+        Your Knowledge source where the question is easy to answer, You can answer it directly.
+        In addition, External source where the question is out of scope of your knowledge base and it related some specialized fields that need the highest accuracy as much as possible.
+        """
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", template),
+                ("human", "{question}"),
+            ]
+        )
+        llm = self.load_llm()
+        structured_llm = llm.with_structured_output(RouteQuery)
+        router = prompt | structured_llm
+        result = router.invoke({"question": user_input})
+        return result
+        
     def create_agent_runnable(self):
         system_prompt = self.create_system_prompt_template()
         llm = self.load_llm()
         tools = self.load_tools()
+        
         agent_runnable = create_tool_calling_agent(llm, tools, system_prompt)
         return agent_runnable, tools
 
     def create_agent_executor(self):
         agent, tools = self.create_agent_runnable()
+        # Create a normal agent executor
         agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-        return agent_executor
+        return agent_executor        
 
     def get_message_from_agent(self, user_message, chat_history):
         agent_exec = self.create_agent_executor()
@@ -107,17 +141,14 @@ def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_
     agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=prompt_content,
                                   tools=user_tools)
     
-    multi_queries = agent_instance.create_multi_queries(input_text)
-    
-    top_knowledge = retrieve_documents_with_rrf(multi_queries)
-    
-    context = "".join([content for content, _ in top_knowledge])
-    
-    input_text = f"according to the knowledge base, {context}. \n question: {input_text}"
+    input_text = agent_instance.create_multi_queries(input_text)
     
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
 
     return output_message
 
-# agent = AgentCreator(agent_name="chatbot", llm_type="openai", prompt_content="Hello! How can I assist you today?", tools=[])
-# print(agent.create_multi_queries("What is the capital of France?"))
+# agent = AgentCreator(agent_name="chatbot", llm_type="openai", prompt_content="Your role do not need to use any tool. just answer based on the context", tools=[])
+# input_text = "How to treat breast cancer?"
+# input_text = agent.create_multi_queries(input_text)
+    
+# output_message = agent.get_message_from_agent(input_text, [])
