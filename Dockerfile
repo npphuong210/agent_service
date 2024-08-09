@@ -1,25 +1,25 @@
-# Sử dụng image python chính thức
+# Use the official Python slim image
 FROM python:3.11-slim
 
-# Đặt biến môi trường
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Đặt thư mục làm việc
+# Set working directory
 WORKDIR /app
 
-# Cài đặt các dependencies cần thiết cho việc build psycopg2
+# Install dependencies required for building psycopg2
 RUN apt-get update \
     && apt-get install -y gcc python3-dev libpq-dev postgresql-client \
     && apt-get clean
 
-# Cài đặt các dependencies
+# Install Python dependencies
 COPY requirements.txt /app/
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Copy toàn bộ mã nguồn của bạn vào container
+# Copy all source code into the container
 COPY . /app/
 
-# Chạy lệnh khởi tạo Django
+# Command to run Django
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

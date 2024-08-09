@@ -1,19 +1,33 @@
 #!/bin/bash
 
+
+# Load environment variables from .env file
+if [ -f .env ]; then
+    export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
+fi
+
 # Check if environment variables are set
 if [ -z "${DB_NAME}" ] || [ -z "${DB_USERNAME}" ] || [ -z "${DB_PASSWORD}" ]; then
     echo "Please set DB_NAME, DB_USERNAME, and DB_PASSWORD environment variables."
     exit 1
 fi
 
-# Check if the container is already running
-if [ "$(docker ps -q -f name=llm-service-web-1)" ]; then
-    echo "Container web is already running. Stopping and removing the old container."
-    docker-compose down -v
+# Check if the container exists
+if [ "$(docker ps -a -q -f name=llm-service-web-1)" ]; then
+    echo "Container 'llm-service-web-1' already exists."
+    # Check if the container is running
+    if [ "$(docker ps -q -f name=llm-service-web-1)" ]; then
+        echo "Container web is already running. Stopping the old container."
+        docker-compose down
+    fi
+    # Start the containers using the existing image
+    docker-compose --env-file .env up -d
+else
+    echo "Container does not exist. Building and starting the containers."
+    # Build and start the containers
+    docker-compose build
+    docker-compose up -d
 fi
-
-# Build and start the containers
-docker-compose up --build -d
 
 # Wait for the services to start
 echo "Waiting for services to start..."
