@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Load environment variables from .env file
 if [ -f .env ]; then
     export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
@@ -25,8 +24,8 @@ if [ "$(docker ps -a -q -f name=llm-service-web-1)" ]; then
 else
     echo "Container does not exist. Building and starting the containers."
     # Build and start the containers
-    docker-compose build
-    docker-compose up -d
+    docker-compose --env-file .env build
+    docker-compose --env-file .env up -d
 fi
 
 # Wait for the services to start
