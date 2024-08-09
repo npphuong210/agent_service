@@ -23,6 +23,8 @@ def load_llm_model(provider="google"):
 def convert_chat_dict_to_prompt(dict_message):
     if isinstance(dict_message, dict) and 'message_type' in dict_message and 'content' in dict_message:
         if dict_message['message_type'] == 'human_message':
+            if dict_message['content'] == None:
+                return HumanMessage("")
             return HumanMessage(dict_message['content'])
         elif dict_message['message_type'] == 'ai_message':
             if dict_message['content'] == None:
@@ -79,7 +81,6 @@ def get_message_from_agent(conversation_id, user_message):
         "human_message": user_message,
         "summary": extracted_info['summary'],
     }
-        
     return response
 
 def get_streaming_agent_instance(conversation_id):

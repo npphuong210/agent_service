@@ -5,7 +5,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     chat_history = serializers.ListField(child=serializers.DictField(), required=False, allow_empty=True)
     class Meta:
         model = Conversation
-        fields = '__all__'
+        fields = ['id', 'agent', 'chat_history']
 
 class SystemPromptSerializer(serializers.ModelSerializer):
     class Meta:
@@ -15,7 +15,7 @@ class SystemPromptSerializer(serializers.ModelSerializer):
 class ExternalKnowledgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ExternalKnowledge
-        fields = '__all__'
+        fields = ['subject', 'chapter', 'content']
 
 class AgentSerializer(serializers.ModelSerializer):
     class Meta:

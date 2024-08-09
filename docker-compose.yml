@@ -1,0 +1,46 @@
+version: '3.11'
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  db-init:
+    image: pgvector/pgvector:pg16
+    depends_on:
+      - db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    command: >
+      bash -c "sleep 20;
+               export PGPASSWORD=${DB_PASSWORD};
+               psql -U ${DB_USERNAME} -d ${DB_NAME} -h db -c 'CREATE EXTENSION vector;'"
+
+  web:
+    build: .
+    command: bash -c "sleep 30 && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - db-init
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db  # Use 'db' instead of 'localhost'
+      DB_PORT: 5432
+
+volumes:
+  postgres_data:

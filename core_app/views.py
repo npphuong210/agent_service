@@ -58,6 +58,24 @@ class AgentListCreate(generics.ListCreateAPIView):
     queryset = Agent.objects.all().order_by('-updated_at')
     serializer_class = AgentSerializer
 
+    def post(self, request, *args, **kwargs):
+        data = request.data
+        agent_name = data.get("agent_name")
+        llm = data.get("llm")
+        tools = data.get("tools")
+        prompt_id = data.get("prompt_id") or data.get("prompt")
+
+        if prompt_id:
+            prompt = SystemPrompt.objects.get(id=prompt_id)
+        else:
+            system_prompt_message = data.get("prompt_message")
+            prompt = SystemPrompt(prompt_name=agent_name, prompt_content=system_prompt_message)
+            prompt.save()
+        agent = Agent.objects.create(agent_name=agent_name, llm=llm, prompt=prompt, tools=tools)
+        agent.save()
+        return Response(self.serializer_class(agent).data, status=status.HTTP_201_CREATED)
+
+
 Agent_list_create = AgentListCreate.as_view()
 
 class AgentRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
@@ -101,10 +119,8 @@ class AgentMessage(generics.CreateAPIView):
         message = data.get("message")
         conversation_id = data.get("conversation_id")
         try:
-
             # Get response from AI
-            ai_response = get_message_from_agent(conversation_id, message)
-            
+            ai_response = get_message_from_agent(conversation_id, message)      
             return Response(ai_response, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(f"Error processing request: {e}", exc_info=True)

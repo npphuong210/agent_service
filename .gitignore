@@ -1,5 +1,5 @@
 core_app/migrations/
-
+*.ipynb
 ### VisualStudioCode template
 .vscode/*
 !.vscode/settings.json

@@ -17,3 +17,4 @@ python-dotenv
 setuptools
 pgvector
 duckduckgo-search
+django-cors-headers
