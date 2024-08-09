@@ -2,7 +2,14 @@
 
 # Load environment variables from .env file
 if [ -f .env ]; then
-    export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
+    echo "Loading environment variables from .env file..."
+    set -o allexport
+    source .env
+    set +o allexport
+    echo "Environment variables loaded."
+else
+    echo ".env file not found!"
+    exit 1
 fi
 
 # Check if environment variables are set
@@ -20,10 +27,12 @@ if [ "$(docker ps -a -q -f name=llm-service-web-1)" ]; then
         docker-compose down
     fi
     # Start the containers using the existing image
+    echo "Starting containers with existing images..."
     docker-compose --env-file .env up -d
 else
     echo "Container does not exist. Building and starting the containers."
     # Build and start the containers
+    echo "Building and starting containers..."
     docker-compose --env-file .env build
     docker-compose --env-file .env up -d
 fi
@@ -33,9 +42,11 @@ echo "Waiting for services to start..."
 sleep 40
 
 # Migrate the database
+echo "Running database migrations..."
 docker-compose exec web python manage.py migrate
 
 # Create superuser if not exists
+echo "Checking for existing superuser..."
 if docker-compose exec web python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); print(User.objects.filter(username='admin').exists())" | grep -q "False"; then
     echo "Creating superuser for Django..."
     docker-compose exec web python manage.py createsuperuser --email admin@example.com --username admin --noinput

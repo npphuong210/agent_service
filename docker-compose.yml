@@ -11,7 +11,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5431:5432"  # Map external port 5431 to internal port 5432
+      - "5432:5432"  # Map external port 5431 to internal port 5432
 
   db-init:
     image: pgvector/pgvector:pg16
@@ -46,7 +46,7 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST: db
-      DB_PORT: 5431  # Use port 5431 for the web service to connect to the database
+      DB_PORT: 5432
 
 volumes:
   postgres_data:
