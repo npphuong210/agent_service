@@ -11,6 +11,7 @@ import pytz
 # create a array that have dimension of 1536
 empty_vector = [0.0]*1536
 
+
 class CommonModel(models.Model):
     class Meta:
         abstract = True
@@ -36,12 +37,13 @@ class SystemPrompt(CommonModel):
     def __str__(self):
         return self.prompt_name
 
+
 class AgentTool(CommonModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tool_name = models.CharField(max_length=100)
     args_schema = ArrayField(models.JSONField(default=dict, null=True, blank=True), default=list, null=True, blank=True)
     description = models.TextField()
-    
+
     def __str__(self):
         return f"{self.tool_name}"
 
@@ -71,9 +73,7 @@ class ExternalKnowledge(CommonModel):
     content = models.TextField()
     content_embedding = VectorField(dimensions=1536, default=empty_vector)
     subject_embedding = VectorField(dimensions=1536, default=empty_vector)
-    chapter_embedding = VectorField(dimensions=1536, default=empty_vector)
-
-    
+    chapter_embedding = VectorField(dimensions=1536, default=empty_vector)   
     class Meta:
         indexes = [
             HnswIndex(
@@ -98,20 +98,15 @@ class ExternalKnowledge(CommonModel):
                 opclasses=['vector_l2_ops']
             )
         ]
-    
-
+  
     def __str__(self):
         return f"{self.subject} - {self.chapter}"
 
 class InternalKnowledge(CommonModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     summary = models.TextField()
-    hashtags = models.TextField()
-    message_output = models.TextField()
-    summary_embedding = VectorField(dimensions=1536, default=empty_vector)
-    hashtags_embedding = VectorField(dimensions=1536, default=empty_vector)
-    
-    
+    question = models.TextField()
+    summary_embedding = VectorField(dimensions=1536, default=empty_vector)    
     class Meta:
         indexes = [
             HnswIndex(
@@ -121,16 +116,7 @@ class InternalKnowledge(CommonModel):
                 ef_construction=64,
                 opclasses=['vector_l2_ops']
             ),
-            HnswIndex(
-                name='hashtags_embedding_hnsw_idx',
-                fields=['hashtags_embedding'],
-                m=16,
-                ef_construction=64,
-                opclasses=['vector_l2_ops']
-            )
         ]
-
     def __str__(self):
-        return f"{self.summary} - {self.hashtags}"
-
+        return f"{self.summary}"
 

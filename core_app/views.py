@@ -10,7 +10,7 @@ from django.http import StreamingHttpResponse
 from asgiref.sync import sync_to_async
 from langchain.agents import AgentExecutor
 import asyncio
-
+import logging
 
 # Create CRUD API views here with Conversation models
 class ConversationListCreate(generics.ListCreateAPIView):
@@ -97,6 +97,7 @@ class AgentToolRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 
 AgentTool_retrieve_update_destroy = AgentToolRetrieveUpdateDestroy.as_view()
     
+logger = logging.getLogger(__name__)
     
 class AgentMessage(generics.CreateAPIView):
     @swagger_auto_schema(
@@ -119,9 +120,10 @@ class AgentMessage(generics.CreateAPIView):
         conversation_id = data.get("conversation_id")
         try:
             # Get response from AI
-            ai_response = get_message_from_agent(conversation_id, message)
-            return Response(ai_response['ai_message'], status=status.HTTP_200_OK)
+            ai_response = get_message_from_agent(conversation_id, message)      
+            return Response(ai_response, status=status.HTTP_200_OK)
         except Exception as e:
+            logger.error(f"Error processing request: {e}", exc_info=True)
             return Response({"ai_message": "Defined error", "human_message": message}, status=status.HTTP_400_BAD_REQUEST)
         
 agent_answer_message = AgentMessage.as_view()
