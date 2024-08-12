@@ -38,6 +38,15 @@ class SystemPrompt(CommonModel):
     def __str__(self):
         return self.prompt_name
 
+class LlmModel(CommonModel):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    llm_name = models.CharField(max_length=100)
+    provider = models.CharField(max_length=100)
+    model_version = models.CharField(max_length=100) # gpt 3.5
+    api_key = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
+    def __str__(self):
+        return self.llm_name
 
 class AgentTool(CommonModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -51,7 +60,7 @@ class AgentTool(CommonModel):
 class Agent(CommonModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     agent_name = models.CharField(max_length=100)
-    llm = models.CharField(max_length=100)
+    llm = models.ForeignKey(LlmModel, on_delete=models.DO_NOTHING, null=True, blank=True)
     prompt = models.ForeignKey(SystemPrompt, on_delete=models.DO_NOTHING)
     tools = ArrayField(models.CharField(max_length=100), default=list, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)

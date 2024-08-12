@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "rest_framework_swagger", # Django rest framework
     "drf_yasg", # Yet another swagger generator
     "corsheaders",
+    "rest_framework.authtoken"
 ]
 
 ASGI_APPLICATION = "django_basic.asgi.application"
