@@ -7,10 +7,11 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5432:5432"  
 
   db-init:
     image: pgvector/pgvector:pg16
@@ -20,13 +21,18 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
     command: >
-      bash -c "sleep 20;
-               export PGPASSWORD=${DB_PASSWORD};
-               psql -U ${DB_USERNAME} -d ${DB_NAME} -h db -c 'CREATE EXTENSION vector;'"
+      bash -c "
+        until PGPASSWORD=${DB_PASSWORD} psql -h db -U ${DB_USERNAME} -d ${DB_NAME} -c 'SELECT 1'; do
+          echo 'Waiting for PostgreSQL to be ready...';
+          sleep 5;
+        done;
+        PGPASSWORD=${DB_PASSWORD} psql -h db -U ${DB_USERNAME} -d ${DB_NAME} -c 'CREATE EXTENSION IF NOT EXISTS vector;'"
 
   web:
-    build: .
+    build:
+      context: .
     command: bash -c "sleep 30 && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
@@ -39,7 +45,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: db  # Use 'db' instead of 'localhost'
+      DB_HOST: db 
       DB_PORT: 5432
 
 volumes:

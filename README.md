@@ -190,36 +190,73 @@ Ensure that your server is running before attempting to access these endpoints
 
 version: '3.11'
 
-To run the start_project.sh script using Git Bash in the integrated terminal of Visual Studio Code (VS Code), follow these steps:
+## Overview:
+1. Bash Script (script.sh):
 
-## Prerequisites:
-- Make sure Docker and Docker Compose are installed on your system. You can check this by running:
+- This script loads environment variables, checks for Docker containers, handles building, starting containers, running migrations, and creating a Django superuser.
 
+2. Dockerfile:
+
+- Builds a Python environment using a slim image, installs dependencies, converts .env and .sh files to Unix format, and sets up Django.
+
+3. Docker Compose (docker-compose.yml):
+
+- Defines services for PostgreSQL (db), initializes the database (db-init), and runs the Django web application (web).
+
+## Recommendations:
+- Environment Variables Loading: 
+
+The bash script correctly loads environment variables from the .env file. It checks if the required variables `(DB_NAME, DB_USERNAME, DB_PASSWORD)` are set before proceeding.
+
+- Container Handling: 
+
+The script checks if the container llm-service-web-1 exists and manages its state appropriately (stopping, rebuilding, or starting as needed).
+
+- Database Migrations & Superuser Creation:
+
+Superuser Creation Check: Make sure the variable superuser_exists is defined and properly checks for the existence of a superuser before attempting to create one.To check it run this below command in your Command Prompt
+
+```
+docker-compose exec web python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); print(User.objects.filter(username='admin').exists())" | grep -q 'True' && echo "Superuser exists." || echo "Superuser does not exist."
+
+```
+
+## Running the Project
+### Prerequisites
+- Docker
+- Docker Compose
+### Running `script.sh`
+On Linux
+1. Give execute permissions (if needed):
 ``` 
-docker --version
-docker-compose --version 
+chmod +x script.sh
+```
+2. Run the script:
+```
+./script.sh
+```
+On Windows
+1. Using Git Bash:
+- Open Git Bash.
+- Navigate to the directory containing `script.sh`.
+```
+cd path/to/your/script
+```
+- Run the script 
+```
+./script.sh
+```
+2. Using Windows Subsystem for Linux (WSL):
+- Open your WSL terminal (e.g., Ubuntu).
+- Navigate to the directory containing `script.sh`.
+```
+cd /mnt/c/path/to/your/script
+```
+- Run the script
+```
+./script.sh
 ```
 
-- Navigate to the directory where start_project.sh is located and make the script executable:
-```
-chmod +x start_project.sh
-```
-
-## Running the Script in Git Bash:
-
-Navigate to the Project Directory:
-
-Use the `cd` command to navigate to the directory where your `start_project.sh` script is located.
-
-Make the script executable (if not already done)
-```
-chmod +x start_project.sh
-```
-
-Run the script:
-```
-./start_project.sh
-```
 ## Prompt instructions:
 
 ## 1. Cấu Trúc Content

@@ -1,9 +1,15 @@
 #!/bin/bash
 
-
 # Load environment variables from .env file
 if [ -f .env ]; then
-    export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
+    echo "Loading environment variables from .env file..."
+    set -o allexport
+    source .env
+    set +o allexport
+    echo "Environment variables loaded."
+else
+    echo ".env file not found!"
+    exit 1
 fi
 
 # Check if environment variables are set
@@ -15,16 +21,19 @@ fi
 # Check if the container exists
 if [ "$(docker ps -a -q -f name=llm-service-web-1)" ]; then
     echo "Container 'llm-service-web-1' already exists."
-    docker-compose --env-file .env up -d
     # Check if the container is running
-elif [ "$(docker ps -q -f name=llm-service-web-1)" ]; then
+    if [ "$(docker ps -q -f name=llm-service-web-1)" ]; then
         echo "Container web is already running. Stopping the old container."
         docker-compose down
-        docker-compose --env-file .env up -d
+    fi
     # Start the containers using the existing image
+    echo "Starting containers with existing images..."
+    docker-compose --env-file .env up -d
 else
     echo "Container does not exist. Building and starting the containers."
     # Build and start the containers
+    echo "Building and starting containers..."
+    docker-compose --env-file .env build
     docker-compose --env-file .env up -d
 fi
 
@@ -33,15 +42,18 @@ echo "Waiting for services to start..."
 sleep 40
 
 # Migrate the database
+echo "Running database migrations..."
 docker-compose exec web python manage.py migrate
 
 # Create superuser if not exists
-if docker-compose exec web python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); print(User.objects.filter(username='admin').exists())" | grep -q "False"; then
-    echo "Creating superuser for Django..."
-    docker-compose exec web python manage.py createsuperuser --email admin@example.com --username admin --password admin
-    docker-compose exec web python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); user = User.objects.get(username='admin'); user.set_password('admin'); user.save()"
-else
+echo "Checking for existing superuser..."
+superuser_exists=$(docker-compose exec web python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); print(User.objects.filter(username='admin').exists())" | tr -d '\r\n')
+
+if [ "$superuser_exists" == "True" ]; then
     echo "Superuser already exists. Skipping creation."
+else
+    echo "Creating superuser for Django..."
+    docker-compose exec web python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.create_superuser('admin', 'admin@example.com', 'admin')"
 fi
 
 echo "Done!"
