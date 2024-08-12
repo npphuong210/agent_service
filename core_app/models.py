@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from pgvector.django import VectorField, HnswIndex
 from django.utils import timezone
+from django.contrib.auth.models import User
 import pytz
 
 # Create your models here.
@@ -43,7 +44,7 @@ class AgentTool(CommonModel):
     tool_name = models.CharField(max_length=100)
     args_schema = ArrayField(models.JSONField(default=dict, null=True, blank=True), default=list, null=True, blank=True)
     description = models.TextField()
-
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
     def __str__(self):
         return f"{self.tool_name}"
 
@@ -53,7 +54,7 @@ class Agent(CommonModel):
     llm = models.CharField(max_length=100)
     prompt = models.ForeignKey(SystemPrompt, on_delete=models.DO_NOTHING)
     tools = ArrayField(models.CharField(max_length=100), default=list, null=True, blank=True)
-
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
     def __str__(self):
         return self.agent_name
 # expose
@@ -62,6 +63,7 @@ class Conversation(CommonModel):
     agent = models.ForeignKey(Agent, on_delete=models.DO_NOTHING)
     chat_history = ArrayField(models.JSONField(), default=list, null=True, blank=True)
     meta_data = models.JSONField(default=dict, null=True, blank=True) # tool id
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
 
     def __str__(self):
         return f"{self.id} - with agent: {self.agent.agent_name}"
@@ -106,7 +108,9 @@ class InternalKnowledge(CommonModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     summary = models.TextField()
     question = models.TextField()
-    summary_embedding = VectorField(dimensions=1536, default=empty_vector)    
+    summary_embedding = VectorField(dimensions=1536, default=empty_vector)
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
+    agent = models.ForeignKey(Agent, on_delete=models.DO_NOTHING, null=True, blank=True)
     class Meta:
         indexes = [
             HnswIndex(
