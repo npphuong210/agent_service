@@ -6,11 +6,12 @@ import os
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from .agent_tool import tool_mapping
 from langchain_core.output_parsers import StrOutputParser
-from core_app.external.external_tool import retrieve_documents_with_rrf, RouteQuery
+from core_app.external.external_tool import retrieve_documents_with_rrf, RouteQuery, CheckValidQuery
 from langchain.agents.agent import AgentOutputParser
-
+from langchain_core.runnables import RunnableSequence
 from core_app.models import ExternalKnowledge
 from .FormatChain import format_chain
+
 class AgentCreator:
     def __init__(self, agent_name: str, llm_type: str, prompt_content: str, tools: list[str]):
         self.agent_name = agent_name
@@ -109,11 +110,21 @@ class AgentCreator:
             context = "".join([content for content, _ in top_knowledge])
             
             print("context", context, "\n-----")
-    
-            input_text = f"according to the knowledge base, {context}. \n question: {user_input}"
+                
+            context = f"According to the knowledge base, {context}."
             
-            return input_text
-
+            valid_response = self.check_valid_retrieval_information(user_input, context)
+            
+            print(valid_response)
+            
+            if valid_response.query == "yes":
+                print("Valid response")
+                input_text = f"according to the knowledge base, {context}. \n question: {user_input}"
+                return input_text 
+            
+            else:
+                print("Invalid response")
+                return f"The context is not sufficient to generate an accurate answer. So, you need to answer the question by youself: {user_input}"
         else:
             print("Routing to your knowledge base")
             return user_input
@@ -135,6 +146,27 @@ class AgentCreator:
         router = prompt | structured_llm
         result = router.invoke({"question": user_input})
         return result
+    
+    def check_valid_retrieval_information(self, user_input, context):
+        validation_prompt = ChatPromptTemplate.from_template(
+            """
+            You are an expert in analyzing the relevance and sufficiency of information provided for answering questions.
+            Given the following context and question, determine whether the context is appropriate and sufficient to provide a correct and complete answer to the question.
+            
+            Context: {context}
+            
+            Question: {question}
+            
+            Please answer with "Yes" or "No" at the beginning of your response.
+            If you answer "No," provide a brief explanation in Vietnamese explaining why the context is insufficient or irrelevant.
+            """
+        )
+        
+        llm = self.load_llm()
+        structured_llm = llm.with_structured_output(CheckValidQuery)
+        validation_chain = validation_prompt | structured_llm
+        return validation_chain.invoke({"context": context, "question": user_input})
+
         
     def create_agent_runnable(self):
         system_prompt = self.create_system_prompt_template()

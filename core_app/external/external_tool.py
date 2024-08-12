@@ -33,7 +33,7 @@ def reciprocal_rank_fusion(rankings, k=60):
     return sorted_docs
 
 
-def retrieve_documents_with_rrf(similar_queries, top_k=3):
+def retrieve_documents_with_rrf(similar_queries, top_k=1):
     num_queries = 5
     all_rankings = []
     for query in similar_queries[:num_queries]:
@@ -59,6 +59,14 @@ class RouteQuery(BaseModel):
     datasource: Literal["external", "your_knowledge"] = Field(
         ...,
         description="The data source to route the query to",
+    )
+
+class CheckValidQuery(BaseModel):
+    """ Check if the query is valid """
+    
+    query: Literal['yes', 'no'] = Field(
+        ...,
+        description="The query to check",
     )
 
 

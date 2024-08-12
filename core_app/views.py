@@ -121,7 +121,7 @@ class AgentMessage(generics.CreateAPIView):
         try:
             # Get response from AI
             ai_response = get_message_from_agent(conversation_id, message)      
-            return Response(ai_response, status=status.HTTP_200_OK)
+            return Response(ai_response['ai_message'], status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(f"Error processing request: {e}", exc_info=True)
             return Response({"ai_message": "Defined error", "human_message": message}, status=status.HTTP_400_BAD_REQUEST)
