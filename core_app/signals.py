@@ -2,6 +2,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from core_app.models import ExternalKnowledge, InternalKnowledge
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
 
 # Sử dụng một biến toàn cục để theo dõi 
 updating_embedding = False
@@ -36,3 +38,8 @@ def update_content_embedding(sender, instance, **kwargs):
         instance.save()
     finally:
         updating_embedding = False
+        
+@receiver(post_save, sender=User)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)

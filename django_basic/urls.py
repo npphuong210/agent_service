@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from rest_framework.authtoken.views import obtain_auth_token
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
@@ -38,6 +39,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path('api/auth/login/', obtain_auth_token, name='api_token_auth'),
 
     path("conversation/", conversation_list_create, name="conversation-list-create"),
     path("conversation/<uuid:pk>/", conversion_retrieve_update_destroy, name="conversation-retrieve-update-destroy"),
