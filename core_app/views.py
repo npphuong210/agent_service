@@ -1,7 +1,8 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
+from django.core.exceptions import PermissionDenied
 from rest_framework.response import Response
-from .models import Conversation, SystemPrompt, ExternalKnowledge, InternalKnowledge, Agent, AgentTool
-from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer, AgentSerializer, AgentToolSerializer
+from .models import Conversation, SystemPrompt, ExternalKnowledge, InternalKnowledge, Agent, AgentTool, LlmModel
+from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer, AgentSerializer, AgentToolSerializer, LlmModelSerializer
 from core_app.chat_service.AgentMessage import get_message_from_agent, get_streaming_agent_instance
 from core_app.extract import extract
 from drf_yasg.utils import swagger_auto_schema
@@ -11,6 +12,38 @@ from asgiref.sync import sync_to_async
 from langchain.agents import AgentExecutor
 import asyncio
 import logging
+
+# create CRUD API views here with LlmModel models
+class LlmModelListCreate(generics.ListCreateAPIView):
+    queryset = LlmModel.objects.all().order_by('-updated_at')
+    serializer_class = LlmModelSerializer
+    permission_classes = [permissions.IsAuthenticated]  # Ensure user is authenticated
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)  # Automatically associate the model with the current user
+        
+    def get_queryset(self):
+        # Filter LlmModel objects to only those belonging to the logged-in user
+        return LlmModel.objects.filter(user=self.request.user).order_by('-updated_at')
+    
+llm_list_create = LlmModelListCreate.as_view()
+    
+class LlmModelRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = LlmModel.objects.all().order_by('-updated_at')
+    serializer_class = LlmModelSerializer
+    permission_classes = [permissions.IsAuthenticated] 
+    
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+        serializer.save()
+        
+    def get_queryset(self):
+        # Filter LlmModel objects to only those belonging to the logged-in user
+        return LlmModel.objects.filter(user=self.request.user).order_by('-updated_at')
+    
+
+llm_retrieve_update_destroy = LlmModelRetrieveUpdateDestroy.as_view()
 
 # Create CRUD API views here with Conversation models
 class ConversationListCreate(generics.ListCreateAPIView):

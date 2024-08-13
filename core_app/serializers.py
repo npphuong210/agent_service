@@ -1,5 +1,12 @@
 from rest_framework import serializers
-from .models import Conversation, SystemPrompt, ExternalKnowledge, Agent, AgentTool
+from .models import Conversation, SystemPrompt, ExternalKnowledge, Agent, AgentTool, LlmModel
+
+class LlmModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LlmModel
+        fields = ['id', 'llm_name', 'provider', 'model_version', 'user']  # Exclude api_key for security
+        read_only_fields = ['id', 'user']  # Ensure some fields are read-only
+
 
 class ConversationSerializer(serializers.ModelSerializer):
     chat_history = serializers.ListField(child=serializers.DictField(), required=False, allow_empty=True)

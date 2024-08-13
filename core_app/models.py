@@ -45,6 +45,7 @@ class LlmModel(CommonModel):
     model_version = models.CharField(max_length=100) # gpt 3.5
     api_key = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
+    
     def __str__(self):
         return self.llm_name
 
@@ -132,4 +133,3 @@ class InternalKnowledge(CommonModel):
         ]
     def __str__(self):
         return f"{self.summary}"
-
