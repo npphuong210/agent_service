@@ -197,14 +197,22 @@ def hybrid_search_for_external(query_text, query_vector, language, k=20):
 
 
 @tool("hybrid_search_external_db", args_schema=HybridSreachInput)
-def hybrid_search_external_db(query_text: str, language: str) -> str:
-    """use user query and embedding query to search"""
-    embedding_query = get_vector_from_embedding(query_text)
-    result = hybrid_search_for_external(query_text, embedding_query, language)
-    full_text = ""
-    for content in result:
-        full_text += str(content[1]) + "\n"
-    return full_text
+def hybrid_search_external_db(query_text: str, language: str):
+    """user query to search"""
+    embedded = get_vector_from_embedding(query_text)
+    knowledge_qs = ExternalKnowledge.objects.annotate(
+        distance=L2Distance("content_embedding", embedded)
+        ).order_by("distance")[:3]
+    results = [(knowledge.content, rank) for rank, knowledge in enumerate(knowledge_qs)]
+    return results
+# def hybrid_search_external_db(query_text: str, language: str) -> str:
+#     """use user query and embedding query to search"""
+#     embedding_query = get_vector_from_embedding(query_text)
+#     result = hybrid_search_for_external(query_text, embedding_query, language)
+#     full_text = ""
+#     for content in result:
+#         full_text += str(content[1]) + "\n"
+#     return full_text
 
 
 class NoOpInput(BaseModel):

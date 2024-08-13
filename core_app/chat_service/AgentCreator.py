@@ -8,8 +8,6 @@ from .agent_tool import tool_mapping
 from core_app.models import ExternalKnowledge, LlmModel
 from langchain_core.output_parsers import StrOutputParser
 from core_app.external.external_tool import retrieve_documents_with_rrf, RouteQuery, CheckValidQuery
-from langchain.agents.agent import AgentOutputParser
-from langchain_core.runnables import RunnableSequence
 from core_app.models import ExternalKnowledge
 from .FormatChain import format_chain
 
@@ -80,7 +78,7 @@ class AgentCreator:
 
     def create_system_prompt_template(self):
 
-        system_prompt_content = self.prompt_content + "\n following the format below to generate the output. Remember: Always follow format, no matter what happens.\n" + self.hidden_prompt
+        system_prompt_content = self.prompt_content + "\n following the format below to generate the output. Remember: Always follow format, no matter what happens. Using vietnamese to answer\n" + self.hidden_prompt
 
         system_prompt = ChatPromptTemplate.from_messages(
             [
