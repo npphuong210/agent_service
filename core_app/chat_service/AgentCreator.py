@@ -5,12 +5,12 @@ from ca_vntl_helper import error_tracking_decorator
 import os
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from .agent_tool import tool_mapping
-from core_app.models import ExternalKnowledge
+from core_app.models import ExternalKnowledge, LlmModel
 from .FormatChain import format_chain
 class AgentCreator:
-    def __init__(self, agent_name: str, llm_type: str, prompt_content: str, tools: list[str]):
+    def __init__(self, agent_name: str, llm_id: str, prompt_content: str, tools: list[str]):
         self.agent_name = agent_name
-        self.llm_type = llm_type
+        self.llm_id = llm_id
         self.prompt_content = prompt_content
         self.tools_str = tools
 
@@ -22,15 +22,16 @@ class AgentCreator:
 
         self.hidden_prompt = f"""
                 All answer must be in Vietnamese.\n
+                
                 If you can use the information from the chat_history to answer, you don't need to use the tools. If not, must use these tools to get information and only use 1 tool. Don't make things up. \n
-                Being flexible between using the tools 'query_internal_knowledge', 'query_external_knowledge' and 'trace_back' based on the use case of the tools is key to success.\n
-                Use case for 'query_external_knowledge':
-                In case the question has never been asked before or not related to the past questions, you are given a list of {subject} and {chapter} to choose from, you can use the 'query_external_knowledge' tool to get the information from the external knowledge table.\n
-                Use case for 'query_internal_knowledge': 
-                1/ If the question has been asked before or so similar to the past questions, you will answer the question exactly the same as the past question.\n
-                2/ If the question is likely related to the past questions, you will get the information from the internal knowledge table and use that information to help answer the question.\n
-                Use case of 'trace_back':
-                If i ask about what did i ask before or something similar, you can use the 'trace_back' tool to get the information from the past conversation and answer the question.\n                
+                
+                Being flexible between using the tools 'query_internal_knowledge', 'query_external_knowledge' and other tools based on the use case of the tools is key to success.\n
+                
+                First, try to use the 'query_internal_knowledge' tool to get information. If the question has been asked before or is likely related to past questions, use this tool. If no similar summary is found, use the 'query_external_knowledge' tool to get information from the external knowledge table using the subjects: {subject} and chapters: {chapter} provided.\n
+                
+                Flexibly use the tools based on the purpose of the tools to ensure success.
+                
+                If neither 'query_internal_knowledge' nor 'query_external_knowledge' provides the necessary information, use other tools to find the answer.
                 """
 
     def load_tools(self):
@@ -40,11 +41,20 @@ class AgentCreator:
         return tools
 
     def load_llm(self):
-        if self.llm_type == "openai":
-            OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-            llm = ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo", streaming=True, callbacks=[StreamingStdOutCallbackHandler()], temperature=0 )
+        if self.llm_id:
+            try:
+                # Truy vấn LlmModel để lấy thông tin mô hình
+                llm_model = LlmModel.objects.get(id=self.llm_id)
+                api_key = llm_model.api_key
+                model_version = llm_model.model_version
+                if llm_model.provider == "openai":
+                    llm = ChatOpenAI(api_key=api_key, model=model_version, streaming=True, callbacks=[StreamingStdOutCallbackHandler()], temperature=0 )
+                else:
+                    raise Exception("LLM provider not supported")
+            except LlmModel.DoesNotExist:
+                raise Exception("LlmModel with the given ID not found")
         else:
-            raise Exception("LLM type not supported")
+            raise Exception("LLM ID must be provided")
         return llm
 
     def create_system_prompt_template(self):
@@ -79,9 +89,8 @@ class AgentCreator:
 
 
 @error_tracking_decorator
-def run_chatbot(input_text, chat_history, agent_role, llm_type="openai", prompt_content="", user_tools=[]):
-    agent_instance = AgentCreator(agent_name=agent_role, llm_type=llm_type, prompt_content=prompt_content,
-                                  tools=user_tools)
+def run_chatbot(input_text, chat_history, agent_role, llm_id, prompt_content="", user_tools=[]):
+    agent_instance = AgentCreator(agent_name=agent_role, llm_id=llm_id, prompt_content=prompt_content, tools=user_tools)
 
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
     format_output = format_chain(output_message)

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Conversation, SystemPrompt, ExternalKnowledge, Agent, AgentTool, LlmModel
+from .models import Conversation, SystemPrompt, ExternalKnowledge, Agent, AgentTool, LlmModel, InternalKnowledge
 
 class LlmModelSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,4 +32,9 @@ class AgentSerializer(serializers.ModelSerializer):
 class AgentToolSerializer(serializers.ModelSerializer):
     class Meta:
         model = AgentTool
+        fields = '__all__'
+        
+class InternalKnowledgeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InternalKnowledge
         fields = '__all__'

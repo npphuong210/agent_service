@@ -55,13 +55,15 @@ def request_data_from_url(url: str, type: str) -> str:
 
 class SummaryInput(BaseModel):
     query: str = Field(description="use this query to find similar summaries")
+    user: str = Field(description="user name")
+    agent: str = Field(description="agent name")
 
 @tool("query_internal_knowledge", args_schema=SummaryInput)
-def query_internal_knowledge(query: str) -> str:
+def query_internal_knowledge(query: str, user: str, agent: str) -> str:
     """Find similar a summary information by a query string"""
     try:
         embedded = get_vector_from_embedding(query)
-        internal_knowledge_qs = InternalKnowledge.objects.annotate(
+        internal_knowledge_qs = InternalKnowledge.objects.filter(user=user,agent=agent).annotate(
             distance=L2Distance("summary_embedding", embedded)
         ).order_by("distance")[:1]
         

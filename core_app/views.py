@@ -1,13 +1,14 @@
+from django.shortcuts import render
 from rest_framework import generics, status, permissions
 from django.core.exceptions import PermissionDenied
 from rest_framework.response import Response
 from .models import Conversation, SystemPrompt, ExternalKnowledge, InternalKnowledge, Agent, AgentTool, LlmModel
-from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer, AgentSerializer, AgentToolSerializer, LlmModelSerializer
+from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer, AgentSerializer, AgentToolSerializer, LlmModelSerializer, InternalKnowledgeSerializer
 from core_app.chat_service.AgentMessage import get_message_from_agent, get_streaming_agent_instance
 from core_app.extract import extract
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from django.http import StreamingHttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from asgiref.sync import sync_to_async
 from langchain.agents import AgentExecutor
 import asyncio
@@ -265,3 +266,16 @@ class AgentAnswerMessageStream(generics.GenericAPIView):
             )
 
 agent_answer_message_stream = AgentAnswerMessageStream.as_view()
+
+class InternalKnowledgeList(generics.ListAPIView):
+    queryset = InternalKnowledge.objects.all()
+    serializer_class = InternalKnowledgeSerializer
+    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        agent_id = self.kwargs.get('agent_id')
+        
+        # Lọc theo user và agent (nếu có)
+        return InternalKnowledge.objects.filter(user=user, agent_id=agent_id)

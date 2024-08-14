@@ -44,7 +44,7 @@ def get_message_from_agent(conversation_id, user_message):
     
     role = conversation_instance.agent.agent_name
     
-    llm = conversation_instance.agent.llm
+    llm_id = conversation_instance.agent.llm_id
     
     prompt_content = conversation_instance.agent.prompt.prompt_content
     
@@ -64,7 +64,7 @@ def get_message_from_agent(conversation_id, user_message):
     # Chạy agent
     print("run_chatbot")
     output_message, format_output = run_chatbot(
-        user_message, chat_history, agent_role=role, llm_type=llm, prompt_content=prompt_content, user_tools=user_tools)
+        user_message, chat_history, agent_role=role, llm_id=llm_id, prompt_content=prompt_content, user_tools=user_tools)
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
     conversation_instance.chat_history.append({"message_type": "ai_message", "content": output_message})
 
@@ -72,7 +72,12 @@ def get_message_from_agent(conversation_id, user_message):
     
     extracted_info = extract(format_output)
     # Save the extracted information to the database
-    extracted_data = InternalKnowledge(summary=extracted_info['summary'], question=user_message)
+    extracted_data = InternalKnowledge(
+        summary=extracted_info['summary'],
+        question=user_message,
+        user = conversation_instance.agent.user,
+        agent = conversation_instance.agent
+        )
     
     extracted_data.save()
     
