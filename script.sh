@@ -13,7 +13,7 @@ else
 fi
 
 # Check if environment variables are set
-if [ -z "${DB_NAME}" ] || [ -z "${DB_USERNAME}" ] || [ -z "${DB_PASSWORD}" ]; then
+if [ -z "${DB_NAME}" ] ]; then
     echo "Please set DB_NAME, DB_USERNAME, and DB_PASSWORD environment variables."
     exit 1
 fi
