@@ -14,12 +14,12 @@ def load_llm_model(provider="openai"):
 
 def format_chain(input_text, provider="openai"):
     response_schemas = [
-        ResponseSchema(name="Summary", description="Brief summary of the input and the question."),
+        ResponseSchema(name="Summary", description="Brief summary of the output, limited one sentence."),
     ]
     output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
     response_format = output_parser.get_format_instructions()
 
-    template = "All summary must be in Vietnamese. Generate summary of the input. Strictly follow the format to generate the output. Remember: Always follow format, no matter what happens.\n{response_format}\n{input}"
+    template = "All summary must be in Vietnamese. Generate summary of the output. Strictly follow the format to generate the output. Remember: Always follow format, no matter what happens.\n{response_format}\n{input}"
     format_prompt = PromptTemplate(
         template = template,
         input_variables=["input"],

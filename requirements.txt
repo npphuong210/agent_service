@@ -18,3 +18,4 @@ setuptools
 pgvector
 duckduckgo-search
 django-cors-headers
+djangorestframework_simplejwt
