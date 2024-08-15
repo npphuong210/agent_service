@@ -122,10 +122,11 @@ class AgentListCreate(generics.ListCreateAPIView):
     authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         data = request.data
         agent_name = data.get("agent_name")
         llm = data.get("llm")
+        llm_instance = LlmModel.objects.get(id=llm)
         tools = data.get("tools")
         prompt_id = data.get("prompt_id") or data.get("prompt")
 
@@ -135,7 +136,7 @@ class AgentListCreate(generics.ListCreateAPIView):
             system_prompt_message = data.get("prompt_message")
             prompt = SystemPrompt(prompt_name=agent_name, prompt_content=system_prompt_message)
             prompt.save()
-        agent = Agent.objects.create(agent_name=agent_name, llm=llm, prompt=prompt, tools=tools)
+        agent = Agent.objects.create(agent_name=agent_name, llm=llm_instance, prompt=prompt, tools=tools)
         agent.save()
         return Response(self.serializer_class(agent).data, status=status.HTTP_201_CREATED)
 
