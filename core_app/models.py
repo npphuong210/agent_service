@@ -74,7 +74,8 @@ class Conversation(CommonModel):
     chat_history = ArrayField(models.JSONField(), default=list, null=True, blank=True)
     meta_data = models.JSONField(default=dict, null=True, blank=True) # tool id
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
-
+    is_use_internal_knowledge = models.BooleanField(default=True)
+    
     def __str__(self):
         return f"{self.id} - with agent: {self.agent.agent_name}"
 
