@@ -8,7 +8,7 @@ from .agent_tool import tool_mapping
 from core_app.models import ExternalKnowledge, LlmModel
 from .FormatChain import format_chain
 class AgentCreator:
-    def __init__(self, agent_name: str, llm_id: str, prompt_content: str, tools: list[str]):
+    def __init__(self, agent_name: str, llm_id: str, prompt_content: str, tools: list[str], user: int, agent: str):
         self.agent_name = agent_name
         self.llm_id = llm_id
         self.prompt_content = prompt_content
@@ -18,20 +18,21 @@ class AgentCreator:
         
         subject = lecture_qs.values_list('subject', flat=True)
         chapter = lecture_qs.values_list('chapter', flat=True)
-
+        print("*"*50)
+        print(f"user: {user}, agent: {agent}")
+        print("*"*50)
 
         self.hidden_prompt = f"""
-                All answer must be in Vietnamese.\n
-                
+             All answer must be in Vietnamese.\n
                 If you can use the information from the chat_history to answer, you don't need to use the tools. If not, must use these tools to get information and only use 1 tool. Don't make things up. \n
-                
-                Being flexible between using the tools 'query_internal_knowledge', 'query_external_knowledge' and other tools based on the use case of the tools is key to success.\n
-                
-                First, try to use the 'query_internal_knowledge' tool to get information. If the question has been asked before or is likely related to past questions, use this tool. If no similar summary is found, use the 'query_external_knowledge' tool to get information from the external knowledge table using the subjects: {subject} and chapters: {chapter} provided.\n
-                
-                Flexibly use the tools based on the purpose of the tools to ensure success.
-                
-                If neither 'query_internal_knowledge' nor 'query_external_knowledge' provides the necessary information, use other tools to find the answer.
+                Being flexible between using the tools 'query_internal_knowledge', 'query_external_knowledge' and 'trace_back' based on the use case of the tools is key to success.\n
+                Use case for 'query_external_knowledge':
+                In case the question has never been asked before or not related to the past questions, you are given a list of {subject} and {chapter} to choose from, you can use the 'query_external_knowledge' tool to get the information from the external knowledge table.\n
+                Use case for 'query_internal_knowledge' with user: {user}, agent: {agent}:
+                1/ If the question has been asked before or so similar to the past questions, you will answer the question exactly the same as the past question.\n
+                2/ If the question is likely related to the past questions, you will get the information from the internal knowledge table and use that information to help answer the question.\n
+                Use case of 'trace_back':
+                If i ask about what did i ask before or something similar, you can use the 'trace_back' tool to get the information from the past conversation and answer the question.\n                
                 """
 
     def load_tools(self):
@@ -89,8 +90,8 @@ class AgentCreator:
 
 
 @error_tracking_decorator
-def run_chatbot(input_text, chat_history, agent_role, llm_id, prompt_content="", user_tools=[]):
-    agent_instance = AgentCreator(agent_name=agent_role, llm_id=llm_id, prompt_content=prompt_content, tools=user_tools)
+def run_chatbot(input_text, chat_history, agent_role, llm_id, prompt_content="", user_tools=[], user="User:", agent="Agent:"):
+    agent_instance = AgentCreator(agent_name=agent_role, llm_id=llm_id, prompt_content=prompt_content, tools=user_tools, user=user, agent=agent)
 
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
     format_output = format_chain(output_message)

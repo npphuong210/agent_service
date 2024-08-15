@@ -50,7 +50,10 @@ def get_message_from_agent(conversation_id, user_message):
     
     user_tools = conversation_instance.agent.tools
 
- 
+    user = conversation_instance.agent.user.id
+    
+    agent = conversation_instance.agent.id
+    
     chat_history_dicts = conversation_instance.chat_history or []
     
     if chat_history_dicts and isinstance(chat_history_dicts[0], dict) and not chat_history_dicts[0]:
@@ -64,7 +67,7 @@ def get_message_from_agent(conversation_id, user_message):
     # Chạy agent
     print("run_chatbot")
     output_message, format_output = run_chatbot(
-        user_message, chat_history, agent_role=role, llm_id=llm_id, prompt_content=prompt_content, user_tools=user_tools)
+        user_message, chat_history, agent_role=role, llm_id=llm_id, prompt_content=prompt_content, user_tools=user_tools, user=user, agent=agent)
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
     conversation_instance.chat_history.append({"message_type": "ai_message", "content": output_message})
 
