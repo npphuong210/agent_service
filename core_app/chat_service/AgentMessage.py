@@ -71,6 +71,7 @@ def get_message_from_agent(conversation_id, user_message):
     conversation_instance.save()
     
     extracted_info = extract(format_output)
+
     # Save the extracted information to the database
     extracted_data = InternalKnowledge(
         summary=extracted_info['summary'],

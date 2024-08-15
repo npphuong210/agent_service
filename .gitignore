@@ -8,6 +8,11 @@ core_app/migrations/
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 
+# Nonsense files
+/RAG
+/RAG-v1
+
+
 # Local History for Visual Studio Code
 .history/
 

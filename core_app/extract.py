@@ -1,9 +1,5 @@
 import re
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
-
-
-import re
-
 # def extract(ai_response: str, user_message: str) -> dict:
     # Initialize variables
     # summary = ""
