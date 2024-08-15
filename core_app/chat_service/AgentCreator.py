@@ -46,7 +46,17 @@ class AgentCreator:
 
     def load_tools(self):
         tools = []
+        if self.is_use_internal_knowledge:
+            hidden_tools = ["query_internal_knowledge", "query_external_knowledge"]
+        else:
+            hidden_tools = ["query_external_knowledge"]
+            
+        for hidden_tool in hidden_tools:
+            tools.append(tool_mapping[hidden_tool])
+
         for tool_str in self.tools_str:
+            if tool_str in hidden_tools:
+                continue
             tools.append(tool_mapping[tool_str])
         return tools
 
