@@ -45,9 +45,11 @@ class LlmModel(CommonModel):
     model_version = models.CharField(max_length=100) # gpt 3.5
     api_key = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
-    
+
     def __str__(self):
         return self.llm_name
+    class Meta:
+        unique_together = ['llm_name', 'user']
 
 class AgentTool(CommonModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -66,6 +68,9 @@ class Agent(CommonModel):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
     def __str__(self):
         return self.agent_name
+    class Meta:
+        unique_together = ['agent_name', 'user']
+
 # expose
 class Conversation(CommonModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
