@@ -54,7 +54,6 @@ class AgentTool(CommonModel):
     tool_name = models.CharField(max_length=100)
     args_schema = ArrayField(models.JSONField(default=dict, null=True, blank=True), default=list, null=True, blank=True)
     description = models.TextField()
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
     def __str__(self):
         return f"{self.tool_name}"
 
