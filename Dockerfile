@@ -23,6 +23,8 @@ COPY . /app/
 
 # Convert .env and .sh files to Unix format
 RUN find /app/ -type f \( -name "*.env" -o -name "*.sh" \) -exec dos2unix {} \;
+RUN python manage.py migrate
+RUN python manage.py collectstatic --noinput
 
 # Command to run Django
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

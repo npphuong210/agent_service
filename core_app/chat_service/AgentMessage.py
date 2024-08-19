@@ -50,7 +50,12 @@ def get_message_from_agent(conversation_id, user_message):
     
     user_tools = conversation_instance.agent.tools
 
- 
+    user = conversation_instance.agent.user.id
+    
+    agent = conversation_instance.agent.id
+    
+    is_use_internal_knowledge = conversation_instance.is_use_internal_knowledge
+    
     chat_history_dicts = conversation_instance.chat_history or []
     
     if chat_history_dicts and isinstance(chat_history_dicts[0], dict) and not chat_history_dicts[0]:
@@ -64,30 +69,37 @@ def get_message_from_agent(conversation_id, user_message):
     # Chạy agent
     print("run_chatbot")
     output_message, format_output = run_chatbot(
-        user_message, chat_history, agent_role=role, llm_id=llm_id, prompt_content=prompt_content, user_tools=user_tools)
+        user_message, chat_history, agent_role=role, llm_id=llm_id, prompt_content=prompt_content, user_tools=user_tools, user=user, agent=agent, is_use_internal_knowledge=is_use_internal_knowledge)
+    
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
     conversation_instance.chat_history.append({"message_type": "ai_message", "content": output_message})
 
     conversation_instance.save()
     
-    extracted_info = extract(format_output)
-
-    # Save the extracted information to the database
-    extracted_data = InternalKnowledge(
-        summary=extracted_info['summary'],
-        question=user_message,
-        user = conversation_instance.agent.user,
-        agent = conversation_instance.agent
-        )
-    
-    extracted_data.save()
-    
-    response = {
-        "ai_message": output_message,
-        "human_message": user_message,
-        "summary": extracted_info['summary'],
-    }
-    return response
+    if not is_use_internal_knowledge:
+        response = {
+            "ai_message": output_message,
+            "human_message": user_message,
+        }
+        return response
+    else:
+        extracted_info = extract(format_output)
+        # Save the extracted information to the database
+        extracted_data = InternalKnowledge(
+            summary=extracted_info['summary'],
+            question=user_message,
+            user = conversation_instance.agent.user,
+            agent = conversation_instance.agent
+            )
+        
+        extracted_data.save()
+        
+        response = {
+            "ai_message": output_message,
+            "human_message": user_message,
+            "summary": extracted_info['summary'],
+        }
+        return response
 
 def get_streaming_agent_instance(conversation_id):
 

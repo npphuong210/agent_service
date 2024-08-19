@@ -6,7 +6,6 @@ ca-vntl-helper==1.1.6
 wikipedia
 openai
 langchain
-psycopg2
 langchain_openai
 langchain_google_genai
 langchain_community
@@ -18,3 +17,4 @@ setuptools
 pgvector
 duckduckgo-search
 django-cors-headers
+djangorestframework_simplejwt

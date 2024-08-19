@@ -15,15 +15,16 @@ import asyncio
 import logging
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
-
-class BearerTokenAuthentication(TokenAuthentication):
-    keyword = 'Bearer'
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from core_app.authentication import get_user_instance_by_token
+# class BearerTokenAuthentication(TokenAuthentication):
+#     keyword = 'Bearer'
     
 # create CRUD API views here with LlmModel models
 class LlmModelListCreate(generics.ListCreateAPIView):
     queryset = LlmModel.objects.all().order_by('-updated_at')
     serializer_class = LlmModelSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated] # Ensure user is authenticated
     
     def perform_create(self, serializer):
@@ -38,7 +39,7 @@ llm_list_create = LlmModelListCreate.as_view()
 class LlmModelRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = LlmModel.objects.all().order_by('-updated_at')
     serializer_class = LlmModelSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     def perform_update(self, serializer):
@@ -57,19 +58,45 @@ llm_retrieve_update_destroy = LlmModelRetrieveUpdateDestroy.as_view()
 class ConversationListCreate(generics.ListCreateAPIView):
     queryset = Conversation.objects.all().order_by('-updated_at')
     serializer_class = ConversationSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    # def perform_create(self, serializer):
+    #     # Trích xuất user_instance từ token
+    #     user_instance = get_user_instance_by_token(self.request)
+    #     if user_instance:
+    #         serializer.save(user=user_instance)
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user) # Lưu đối tượng với user_instance
 
 conversation_list_create = ConversationListCreate.as_view()
 
 class ConversationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Conversation.objects.all().order_by('-updated_at')
     serializer_class = ConversationSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    
+    def update(self, request, *args, **kwargs):
+        # Trích xuất user_instance từ token
+        user_instance = get_user_instance_by_token(request)
+        if not user_instance:
+            return Response({"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED)
+        # Tách user_conversation từ request
+        user_conversation = request.user
+        # Kiểm tra quyền (phân quyền)
+        if user_conversation != user_instance:
+            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+        serializer.save()
+         
+    def get_queryset(self):
+        # Filter Conversation objects to only those belonging to the logged-in user
+        return Conversation.objects.filter(user=self.request.user).order_by('-updated_at')
 
 conversion_retrieve_update_destroy = ConversationRetrieveUpdateDestroy.as_view()
 
@@ -78,18 +105,15 @@ conversion_retrieve_update_destroy = ConversationRetrieveUpdateDestroy.as_view()
 class SystemPromptListCreate(generics.ListCreateAPIView):
     queryset = SystemPrompt.objects.all().order_by('-updated_at')
     serializer_class = SystemPromptSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
 
 system_prompt_list_create = SystemPromptListCreate.as_view()
 
 class SystemPromptRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = SystemPrompt.objects.all().order_by('-updated_at')
     serializer_class = SystemPromptSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
 system_prompt_retrieve_update_destroy = SystemPromptRetrieveUpdateDestroy.as_view()
@@ -99,18 +123,18 @@ system_prompt_retrieve_update_destroy = SystemPromptRetrieveUpdateDestroy.as_vie
 class ExternalListCreate(generics.ListCreateAPIView):
     queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user) # Lưu đối tượng với user_instance
 
 external_knowledge_list_create = ExternalListCreate.as_view()
 
 class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
 external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
@@ -119,10 +143,13 @@ external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDest
 class AgentListCreate(generics.ListCreateAPIView):
     queryset = Agent.objects.all().order_by('-updated_at')
     serializer_class = AgentSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):        
         data = request.data
         agent_name = data.get("agent_name")
         llm = data.get("llm")
@@ -139,6 +166,14 @@ class AgentListCreate(generics.ListCreateAPIView):
         agent = Agent.objects.create(agent_name=agent_name, llm=llm_instance, prompt=prompt, tools=tools)
         agent.save()
         return Response(self.serializer_class(agent).data, status=status.HTTP_201_CREATED)
+    
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+        serializer.save()
+        
+    def get_queryset(self):
+        return Agent.objects.filter(user=self.request.user).order_by('-updated_at')
 
 
 Agent_list_create = AgentListCreate.as_view()
@@ -146,8 +181,29 @@ Agent_list_create = AgentListCreate.as_view()
 class AgentRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Agent.objects.all().order_by('-updated_at')
     serializer_class = AgentSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    
+    def update(self, request, *args, **kwargs):
+        # Trích xuất user_instance từ token
+        user_instance = get_user_instance_by_token(request)
+        if not user_instance:
+            return Response({"error": "Invalid token"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Tách user_conversation từ request
+        user_conversation = request.user
+        # Kiểm tra quyền (phân quyền)
+        if user_conversation != user_instance:
+            return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+    
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+        serializer.save()
+        
+    def get_queryset(self):
+        return Agent.objects.filter(user=self.request.user).order_by('-updated_at')
 
 Agent_retrieve_update_destroy = AgentRetrieveUpdateDestroy.as_view()
 
@@ -155,15 +211,19 @@ Agent_retrieve_update_destroy = AgentRetrieveUpdateDestroy.as_view()
 class AgentToolListCreate(generics.ListCreateAPIView):
     queryset = AgentTool.objects.all().order_by('-updated_at')
     serializer_class = AgentToolSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+        
     
 AgentTool_list_create = AgentToolListCreate.as_view()
 
 class AgentToolRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = AgentTool.objects.all().order_by('-updated_at')
     serializer_class = AgentToolSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
 AgentTool_retrieve_update_destroy = AgentToolRetrieveUpdateDestroy.as_view()
@@ -171,7 +231,7 @@ AgentTool_retrieve_update_destroy = AgentToolRetrieveUpdateDestroy.as_view()
 logger = logging.getLogger(__name__)
     
 class AgentMessage(generics.CreateAPIView):
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
@@ -189,13 +249,14 @@ class AgentMessage(generics.CreateAPIView):
         },
     )
     def post(self, request, *args, **kwargs):
+        user = request.user
         data = request.data
         message = data.get("message")
         conversation_id = data.get("conversation_id")
         try:
             # Get response from AI
             ai_response = get_message_from_agent(conversation_id, message)      
-            return Response(ai_response, status=status.HTTP_200_OK)
+            return Response({"ai_message": ai_response['ai_message'], "human_message": message}, status=status.HTTP_200_OK)
         except Exception as e:
             logger.error(f"Error processing request: {e}", exc_info=True)
             return Response({"ai_message": "Defined error", "human_message": message}, status=status.HTTP_400_BAD_REQUEST)
@@ -203,7 +264,7 @@ class AgentMessage(generics.CreateAPIView):
 agent_answer_message = AgentMessage.as_view()
 
 class AgentAnswerMessageStream(generics.GenericAPIView):
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
@@ -271,7 +332,7 @@ agent_answer_message_stream = AgentAnswerMessageStream.as_view()
 class InternalKnowledgeList(generics.ListAPIView):
     queryset = InternalKnowledge.objects.all()
     serializer_class = InternalKnowledgeSerializer
-    authentication_classes = [BearerTokenAuthentication, SessionAuthentication]
+    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
