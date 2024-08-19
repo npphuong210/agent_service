@@ -3,11 +3,26 @@ from rest_framework.response import Response
 from core_app.models import Conversation, Agent
 from django.contrib.auth.models import User
 from core_app.chat_service.AgentMessage import get_message_from_agent, get_streaming_agent_instance
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 import os
 
 class QuickAnswerMessage(generics.CreateAPIView):
     authentication_classes = []
     permission_classes = []
+    @swagger_auto_schema(
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        required=["query"],
+            properties={
+                "query": openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        responses={
+            200: openapi.Response("Successful response", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+            400: "Bad Request",
+        },
+    )
     def post(self, request, *args, **kwargs):
         admin_user = User.objects.get(username='admin')
         message = request.data['query']

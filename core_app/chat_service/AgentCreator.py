@@ -53,7 +53,7 @@ class AgentCreator:
         if self.is_use_internal_knowledge:
             hidden_tools = ["query_internal_knowledge", "query_external_knowledge"]
         else:
-            hidden_tools = ["query_external_knowledge"]
+            hidden_tools = ["noop_tool"]
             
         for hidden_tool in hidden_tools:
             tools.append(tool_mapping[hidden_tool])
@@ -122,7 +122,7 @@ class AgentCreator:
     
             context = "".join([content for content, _ in top_knowledge])
             
-            print("context", context, "\n-----")
+            #print("context", context, "\n-----")
                 
             context = f"According to the knowledge base, {context}."
             
@@ -130,7 +130,7 @@ class AgentCreator:
             
             print(valid_response)
             
-            if valid_response.query == "yes":
+            if valid_response.query.lower() == "yes":
                 print("Valid response")
                 input_text = f"according to the knowledge base, {context}. \n question: {user_input}"
                 return input_text 
@@ -170,8 +170,8 @@ class AgentCreator:
             
             Question: {question}
             
-            Please answer with "Yes" or "No" at the beginning of your response.
-            If you answer "No," provide a brief explanation in Vietnamese explaining why the context is insufficient or irrelevant.
+            Please answer with "yes" or "no" at the beginning of your response.
+            If you answer "no," provide a brief explanation in Vietnamese explaining why the context is insufficient or irrelevant.
             """
         )
         
@@ -197,6 +197,7 @@ class AgentCreator:
 
     def get_message_from_agent(self, user_message, chat_history):
         agent_exec = self.create_agent_executor()
+        print("user_message", user_message)
         output = agent_exec.invoke({"input": user_message, "chat_history": chat_history})
         return output['output']
 

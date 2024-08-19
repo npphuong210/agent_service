@@ -25,15 +25,24 @@ def reciprocal_rank_fusion(rankings, k=60):
     # Iterate over each ranked list
     for ranking in rankings:
         for rank, (doc, _) in enumerate(ranking):
+            if doc not in score_dict:
+                score_dict[doc] = 0.0
             score_dict[doc] += 1.0 / (k + rank + 1)
     
     # Sort documents by their aggregated scores in descending order
     sorted_docs = sorted(score_dict.items(), key=lambda item: item[1], reverse=True)
+    #print(sorted_docs, "----------------")
+    
+    #print("Reranked documents: ", sorted_docs)
+    
+    for doc in sorted_docs:
+        print("------- \n")
+        print("Score:", doc[1])
     
     return sorted_docs
 
 
-def retrieve_documents_with_rrf(similar_queries, top_k=1):
+def retrieve_documents_with_rrf(similar_queries, top_k=3):
     num_queries = 5
     all_rankings = []
     for query in similar_queries[:num_queries]:
