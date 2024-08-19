@@ -223,6 +223,26 @@ def noop_tool(info: str) -> str:
     """just return the intact info"""
     return info
 
+class ContentInput(BaseModel):
+    query: str = Field(description="use this query to find similar contents")
+
+@tool("external_content_search", args_schema=ContentInput)
+def external_content_search(query: str) -> str:
+    """Find similar a content information by a query string"""
+    try:
+        embedded = get_vector_from_embedding(query)
+        external_knowledge_qs = ExternalKnowledge.objects.annotate(
+            distance=L2Distance("content_embedding", embedded)
+        ).order_by("distance")[:1]
+        
+        summaries = [internal_knowledge.summary for internal_knowledge in external_knowledge_qs]
+        summary_output = "Similar summary found:\n" + "\n".join(summaries)
+        return summary_output
+    
+    except Exception as e:
+        return f"An error occurred: {e}"
+
+
 
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
