@@ -40,20 +40,23 @@ class AgentCreator:
                     IMPORTANT: Always answer the question in the language of the user message. \n                
                     """
         else:
-            self.hidden_prompt = f"""
-                    If you can use the information from the chat_history to answer, you don't need to use the tools. If not, must use these tools to get information and only use 1 tool. Don't make things up. \n
-                    Being flexible between using the tools 'query_external_knowledge'. \n
-                    Use case for 'query_external_knowledge':
-                    In case the question has never been asked before or not related to the past questions, you are given a list of {subject} and {chapter} to choose from, you can use the 'query_external_knowledge' tool to get the information from the external knowledge table.\n
-                    IMPORTANT: Always answer the question in the language of the user message. \n
-                """
+            # self.hidden_prompt = f"""
+            #         If you can use the information from the chat_history to answer, you don't need to use the tools. If not, must use these tools to get information and only use 1 tool. Don't make things up. \n
+            #         Being flexible between using the tools 'query_external_knowledge'. \n
+            #         Use case for 'query_external_knowledge':
+            #         In case the question has never been asked before or not related to the past questions, you are given a list of {subject} and {chapter} to choose from, you can use the 'query_external_knowledge' tool to get the information from the external knowledge table.\n
+            #         IMPORTANT: Always answer the question in the language of the user message. \n
+            #     """
+            self.hidden_prompt = """
+            use 'multi_query' tool to generate multiple perspectives on the user question, your goal is to help the user overcome some of the limitations of the distance-based similarity search.
+            """
 
     def load_tools(self):
         tools = []
         if self.is_use_internal_knowledge:
             hidden_tools = ["query_internal_knowledge", "query_external_knowledge"]
         else:
-            hidden_tools = ["noop_tool"]
+            hidden_tools = ["multi_query"]
             
         for hidden_tool in hidden_tools:
             tools.append(tool_mapping[hidden_tool])
@@ -94,93 +97,6 @@ class AgentCreator:
             ])
         return system_prompt
     
-    
-    def create_multi_queries(self, user_input):
-        template = """You are an AI language model assistant. Your task is to generate five 
-        different versions of the given user question to retrieve relevant documents from a vector 
-        database. By generating multiple perspectives on the user question, your goal is to help
-        the user overcome some of the limitations of the distance-based similarity search. 
-        Provide these alternative questions separated by newlines. Original question: {question}"""
-        prompt_perspectives = ChatPromptTemplate.from_template(template)
-        llm = self.load_llm()
-        generate_queries = (
-            prompt_perspectives 
-            | llm
-            | StrOutputParser() 
-            | (lambda x: x.split("\n"))
-        )
-        
-        decision = self.database_router(user_input)
-        
-        if decision.datasource == "external":
-            print("Routing to external data source")
-            similar_queries =  generate_queries.invoke({"question": user_input})
-            
-            similar_queries.append(f"\noriginal query. {user_input}")
-        
-            top_knowledge = retrieve_documents_with_rrf(similar_queries)
-    
-            context = "".join([content for content, _ in top_knowledge])
-            
-            #print("context", context, "\n-----")
-                
-            context = f"According to the knowledge base, {context}."
-            
-            valid_response = self.check_valid_retrieval_information(user_input, context)
-            
-            print(valid_response)
-            
-            if valid_response.query.lower() == "yes":
-                print("Valid response")
-                input_text = f"according to the knowledge base, {context}. \n question: {user_input}"
-                return input_text 
-            
-            else:
-                print("Invalid response")
-                return f"The context is not sufficient to generate an accurate answer. So, you need to answer the question by youself: {user_input}"
-        else:
-            print("Routing to your knowledge base")
-            return user_input
-
-    def database_router(self, user_input):
-        template = """You are an expert at routing a user question to the appropriate data source.
-        Based on the question is referring to, route it to the relevant data source.
-        Your Knowledge source where the question is easy to answer, You can answer it directly.
-        In addition, External source where the question is out of scope of your knowledge base and it related some specialized fields that need the highest accuracy as much as possible.
-        """
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", template),
-                ("human", "{question}"),
-            ]
-        )
-        llm = self.load_llm()
-        structured_llm = llm.with_structured_output(RouteQuery)
-        router = prompt | structured_llm
-        result = router.invoke({"question": user_input})
-        return result
-    
-    def check_valid_retrieval_information(self, user_input, context):
-        validation_prompt = ChatPromptTemplate.from_template(
-            """
-            You are an expert in analyzing the relevance and sufficiency of information provided for answering questions.
-            Given the following context and question, determine whether the context is appropriate and sufficient to provide a correct and complete answer to the question.
-            
-            Context: {context}
-            
-            Question: {question}
-            
-            Please answer with "yes" or "no" at the beginning of your response.
-            If you answer "no," provide a brief explanation in Vietnamese explaining why the context is insufficient or irrelevant.
-            """
-        )
-        
-        llm = self.load_llm()
-        structured_llm = llm.with_structured_output(CheckValidQuery)
-        validation_chain = validation_prompt | structured_llm
-        return validation_chain.invoke({"context": context, "question": user_input})
-
-        
     def create_agent_runnable(self):
         system_prompt = self.create_system_prompt_template()
         llm = self.load_llm()
@@ -205,14 +121,8 @@ class AgentCreator:
 @error_tracking_decorator
 def run_chatbot(input_text, chat_history, agent_role, llm_id, prompt_content="", user_tools=[], user="User:", agent="Agent:", is_use_internal_knowledge=True):
     agent_instance = AgentCreator(agent_name=agent_role, llm_id=llm_id, prompt_content=prompt_content, tools=user_tools, user=user, agent=agent, is_use_internal_knowledge=is_use_internal_knowledge)
-    input_text = agent_instance.create_multi_queries(input_text)
+    #input_text = agent_instance.create_multi_queries(input_text)
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
     format_output = format_chain(output_message)
 
     return output_message, format_output
-
-# agent = AgentCreator(agent_name="chatbot", llm_type="openai", prompt_content="Your role do not need to use any tool. just answer based on the context", tools=[])
-# input_text = "How to treat breast cancer?"
-# input_text = agent.create_multi_queries(input_text)
-    
-# output_message = agent.get_message_from_agent(input_text, [])

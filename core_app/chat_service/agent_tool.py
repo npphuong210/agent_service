@@ -8,6 +8,7 @@ from core_app.embedding.embedding_by_openai import get_vector_from_embedding
 from django.db import connection
 from pgvector.django import L2Distance
 from langchain.agents import Tool
+from core_app.external.external_tool import create_multi_queries, vector_search, reciprocal_rank_fusion, retrieve_documents_with_rrf
 
 
 duckduckgosearch = DuckDuckGoSearchRun()
@@ -197,22 +198,22 @@ def hybrid_search_for_external(query_text, query_vector, language, k=20):
 
 
 @tool("hybrid_search_external_db", args_schema=HybridSreachInput)
-def hybrid_search_external_db(query_text: str, language: str):
-    """user query to search"""
-    embedded = get_vector_from_embedding(query_text)
-    knowledge_qs = ExternalKnowledge.objects.annotate(
-        distance=L2Distance("content_embedding", embedded)
-        ).order_by("distance")[:3]
-    results = [(knowledge.content, rank) for rank, knowledge in enumerate(knowledge_qs)]
-    return results
-# def hybrid_search_external_db(query_text: str, language: str) -> str:
-#     """use user query and embedding query to search"""
-#     embedding_query = get_vector_from_embedding(query_text)
-#     result = hybrid_search_for_external(query_text, embedding_query, language)
-#     full_text = ""
-#     for content in result:
-#         full_text += str(content[1]) + "\n"
-#     return full_text
+# def hybrid_search_external_db(query_text: str, language: str):
+#     """user query to search"""
+#     embedded = get_vector_from_embedding(query_text)
+#     knowledge_qs = ExternalKnowledge.objects.annotate(
+#         distance=L2Distance("content_embedding", embedded)
+#         ).order_by("distance")[:3]
+#     results = [(knowledge.content, rank) for rank, knowledge in enumerate(knowledge_qs)]
+#     return results
+def hybrid_search_external_db(query_text: str, language: str) -> str:
+    """use user query and embedding query to search"""
+    embedding_query = get_vector_from_embedding(query_text)
+    result = hybrid_search_for_external(query_text, embedding_query, language)
+    full_text = ""
+    for content in result:
+        full_text += str(content[1]) + "\n"
+    return full_text
 
 
 class NoOpInput(BaseModel):
@@ -243,6 +244,27 @@ def external_content_search(query: str) -> str:
         return f"An error occurred: {e}"
 
 
+class InputQuery(BaseModel):
+    """ Input query to search """
+    
+    query: str = Field(description="The user query to search",)
+    
+@tool("multi_query", args_schema=InputQuery)
+def multi_query(query: str) -> str:
+    """based on the user query, create multiple queries to search"""
+    similar_queries =  create_multi_queries(query)     
+    similar_queries.append(f"\noriginal query. {query}")
+    top_knowledge = retrieve_documents_with_rrf(similar_queries)
+            
+    print(top_knowledge[0])
+    
+    context = "".join([content for content, _ in top_knowledge])
+                
+    context = f"According to the knowledge base, {context}. \n question: {query}"
+            
+    return context
+
+
 
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
@@ -253,5 +275,5 @@ tool_mapping = {
     "hybrid_search_internal_db": hybrid_search_internal_db,
     "hybrid_search_external_db": hybrid_search_external_db,
     "noop_tool": noop_tool,
-    
+    "multi_query": multi_query,
 }

@@ -6,6 +6,25 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
 import os
+from langchain_core.output_parsers import StrOutputParser
+
+def create_multi_queries(user_input):
+    template = """You are an AI language model assistant. Your task is to generate five 
+        different versions of the given user question to retrieve relevant documents from a vector 
+        database. By generating multiple perspectives on the user question, your goal is to help
+        the user overcome some of the limitations of the distance-based similarity search. 
+        Provide these alternative questions separated by newlines. Original question: {question}"""
+    prompt_perspectives = ChatPromptTemplate.from_template(template)
+    llm = ChatOpenAI(api_key=os.getenv('API_KEY'), model='gpt-3.5-turbo', streaming=True, temperature=0, verbose=True)
+    generate_queries = (
+            prompt_perspectives 
+            | llm
+            | StrOutputParser() 
+            | (lambda x: x.split("\n"))
+    )
+    
+    multi_queries = generate_queries.invoke({"question": user_input})
+    return multi_queries
 
 
 def vector_search(query: str):
@@ -35,10 +54,6 @@ def reciprocal_rank_fusion(rankings, k=60):
     
     #print("Reranked documents: ", sorted_docs)
     
-    for doc in sorted_docs:
-        print("------- \n")
-        print("Score:", doc[1])
-    
     return sorted_docs
 
 
@@ -54,12 +69,6 @@ def retrieve_documents_with_rrf(similar_queries, top_k=3):
     top_k_combined_results = combined_results[:top_k]
     
     return top_k_combined_results
-
-# original_query = "What is the capital of France?"
-# top_k_results = retrieve_documents_with_rrf(original_query)
-
-# for content, score in top_k_results:
-#     print(f"Content: {content}, Score: {score}")
 
 
 class RouteQuery(BaseModel):
@@ -96,3 +105,91 @@ class CheckValidQuery(BaseModel):
 #     )
         
 #     return generate_queries_decomposition.invoke({"question": user_input})
+
+    # def create_multi_queries(self, user_input):
+    #     template = """You are an AI language model assistant. Your task is to generate five 
+    #     different versions of the given user question to retrieve relevant documents from a vector 
+    #     database. By generating multiple perspectives on the user question, your goal is to help
+    #     the user overcome some of the limitations of the distance-based similarity search. 
+    #     Provide these alternative questions separated by newlines. Original question: {question}"""
+    #     prompt_perspectives = ChatPromptTemplate.from_template(template)
+    #     llm = self.load_llm()
+    #     generate_queries = (
+    #         prompt_perspectives 
+    #         | llm
+    #         | StrOutputParser() 
+    #         | (lambda x: x.split("\n"))
+    #     )
+        
+    #     decision = self.database_router(user_input)
+        
+    #     if decision.datasource == "external":
+    #         print("Routing to external data source")
+    #         similar_queries =  generate_queries.invoke({"question": user_input})
+            
+    #         similar_queries.append(f"\noriginal query. {user_input}")
+        
+    #         top_knowledge = retrieve_documents_with_rrf(similar_queries)
+            
+    #         print(top_knowledge[0])
+    
+    #         context = "".join([content for content, _ in top_knowledge])
+                
+    #         context = f"According to the knowledge base, {context}. \n question: {user_input}"
+            
+    #         return context
+            
+    #         # valid_response = self.check_valid_retrieval_information(user_input, context)
+            
+    #         # print(valid_response)
+            
+    #         # if valid_response.query.lower() == "yes":
+    #         #     print("Valid response")
+    #         #     input_text = f"according to the knowledge base, {context}. \n question: {user_input}"
+    #         #     return input_text 
+            
+    #         # else:
+    #         #     print("Invalid response")
+    #         #     return f"The context is not sufficient to generate an accurate answer. So, you need to answer the question by youself: {user_input}"
+    #     else:
+    #         print("Routing to your knowledge base")
+    #         return user_input
+
+    # def database_router(self, user_input):
+    #     template = """You are an expert at routing a user question to the appropriate data source.
+    #     Based on the question is referring to, route it to the relevant data source.
+    #     Your Knowledge source where the question is easy to answer, You can answer it directly.
+    #     In addition, External source where the question is out of scope of your knowledge base and it related some specialized fields that need the highest accuracy as much as possible.
+    #     """
+    #     prompt = ChatPromptTemplate.from_messages(
+    #         [
+    #             ("system", template),
+    #             ("human", "{question}"),
+    #         ]
+    #     )
+    #     llm = self.load_llm()
+    #     structured_llm = llm.with_structured_output(RouteQuery)
+    #     router = prompt | structured_llm
+    #     result = router.invoke({"question": user_input})
+    #     return result
+    
+    # def check_valid_retrieval_information(self, user_input, context):
+    #     validation_prompt = ChatPromptTemplate.from_template(
+    #         """
+    #         You are an expert in analyzing the relevance and sufficiency of information provided for answering questions.
+    #         Given the following context and question, determine whether the context is appropriate and sufficient to provide a correct and complete answer to the question.
+            
+    #         Context: {context}
+            
+    #         Question: {question}
+            
+    #         Please answer with "yes" or "no" at the beginning of your response.
+    #         If you answer "no," provide a brief explanation in Vietnamese explaining why the context is insufficient or irrelevant.
+    #         """
+    #     )
+        
+    #     llm = self.load_llm()
+    #     structured_llm = llm.with_structured_output(CheckValidQuery)
+    #     validation_chain = validation_prompt | structured_llm
+    #     return validation_chain.invoke({"context": context, "question": user_input})
+
