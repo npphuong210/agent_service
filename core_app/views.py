@@ -65,7 +65,19 @@ class ConversationListCreate(generics.ListCreateAPIView):
             serializer.save(user=user_instance)
         else:
             raise PermissionDenied("User instance not found.")
- 
+    
+    def post(self, request, *args, **kwargs):   
+        data = request.data
+        agent_id = data.get("agent_id")
+        try:
+            agent_instance = Agent.objects.get(id=agent_id)
+        except Agent.DoesNotExist:
+            return Response({"error": "Agent not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        conversation = Conversation.objects.create(agent=agent_instance, user=request.user)
+        conversation.save()
+        return Response(self.serializer_class(conversation).data, status=status.HTTP_201_CREATED)
+    
     def get_queryset(self):
         return Conversation.objects.filter(user=self.request.user).order_by('-updated_at')
  
@@ -163,7 +175,7 @@ class AgentListCreate(generics.ListCreateAPIView):
             system_prompt_message = data.get("prompt_message")
             prompt = SystemPrompt(prompt_name=agent_name, prompt_content=system_prompt_message)
             prompt.save()
-        agent = Agent.objects.create(agent_name=agent_name, llm=llm_instance, prompt=prompt, tools=tools)
+        agent = Agent.objects.create(agent_name=agent_name, llm=llm_instance, prompt=prompt, tools=tools, user = request.user)
         agent.save()
         return Response(self.serializer_class(agent).data, status=status.HTTP_201_CREATED)
     
