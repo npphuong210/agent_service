@@ -56,20 +56,20 @@ llm_retrieve_update_destroy = LlmModelRetrieveUpdateDestroy.as_view()
 
 # Create CRUD API views here with Conversation models
 class ConversationListCreate(generics.ListCreateAPIView):
-    queryset = Conversation.objects.all().order_by('-updated_at')
     serializer_class = ConversationSerializer
-    # authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
-    # def perform_create(self, serializer):
-    #     # Trích xuất user_instance từ token
-    #     user_instance = get_user_instance_by_token(self.request)
-    #     if user_instance:
-    #         serializer.save(user=user_instance)
+   
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user) # Lưu đối tượng với user_instance
-
-conversation_list_create = ConversationListCreate.as_view()
+        user_instance = get_user_instance_by_token(self.request)
+        if user_instance:
+            serializer.save(user=user_instance)
+        else:
+            raise PermissionDenied("User instance not found.")
+ 
+    def get_queryset(self):
+        return Conversation.objects.filter(user=self.request.user).order_by('-updated_at')
+ 
+conversation_list_create = ConversationListCreate.as_view()        
 
 class ConversationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Conversation.objects.all().order_by('-updated_at')
