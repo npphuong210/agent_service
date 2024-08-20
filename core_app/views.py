@@ -89,6 +89,15 @@ class ConversationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
 
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+        serializer.save()
+         
+    def get_queryset(self):
+        # Filter Conversation objects to only those belonging to the logged-in user
+        return Conversation.objects.filter(user=self.request.user).order_by('-updated_at')
+
 conversion_retrieve_update_destroy = ConversationRetrieveUpdateDestroy.as_view()
 
 
@@ -157,6 +166,14 @@ class AgentListCreate(generics.ListCreateAPIView):
         agent = Agent.objects.create(agent_name=agent_name, llm=llm_instance, prompt=prompt, tools=tools)
         agent.save()
         return Response(self.serializer_class(agent).data, status=status.HTTP_201_CREATED)
+    
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+        serializer.save()
+        
+    def get_queryset(self):
+        return Agent.objects.filter(user=self.request.user).order_by('-updated_at')
 
 
 Agent_list_create = AgentListCreate.as_view()
@@ -179,6 +196,14 @@ class AgentRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         if user_conversation != user_instance:
             return Response({"error": "Permission denied"}, status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
+    
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+        serializer.save()
+        
+    def get_queryset(self):
+        return Agent.objects.filter(user=self.request.user).order_by('-updated_at')
 
 Agent_retrieve_update_destroy = AgentRetrieveUpdateDestroy.as_view()
 

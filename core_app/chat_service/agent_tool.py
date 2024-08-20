@@ -4,11 +4,15 @@ from langchain_community.tools import WikipediaQueryRun, tool, DuckDuckGoSearchR
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain.pydantic_v1 import BaseModel, Field
 import requests
-from pgvector.django import L2Distance
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
 from django.db import connection
+from pgvector.django import L2Distance
+from langchain.agents import Tool
+from core_app.external.external_tool import create_multi_queries, vector_search, reciprocal_rank_fusion, retrieve_documents_with_rrf
+
 
 duckduckgosearch = DuckDuckGoSearchRun()
+
 
 class DuckDuckGoSearchInput(BaseModel):
     query: str = Field(description="query to search on duckduckgo")
@@ -30,7 +34,6 @@ def query_data_from_wikipedia(query: str) -> str:
     """Get data from wikipedia."""
     output = WikipediaAPIWrapper().run(query)
     return output
-
 
 class RequestInput(BaseModel):
     url: str = Field(description="URL to request from")
@@ -112,7 +115,7 @@ def trace_back(query: str) -> str:
                     """       
     return output
 
-def hybrid_search_for_internal(query_text, query_vector, k=60):
+def hybrid_search_for_internal(query_text, query_vector, language, k=20):
 
     sql = """
     WITH semantic_search AS (
@@ -122,10 +125,10 @@ def hybrid_search_for_internal(query_text, query_vector, k=60):
         LIMIT 20
     ),
     keyword_search AS (
-        SELECT id, RANK () OVER (ORDER BY ts_rank_cd(to_tsvector('english', summary), query) DESC), summary
-        FROM core_app_internalknowledge, plainto_tsquery('english', %(query_text)s) query
-        WHERE to_tsvector('english', summary) @@ query
-        ORDER BY ts_rank_cd(to_tsvector('english', summary), query) DESC
+        SELECT id, RANK () OVER (ORDER BY ts_rank_cd(to_tsvector(%(language)s, summary), query) DESC), summary
+        FROM core_app_internalknowledge, plainto_tsquery(%(language)s, %(query_text)s) query
+        WHERE to_tsvector(%(language)s, summary) @@ query
+        ORDER BY ts_rank_cd(to_tsvector(%(language)s, summary), query) DESC
         LIMIT 20
     )
         
@@ -141,28 +144,136 @@ def hybrid_search_for_internal(query_text, query_vector, k=60):
     """
 
     with connection.cursor() as cursor:
-        cursor.execute(sql, {'query_text': query_text, 'query_vector': query_vector, 'k': k})
+        cursor.execute(sql, {'query_text': query_text, 'query_vector': query_vector, "language" : language,'k': k})
         results = cursor.fetchall()
     return results
   
 class HybridSreachInput(BaseModel):
     query_text: str = Field(description="user's query to search ")
+    language: str = Field(description="language to search")
     
-@tool("hybrid_search_db", args_schema=HybridSreachInput)
-def hybrid_search_db(query_text: str) -> str:
+@tool("hybrid_search_internal_db", args_schema=HybridSreachInput)
+def hybrid_search_internal_db(query_text: str, language: str) -> str:
     """use user query and embedding query to search"""
     embedding_query = get_vector_from_embedding(query_text)
-    result = hybrid_search_for_internal(query_text, embedding_query)
-    return result[0][1]
+    result = hybrid_search_for_internal(query_text, embedding_query, language)
+    full_text = ""
+    for content in result:
+        full_text += str(content[1]) + "\n"
+    return full_text
+
+
+def hybrid_search_for_external(query_text, query_vector, language, k=20):
+
+    sql = """
+    WITH semantic_search AS (
+        SELECT id, RANK () OVER (ORDER BY content_embedding <=> %(query_vector)s::vector) AS rank
+        FROM core_app_externalknowledge
+        ORDER BY content_embedding <=> %(query_vector)s::vector
+        LIMIT 20
+    ),
+    keyword_search AS (
+        SELECT id, RANK () OVER (ORDER BY ts_rank_cd(to_tsvector('english', content), query) DESC), content
+        FROM core_app_externalknowledge, plainto_tsquery(%(language)s, %(query_text)s) query
+        WHERE to_tsvector(%(language)s, content) @@ query
+        ORDER BY ts_rank_cd(to_tsvector(%(language)s, content), query) DESC
+        LIMIT 20
+    )
+        
+    SELECT
+      COALESCE(semantic_search.id, keyword_search.id) AS id,    
+      content,
+      COALESCE(1.0 / (%(k)s + semantic_search.rank), 0.0) +
+      COALESCE(1.0 / (%(k)s + keyword_search.rank), 0.0) AS score
+    FROM semantic_search
+    FULL OUTER JOIN keyword_search ON semantic_search.id = keyword_search.id
+    ORDER BY score DESC
+    LIMIT 5
+    """
+
+    with connection.cursor() as cursor:
+        cursor.execute(sql, {'query_text': query_text, 'query_vector': query_vector, "language": language , 'k': k})
+        results = cursor.fetchall()
+    return results
+
+
+@tool("hybrid_search_external_db", args_schema=HybridSreachInput)
+# def hybrid_search_external_db(query_text: str, language: str):
+#     """user query to search"""
+#     embedded = get_vector_from_embedding(query_text)
+#     knowledge_qs = ExternalKnowledge.objects.annotate(
+#         distance=L2Distance("content_embedding", embedded)
+#         ).order_by("distance")[:3]
+#     results = [(knowledge.content, rank) for rank, knowledge in enumerate(knowledge_qs)]
+#     return results
+def hybrid_search_external_db(query_text: str, language: str) -> str:
+    """use user query and embedding query to search"""
+    embedding_query = get_vector_from_embedding(query_text)
+    result = hybrid_search_for_external(query_text, embedding_query, language)
+    full_text = ""
+    for content in result:
+        full_text += str(content[1]) + "\n"
+    return full_text
+
+
+class NoOpInput(BaseModel):
+    info: str = Field(description="Information to process")
+
+@tool("noop_tool", args_schema=NoOpInput)
+def noop_tool(info: str) -> str:
+    """just return the intact info"""
+    return info
+
+class ContentInput(BaseModel):
+    query: str = Field(description="use this query to find similar contents")
+
+@tool("external_content_search", args_schema=ContentInput)
+def external_content_search(query: str) -> str:
+    """Find similar a content information by a query string"""
+    try:
+        embedded = get_vector_from_embedding(query)
+        external_knowledge_qs = ExternalKnowledge.objects.annotate(
+            distance=L2Distance("content_embedding", embedded)
+        ).order_by("distance")[:1]
+        
+        summaries = [internal_knowledge.summary for internal_knowledge in external_knowledge_qs]
+        summary_output = "Similar summary found:\n" + "\n".join(summaries)
+        return summary_output
     
- 
+    except Exception as e:
+        return f"An error occurred: {e}"
+
+
+class InputQuery(BaseModel):
+    """ Input query to search """
+    
+    query: str = Field(description="The user query to search",)
+    
+@tool("multi_query", args_schema=InputQuery)
+def multi_query(query: str) -> str:
+    """based on the user query, create multiple queries to search"""
+    similar_queries =  create_multi_queries(query)     
+    similar_queries.append(f"\noriginal query. {query}")
+    top_knowledge = retrieve_documents_with_rrf(similar_queries)
+            
+    print(top_knowledge[0])
+    
+    context = "".join([content for content, _ in top_knowledge])
+                
+    context = f"According to the knowledge base, {context}. \n question: {query}"
+            
+    return context
+
+
+
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
     "search_data_from_duckduckgo": search_data_from_duckduckgo,
-    "request_data_from_furl": request_data_from_url,
+    "request_data_from_url": request_data_from_url,
     "query_internal_knowledge": query_internal_knowledge,
     "query_external_knowledge": query_external_knowledge,
-    "trace_back": trace_back,
-    "hybrid_search_db": hybrid_search_db,
-
+    "hybrid_search_internal_db": hybrid_search_internal_db,
+    "hybrid_search_external_db": hybrid_search_external_db,
+    "noop_tool": noop_tool,
+    "multi_query": multi_query,
 }

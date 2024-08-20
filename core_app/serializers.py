@@ -4,7 +4,7 @@ from .models import Conversation, SystemPrompt, ExternalKnowledge, Agent, AgentT
 class LlmModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = LlmModel
-        fields = ['id', 'llm_name', 'provider', 'model_version', 'user']  # Exclude api_key for security
+        fields = ['id', 'llm_name', 'provider', 'model_version', 'user', 'api_key']  # Exclude api_key for security
         read_only_fields = ['id', 'user']  # Ensure some fields are read-only
 
 
@@ -27,7 +27,7 @@ class ExternalKnowledgeSerializer(serializers.ModelSerializer):
 class AgentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agent
-        fields = '__all__'
+        fields = ['agent_name', 'llm', 'prompt', 'tools']
         
 class AgentToolSerializer(serializers.ModelSerializer):
     class Meta:
