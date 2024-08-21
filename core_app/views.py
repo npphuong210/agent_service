@@ -16,7 +16,7 @@ import logging
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from core_app.authentication import get_user_instance_by_token
+from core_app.authentication import BearerTokenAuthentication, get_user_instance_by_token
 # class BearerTokenAuthentication(TokenAuthentication):
 #     keyword = 'Bearer'
     
@@ -24,7 +24,7 @@ from core_app.authentication import get_user_instance_by_token
 class LlmModelListCreate(generics.ListCreateAPIView):
     queryset = LlmModel.objects.all().order_by('-updated_at')
     serializer_class = LlmModelSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated] # Ensure user is authenticated
     
     def perform_create(self, serializer):
@@ -39,7 +39,7 @@ llm_list_create = LlmModelListCreate.as_view()
 class LlmModelRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = LlmModel.objects.all().order_by('-updated_at')
     serializer_class = LlmModelSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def perform_update(self, serializer):
@@ -57,6 +57,7 @@ llm_retrieve_update_destroy = LlmModelRetrieveUpdateDestroy.as_view()
 # Create CRUD API views here with Conversation models
 class ConversationListCreate(generics.ListCreateAPIView):
     serializer_class = ConversationSerializer
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
    
     def perform_create(self, serializer):
@@ -86,7 +87,7 @@ conversation_list_create = ConversationListCreate.as_view()
 class ConversationRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Conversation.objects.all().order_by('-updated_at')
     serializer_class = ConversationSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def update(self, request, *args, **kwargs):
@@ -117,7 +118,7 @@ conversion_retrieve_update_destroy = ConversationRetrieveUpdateDestroy.as_view()
 class SystemPromptListCreate(generics.ListCreateAPIView):
     queryset = SystemPrompt.objects.all().order_by('-updated_at')
     serializer_class = SystemPromptSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
 system_prompt_list_create = SystemPromptListCreate.as_view()
@@ -125,7 +126,7 @@ system_prompt_list_create = SystemPromptListCreate.as_view()
 class SystemPromptRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = SystemPrompt.objects.all().order_by('-updated_at')
     serializer_class = SystemPromptSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
 system_prompt_retrieve_update_destroy = SystemPromptRetrieveUpdateDestroy.as_view()
@@ -135,7 +136,7 @@ system_prompt_retrieve_update_destroy = SystemPromptRetrieveUpdateDestroy.as_vie
 class ExternalListCreate(generics.ListCreateAPIView):
     queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def perform_create(self, serializer):
@@ -146,7 +147,7 @@ external_knowledge_list_create = ExternalListCreate.as_view()
 class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
 external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
@@ -155,7 +156,7 @@ external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDest
 class AgentListCreate(generics.ListCreateAPIView):
     queryset = Agent.objects.all().order_by('-updated_at')
     serializer_class = AgentSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def perform_create(self, serializer):
@@ -193,7 +194,7 @@ Agent_list_create = AgentListCreate.as_view()
 class AgentRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = Agent.objects.all().order_by('-updated_at')
     serializer_class = AgentSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def update(self, request, *args, **kwargs):
@@ -223,7 +224,7 @@ Agent_retrieve_update_destroy = AgentRetrieveUpdateDestroy.as_view()
 class AgentToolListCreate(generics.ListCreateAPIView):
     queryset = AgentTool.objects.all().order_by('-updated_at')
     serializer_class = AgentToolSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     def perform_create(self, serializer):
@@ -234,7 +235,7 @@ AgentTool_list_create = AgentToolListCreate.as_view()
 class AgentToolRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = AgentTool.objects.all().order_by('-updated_at')
     serializer_class = AgentToolSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
 AgentTool_retrieve_update_destroy = AgentToolRetrieveUpdateDestroy.as_view()
@@ -242,7 +243,7 @@ AgentTool_retrieve_update_destroy = AgentToolRetrieveUpdateDestroy.as_view()
 logger = logging.getLogger(__name__)
     
 class AgentMessage(generics.CreateAPIView):
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
@@ -275,7 +276,7 @@ class AgentMessage(generics.CreateAPIView):
 agent_answer_message = AgentMessage.as_view()
 
 class AgentAnswerMessageStream(generics.GenericAPIView):
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
     
     @swagger_auto_schema(
@@ -343,7 +344,7 @@ agent_answer_message_stream = AgentAnswerMessageStream.as_view()
 class InternalKnowledgeList(generics.ListAPIView):
     queryset = InternalKnowledge.objects.all()
     serializer_class = InternalKnowledgeSerializer
-    # authentication_classes = [JWTAuthentication]
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
