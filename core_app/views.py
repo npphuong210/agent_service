@@ -17,6 +17,13 @@ from rest_framework.authentication import TokenAuthentication, SessionAuthentica
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from core_app.authentication import BearerTokenAuthentication, get_user_instance_by_token
+from django.shortcuts import render
+
+def home(request):
+    template = "home.html"
+    context = {}
+    return render(request, template, context)
+
 # class BearerTokenAuthentication(TokenAuthentication):
 #     keyword = 'Bearer'
     

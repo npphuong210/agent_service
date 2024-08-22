@@ -28,7 +28,7 @@ from core_app.views import (conversation_list_create, conversion_retrieve_update
                             Agent_list_create, Agent_retrieve_update_destroy,
                             AgentTool_list_create, AgentTool_retrieve_update_destroy,
                             agent_answer_message, agent_answer_message_stream,
-                            llm_list_create, llm_retrieve_update_destroy)
+                            llm_list_create, llm_retrieve_update_destroy, home)
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -42,6 +42,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", home, name="home"),
     path('api/auth/login/', obtain_auth_token, name='api_token_auth'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), 
