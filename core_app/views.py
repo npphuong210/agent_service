@@ -388,4 +388,4 @@ class ExternalKnowledgePost(generics.CreateAPIView):
         # if standard PDF => extract text
         # if scanned PDF => vision LLM model
 
-agent_answer_message = AgentMessage.as_view()
+# agent_answer_message = AgentMessage.as_view()

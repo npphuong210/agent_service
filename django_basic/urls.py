@@ -68,5 +68,5 @@ urlpatterns = [
     path("answer/", agent_answer_message, name="agent-answer-message"),
     path("swagger/", schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 
-    path('api/chat', quick_answer_message, name='quick-answer-message')
+    # path('api/chat', quick_answer_message, name='quick-answer-message')
 ]
