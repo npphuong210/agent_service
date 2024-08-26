@@ -139,26 +139,6 @@ class SystemPromptRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
 system_prompt_retrieve_update_destroy = SystemPromptRetrieveUpdateDestroy.as_view()
 
 
-# create CRUD API views here with ExternalKnowledge models
-class ExternalListCreate(generics.ListCreateAPIView):
-    queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
-    serializer_class = ExternalKnowledgeSerializer
-    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user) # Lưu đối tượng với user_instance
-
-external_knowledge_list_create = ExternalListCreate.as_view()
-
-class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
-    serializer_class = ExternalKnowledgeSerializer
-    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
-
 # create CRUD API views here with Agent models
 class AgentListCreate(generics.ListCreateAPIView):
     queryset = Agent.objects.all().order_by('-updated_at')
@@ -360,3 +340,52 @@ class InternalKnowledgeList(generics.ListAPIView):
         
         # Lọc theo user và agent (nếu có)
         return InternalKnowledge.objects.filter(user=user, agent_id=agent_id)
+
+
+class ExternalKnowledgeList(generics.ListAPIView):
+    queryset = LlmModel.objects.all().order_by('-updated_at')
+    serializer_class = LlmModelSerializer
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    permission_classes = [IsAuthenticated]  # Ensure user is authenticated
+
+    def get_queryset(self):
+        # Filter LlmModel objects to only those belonging to the logged-in user
+        return LlmModel.objects.filter(user=self.request.user).order_by('-updated_at')
+
+
+external_knowledge_list = ExternalKnowledgeList.as_view()
+
+
+class LlmModelRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = LlmModel.objects.all().order_by('-updated_at')
+    serializer_class = LlmModelSerializer
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.user:
+            raise PermissionDenied("You do not have permission to perform this action.")
+        serializer.save()
+
+    def get_queryset(self):
+        # Filter LlmModel objects to only those belonging to the logged-in user
+        return LlmModel.objects.filter(user=self.request.user).order_by('-updated_at')
+
+external_knowledge_retrieve_update_destroy = LlmModelRetrieveUpdateDestroy.as_view()
+
+
+class ExternalKnowledgePost(generics.CreateAPIView):
+    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        # check header request type must be form-data and get file from request
+        if request.content_type != 'multipart/form-data':
+            return Response({"error": "Request must be form-data"}, status=status.HTTP_400_BAD_REQUEST)
+        file = request.FILES.get('file') # binary file
+
+        # read pdf file by binary
+        # if standard PDF => extract text
+        # if scanned PDF => vision LLM model
+
+agent_answer_message = AgentMessage.as_view()
