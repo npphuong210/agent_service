@@ -19,6 +19,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from core_app.authentication import BearerTokenAuthentication, get_user_instance_by_token
 from django.shortcuts import render
 from rest_framework.parsers import MultiPartParser, FormParser
+from core_app.pdf_classify.pdf_classify import is_scanned_pdf
 
 def home(request):
     template = "home.html"
@@ -433,8 +434,15 @@ class ExternalKnowledgePost(generics.CreateAPIView):
         chapter = request.data.get('chapter')
         file = open(destination_path, 'rb')
         pdf = file.read()
-        # if standard PDF => extract text
-        # if scanned PDF => vision LLM model
+        
+        if is_scanned_pdf(pdf):
+            # if scanned PDF => vision LLM model
+            print("Đây là PDF được scan.")
+        else:
+            # if standard PDF => extract text
+            print("Đây là PDF chuẩn.")
+            
+            
                 
         return Response({"message": "success"}, status=status.HTTP_200_OK)
 
