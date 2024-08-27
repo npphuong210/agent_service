@@ -20,7 +20,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from core_app.authentication import BearerTokenAuthentication, get_user_instance_by_token
 from django.shortcuts import render
 from rest_framework.parsers import MultiPartParser, FormParser
-from core_app.pdf_classify.pdf_classify import is_scanned_pdf
+from core_app.pdf_classify.pdf_classify import is_scanned_pdf,  process_scanned_pdf_with_llm
 from pdfminer.high_level import extract_text
 
 def home(request):
@@ -438,6 +438,10 @@ class ExternalKnowledgePost(generics.CreateAPIView):
         if is_scanned_pdf(pdf):
             # if scanned PDF => vision LLM model
             print("Đây là PDF được scan.")
+
+            vision_result = process_scanned_pdf_with_llm(pdf)
+
+            return Response({"message": "success", "vision_result": vision_result}, status=status.HTTP_200_OK)
             
             return Response({"message": "success"}, status=status.HTTP_200_OK)
         else:
