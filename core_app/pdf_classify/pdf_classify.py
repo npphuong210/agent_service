@@ -3,6 +3,11 @@ import pytesseract
 from pdfminer.high_level import extract_text
 from PIL import Image
 from io import BytesIO
+from .vision_model import VisionLLMModel  # Import the VisionLLMModel
+
+
+# Instantiate the model
+vision_llm_model = VisionLLMModel()
 
 # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
@@ -35,3 +40,34 @@ def is_scanned_pdf(pdf_binary):
         print(f"Error using PyMuPDF or Tesseract: {e}")
 
     return True  # Assume it's scanned if no text found
+
+
+def process_scanned_pdf_with_llm(pdf_binary):
+    """
+    Process a scanned PDF using a vision LLM model.
+
+    :param pdf_binary: The binary data of the scanned PDF.
+    :return: Processed result from the vision LLM model.
+    """
+    # Convert the binary PDF to images (one image per page)
+    file_like_object = BytesIO(pdf_binary)
+    pdf_document = fitz.open("pdf", file_like_object)
+    images = []
+
+    for page_num in range(len(pdf_document)):
+        page = pdf_document.load_page(page_num)
+        pix = page.get_pixmap()
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        images.append(img)
+    
+    # Process the images with your vision LLM model
+    print("Processing the scanned PDF with vision LLM...")
+    
+    result = []
+    for img in images:
+        model_result = vision_llm_model.predict(img)
+        result.append(model_result)
+    
+    combined_result = "\n".join(result)
+    
+    return combined_result
