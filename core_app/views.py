@@ -347,20 +347,19 @@ class InternalKnowledgeList(generics.ListAPIView):
 
 
 class ExternalKnowledgeList(generics.ListAPIView):
-    queryset = LlmModel.objects.all().order_by('-updated_at')
+    queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
     authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]  # Ensure user is authenticated
 
     def get_queryset(self):
-        # Filter LlmModel objects to only those belonging to the logged-in user
-        return LlmModel.objects.filter(user=self.request.user).order_by('-updated_at')
+        return ExternalKnowledge.objects.filter(user=self.request.user).order_by('-updated_at')
 
 
 external_knowledge_list = ExternalKnowledgeList.as_view()
 
 class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
-    queryset = LlmModel.objects.all().order_by('-updated_at')
+    queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
     authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -372,7 +371,7 @@ class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIVi
 
     def get_queryset(self):
         # Filter LlmModel objects to only those belonging to the logged-in user
-        return LlmModel.objects.filter(user=self.request.user).order_by('-updated_at')
+        return ExternalKnowledge.objects.filter(user=self.request.user).order_by('-updated_at')
 
 external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
 
