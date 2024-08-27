@@ -24,11 +24,12 @@ from rest_framework import permissions
 from core_app.chat_views import quick_answer_message
 from core_app.views import (conversation_list_create, conversion_retrieve_update_destroy,  
                             system_prompt_list_create, system_prompt_retrieve_update_destroy,
-                            external_knowledge_list_create, external_knowledge_retrieve_update_destroy,
                             Agent_list_create, Agent_retrieve_update_destroy,
                             AgentTool_list_create, AgentTool_retrieve_update_destroy,
                             agent_answer_message, agent_answer_message_stream,
-                            llm_list_create, llm_retrieve_update_destroy, home)
+                            llm_list_create, llm_retrieve_update_destroy, home,
+                            external_knowledge_post, external_knowledge_list, external_knowledge_retrieve_update_destroy)
+
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -53,8 +54,9 @@ urlpatterns = [
     path("system-prompt/", system_prompt_list_create, name="system-prompt-list-create"),
     path("system-prompt/<uuid:pk>/", system_prompt_retrieve_update_destroy, name="system-prompt-retrieve-update-destroy"),
     
-    path("external-knowledge/", external_knowledge_list_create, name="external-knowledge-list-create"),
+    path("external-knowledge/", external_knowledge_list, name="external-knowledge-list-create"),
     path("external-knowledge/<uuid:pk>/", external_knowledge_retrieve_update_destroy, name="external-knowledge-retrieve-update-destroy"),
+    path("external-knowledge-post/", external_knowledge_post, name="external-knowledge-post"),
     
     path("agent/", Agent_list_create, name="agent-list-create"),
     path("agent/<uuid:pk>/", Agent_retrieve_update_destroy, name="agent-retrieve-update-destroy"),

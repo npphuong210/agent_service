@@ -3,7 +3,7 @@ from rest_framework import generics, status, permissions
 from django.core.exceptions import PermissionDenied
 from rest_framework.response import Response
 from .models import Conversation, SystemPrompt, ExternalKnowledge, InternalKnowledge, Agent, AgentTool, LlmModel
-from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer, AgentSerializer, AgentToolSerializer, LlmModelSerializer, InternalKnowledgeSerializer
+from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer, AgentSerializer, AgentToolSerializer, LlmModelSerializer, InternalKnowledgeSerializer, ExternalKnowledgePostSerializer
 from core_app.chat_service.AgentMessage import get_message_from_agent, get_streaming_agent_instance
 from core_app.extract import extract
 from drf_yasg.utils import swagger_auto_schema
@@ -18,6 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from core_app.authentication import BearerTokenAuthentication, get_user_instance_by_token
 from django.shortcuts import render
+from rest_framework.parsers import MultiPartParser, FormParser
 
 def home(request):
     template = "home.html"
@@ -344,7 +345,7 @@ class InternalKnowledgeList(generics.ListAPIView):
 
 class ExternalKnowledgeList(generics.ListAPIView):
     queryset = LlmModel.objects.all().order_by('-updated_at')
-    serializer_class = LlmModelSerializer
+    serializer_class = ExternalKnowledgeSerializer
     authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]  # Ensure user is authenticated
 
@@ -356,9 +357,9 @@ class ExternalKnowledgeList(generics.ListAPIView):
 external_knowledge_list = ExternalKnowledgeList.as_view()
 
 
-class LlmModelRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = LlmModel.objects.all().order_by('-updated_at')
-    serializer_class = LlmModelSerializer
+    serializer_class = ExternalKnowledgeSerializer
     authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -371,21 +372,72 @@ class LlmModelRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
         # Filter LlmModel objects to only those belonging to the logged-in user
         return LlmModel.objects.filter(user=self.request.user).order_by('-updated_at')
 
-external_knowledge_retrieve_update_destroy = LlmModelRetrieveUpdateDestroy.as_view()
+external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
 
 
 class ExternalKnowledgePost(generics.CreateAPIView):
-    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    #authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    #permission_classes = [IsAuthenticated]
+    
+    serializer_class = ExternalKnowledgePostSerializer
+    
+    parser_classes = (MultiPartParser, FormParser)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                "subject",
+                openapi.IN_FORM,
+                description="subject of pdf file",
+                type=openapi.TYPE_STRING,
+                required=True,
+            ),
+            openapi.Parameter(
+                "chapter",
+                openapi.IN_FORM,
+                description="chapter of pdf file",
+                type=openapi.TYPE_STRING,
+                required=True,
+            ),
+            openapi.Parameter(
+                "file",
+                openapi.IN_FORM,
+                description="File to upload",
+                type=openapi.TYPE_FILE,
+                required=True,
+            ),
+        ],
+        responses={
+            200: openapi.Response("Successful response", schema=openapi.Schema(type=openapi.TYPE_OBJECT)),
+            400: "Bad Request - Can not upload file",
+        },
+        consumes=["multipart/form-data"],
+    )
 
     def post(self, request, *args, **kwargs):
-        # check header request type must be form-data and get file from request
-        if request.content_type != 'multipart/form-data':
-            return Response({"error": "Request must be form-data"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         file = request.FILES.get('file') # binary file
+        
+        if file:
+            name = file.name
+            destination_path = f"data/{name}"
+            with open(destination_path, 'wb+') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
 
         # read pdf file by binary
+        subject = request.data.get('subject')
+        chapter = request.data.get('chapter')
+        file = open(destination_path, 'rb')
+        pdf = file.read()
         # if standard PDF => extract text
         # if scanned PDF => vision LLM model
+                
+        return Response({"message": "success"}, status=status.HTTP_200_OK)
 
+
+external_knowledge_post = ExternalKnowledgePost.as_view()
 # agent_answer_message = AgentMessage.as_view()

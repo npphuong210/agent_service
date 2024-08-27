@@ -38,3 +38,9 @@ class InternalKnowledgeSerializer(serializers.ModelSerializer):
     class Meta:
         model = InternalKnowledge
         fields = '__all__'
+
+        
+class ExternalKnowledgePostSerializer(serializers.Serializer):
+    subject = serializers.CharField(required=True)
+    chapter = serializers.CharField(required=True)
+    file = serializers.FileField(required=True)
