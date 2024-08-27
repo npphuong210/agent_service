@@ -353,7 +353,7 @@ class ExternalKnowledgeList(generics.ListAPIView):
     permission_classes = [IsAuthenticated]  # Ensure user is authenticated
 
     def get_queryset(self):
-        return ExternalKnowledge.objects.filter(user=self.request.user).order_by('-updated_at')
+        return ExternalKnowledge.objects.all().order_by('-updated_at')
 
 
 external_knowledge_list = ExternalKnowledgeList.as_view()
@@ -371,7 +371,7 @@ class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIVi
 
     def get_queryset(self):
         # Filter LlmModel objects to only those belonging to the logged-in user
-        return ExternalKnowledge.objects.filter(user=self.request.user).order_by('-updated_at')
+        return ExternalKnowledge.objects.all().order_by('-updated_at')
 
 external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
 
