@@ -1,3 +1,4 @@
+from io import BytesIO
 from django.shortcuts import render
 from rest_framework import generics, status, permissions
 from django.core.exceptions import PermissionDenied
@@ -20,6 +21,7 @@ from core_app.authentication import BearerTokenAuthentication, get_user_instance
 from django.shortcuts import render
 from rest_framework.parsers import MultiPartParser, FormParser
 from core_app.pdf_classify.pdf_classify import is_scanned_pdf
+from pdfminer.high_level import extract_text
 
 def home(request):
     template = "home.html"
@@ -357,7 +359,6 @@ class ExternalKnowledgeList(generics.ListAPIView):
 
 external_knowledge_list = ExternalKnowledgeList.as_view()
 
-
 class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = LlmModel.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
@@ -438,13 +439,18 @@ class ExternalKnowledgePost(generics.CreateAPIView):
         if is_scanned_pdf(pdf):
             # if scanned PDF => vision LLM model
             print("Đây là PDF được scan.")
+            
+            return Response({"message": "success"}, status=status.HTTP_200_OK)
         else:
             # if standard PDF => extract text
             print("Đây là PDF chuẩn.")
+            file_like_object = BytesIO(pdf)
+            text = extract_text(file_like_object)
             
+            knowledge = ExternalKnowledge(subject=subject, chapter=chapter, content=text)
+            knowledge.save()
             
-                
-        return Response({"message": "success"}, status=status.HTTP_200_OK)
+            return Response({"message": "success"}, status=status.HTTP_200_OK)
 
 
 external_knowledge_post = ExternalKnowledgePost.as_view()
