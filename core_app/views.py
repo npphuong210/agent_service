@@ -443,7 +443,6 @@ class ExternalKnowledgePost(generics.CreateAPIView):
 
             return Response({"message": "success", "vision_result": vision_result}, status=status.HTTP_200_OK)
             
-            return Response({"message": "success"}, status=status.HTTP_200_OK)
         else:
             # if standard PDF => extract text
             print("Đây là PDF chuẩn.")
