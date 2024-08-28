@@ -20,7 +20,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from core_app.authentication import BearerTokenAuthentication, get_user_instance_by_token
 from django.shortcuts import render
 from rest_framework.parsers import MultiPartParser, FormParser
-from core_app.pdf_classify.pdf_classify import is_scanned_pdf
+from core_app.pdf_classify.pdf_classify import is_scanned_pdf,  process_scanned_pdf_with_llm
 from pdfminer.high_level import extract_text
 
 def home(request):
@@ -349,11 +349,9 @@ class InternalKnowledgeList(generics.ListAPIView):
 class ExternalKnowledgeList(generics.ListAPIView):
     queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
-    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    permission_classes = [IsAuthenticated]  # Ensure user is authenticated
+    # authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    # permission_classes = [IsAuthenticated]  # Ensure user is authenticated
 
-    def get_queryset(self):
-        return ExternalKnowledge.objects.filter(user=self.request.user).order_by('-updated_at')
 
 
 external_knowledge_list = ExternalKnowledgeList.as_view()
@@ -361,24 +359,16 @@ external_knowledge_list = ExternalKnowledgeList.as_view()
 class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
-    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    # permission_classes = [IsAuthenticated]
 
-    def perform_update(self, serializer):
-        if self.request.user != serializer.instance.user:
-            raise PermissionDenied("You do not have permission to perform this action.")
-        serializer.save()
-
-    def get_queryset(self):
-        # Filter LlmModel objects to only those belonging to the logged-in user
-        return ExternalKnowledge.objects.filter(user=self.request.user).order_by('-updated_at')
 
 external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
 
 
 class ExternalKnowledgePost(generics.CreateAPIView):
-    #authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    #permission_classes = [IsAuthenticated]
+    # authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    # permission_classes = [IsAuthenticated]
     
     serializer_class = ExternalKnowledgePostSerializer
     
@@ -419,6 +409,7 @@ class ExternalKnowledgePost(generics.CreateAPIView):
         
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        print("pass test")
 
         file = request.FILES.get('file') # binary file
         
@@ -438,8 +429,16 @@ class ExternalKnowledgePost(generics.CreateAPIView):
         if is_scanned_pdf(pdf):
             # if scanned PDF => vision LLM model
             print("Đây là PDF được scan.")
+
+            vision_result = process_scanned_pdf_with_llm(pdf)
             
-            return Response({"message": "success"}, status=status.HTTP_200_OK)
+            print("sdsadasdas", vision_result)
+            
+            knowledge = ExternalKnowledge(subject=subject, chapter=chapter, content=vision_result)
+            knowledge.save()
+
+            return Response({"message": "success", "vision_result": vision_result}, status=status.HTTP_200_OK)
+            
         else:
             # if standard PDF => extract text
             print("Đây là PDF chuẩn.")
