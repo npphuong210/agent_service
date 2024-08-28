@@ -9,29 +9,18 @@ from langchain_core.output_parsers import JsonOutputParser
 from io import BytesIO
 from PIL import Image
 
-# Set verbose logging for LangChain
 globals.set_debug(True)
 
-# Step 1: Define the function to encode the image as base64
 def encode_image(image: Image.Image) -> dict:
     """Encode a PIL image as base64 and return in a dict with a proper format."""
     buffered = BytesIO()
     image.save(buffered, format="JPEG")
     image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
     
-    # The correct structure expected by the API
     return {
         "url": f"data:image/jpeg;base64,{image_base64}"
     }
 
-# Step 2: Define the Pydantic model for the expected output structure
-# class ImageInformation(BaseModel):
-#     """Information about an image."""
-#     image_description: str = Field(description="A short description of the image")
-#     people_count: int = Field(description="Number of humans in the picture")
-#     main_objects: list[str] = Field(description="List of the main objects in the picture")
-
-# Step 3: Create the chain that invokes the model with the prompt and image
 @chain
 def image_model(inputs: dict) -> str | list[str] | dict:
     """Invoke model with image and prompt."""
@@ -48,10 +37,8 @@ def image_model(inputs: dict) -> str | list[str] | dict:
     )
     return msg.content
 
-# Step 4: Define the output parser using the Pydantic model
 # parser = JsonOutputParser(pydantic_object=ImageInformation)
 
-# Step 5: Orchestrate the entire process in one function
 def get_image_informations(image: Image.Image) -> dict:
     vision_prompt = """
     Given the image, provide the following information:

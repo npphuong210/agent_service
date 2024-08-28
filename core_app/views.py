@@ -432,7 +432,9 @@ class ExternalKnowledgePost(generics.CreateAPIView):
 
             vision_result = process_scanned_pdf_with_llm(pdf)
             
-            print("sdsadasdas", vision_result)
+            print("#"*50)
+            print(vision_result)
+            print("#"*50)
             
             knowledge = ExternalKnowledge(subject=subject, chapter=chapter, content=vision_result)
             knowledge.save()
