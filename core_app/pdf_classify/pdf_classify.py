@@ -9,7 +9,7 @@ from .vision_model import get_image_informations  # Import the VisionLLMModel
 # Instantiate the model
 # vision_llm_model = VisionLLMModel()
 
-# pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def is_scanned_pdf(pdf_binary):
     # Create a file-like object from the binary data
@@ -64,10 +64,11 @@ def process_scanned_pdf_with_llm(pdf_binary):
             image_bytes = base_image["image"]
             img = Image.open(BytesIO(image_bytes))
             
-            # Process the image using the get_image_informations function
+            # Process the image using the Vision LLM model
             result = get_image_informations(img)
             results.append(result)
-    
+
+    # Combine all results into a single string
     combined_result = "\n".join(results)
     
     return combined_result

@@ -441,7 +441,11 @@ class ExternalKnowledgePost(generics.CreateAPIView):
 
             vision_result = process_scanned_pdf_with_llm(pdf)
 
-            return Response({"message": "success", "vision_result": vision_result}, status=status.HTTP_200_OK)
+            # Store the extracted text in the database
+            knowledge = ExternalKnowledge(subject=subject, chapter=chapter, content=vision_result)
+            knowledge.save()
+
+            return Response({"message": "success"}, status=status.HTTP_200_OK)
             
         else:
             # if standard PDF => extract text
