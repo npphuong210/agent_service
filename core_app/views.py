@@ -349,11 +349,9 @@ class InternalKnowledgeList(generics.ListAPIView):
 class ExternalKnowledgeList(generics.ListAPIView):
     queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
-    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    permission_classes = [IsAuthenticated]  # Ensure user is authenticated
+    # authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    # permission_classes = [IsAuthenticated]  # Ensure user is authenticated
 
-    def get_queryset(self):
-        return ExternalKnowledge.objects.all().order_by('-updated_at')
 
 
 external_knowledge_list = ExternalKnowledgeList.as_view()
@@ -361,24 +359,16 @@ external_knowledge_list = ExternalKnowledgeList.as_view()
 class ExternalKnowledgeRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = ExternalKnowledge.objects.all().order_by('-updated_at')
     serializer_class = ExternalKnowledgeSerializer
-    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    # permission_classes = [IsAuthenticated]
 
-    def perform_update(self, serializer):
-        if self.request.user != serializer.instance.user:
-            raise PermissionDenied("You do not have permission to perform this action.")
-        serializer.save()
-
-    def get_queryset(self):
-        # Filter LlmModel objects to only those belonging to the logged-in user
-        return ExternalKnowledge.objects.all().order_by('-updated_at')
 
 external_knowledge_retrieve_update_destroy = ExternalKnowledgeRetrieveUpdateDestroy.as_view()
 
 
 class ExternalKnowledgePost(generics.CreateAPIView):
-    #authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    #permission_classes = [IsAuthenticated]
+    # authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    # permission_classes = [IsAuthenticated]
     
     serializer_class = ExternalKnowledgePostSerializer
     
@@ -419,6 +409,7 @@ class ExternalKnowledgePost(generics.CreateAPIView):
         
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        print("pass test")
 
         file = request.FILES.get('file') # binary file
         
@@ -440,6 +431,11 @@ class ExternalKnowledgePost(generics.CreateAPIView):
             print("Đây là PDF được scan.")
 
             vision_result = process_scanned_pdf_with_llm(pdf)
+            
+            print("sdsadasdas", vision_result)
+            
+            knowledge = ExternalKnowledge(subject=subject, chapter=chapter, content=vision_result)
+            knowledge.save()
 
             return Response({"message": "success", "vision_result": vision_result}, status=status.HTTP_200_OK)
             
