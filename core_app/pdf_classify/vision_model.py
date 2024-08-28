@@ -9,6 +9,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from io import BytesIO
 from PIL import Image
 
+
 # globals.set_debug(True)
 
 def encode_image(image: Image.Image) -> dict:
@@ -57,4 +58,6 @@ def get_image_informations(image: Image.Image) -> dict:
     return vision_chain.invoke({
         'image': image_data,
         'prompt': vision_prompt
+
     })
+

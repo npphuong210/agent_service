@@ -15,7 +15,6 @@ def is_scanned_pdf(pdf_binary):
     # Create a file-like object from the binary data
     file_like_object = BytesIO(pdf_binary)
 
-    # Try to extract text using pdfminer
     try:
         text = extract_text(file_like_object)
         if text.strip():
@@ -23,9 +22,8 @@ def is_scanned_pdf(pdf_binary):
     except Exception as e:
         print(f"Error using pdfminer to extract text: {e}")
 
-    # If text extraction fails, use PyMuPDF to check for images and run OCR
     try:
-        file_like_object.seek(0)  # Reset the pointer to the beginning of the file
+        file_like_object.seek(0)
         pdf_document = fitz.open("pdf", file_like_object)
         
         for page_num in range(len(pdf_document)):
@@ -39,7 +37,9 @@ def is_scanned_pdf(pdf_binary):
     except Exception as e:
         print(f"Error using PyMuPDF or Tesseract: {e}")
 
+
     return True  # Assume it's scanned if no text found
+
 
 
 def process_scanned_pdf_with_llm(pdf_binary):
@@ -63,12 +63,11 @@ def process_scanned_pdf_with_llm(pdf_binary):
             base_image = pdf_document.extract_image(xref)
             image_bytes = base_image["image"]
             img = Image.open(BytesIO(image_bytes))
-            
-            # Process the image using the Vision LLM model
+    
+            # Process the image using the get_image_informations function
             result = get_image_informations(img)
             results.append(result)
-
-    # Combine all results into a single string
+    
     combined_result = "\n".join(results)
     
     return combined_result

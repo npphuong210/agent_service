@@ -43,7 +43,7 @@ class LlmModel(CommonModel):
     llm_name = models.CharField(max_length=100)
     provider = models.CharField(max_length=100)
     model_version = models.CharField(max_length=100) # gpt 3.5
-    api_key = models.CharField(max_length=100)
+    api_key = models.CharField(max_length=250)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
 
     def __str__(self):
