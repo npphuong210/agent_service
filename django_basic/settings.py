@@ -14,6 +14,7 @@ from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
+load_dotenv(".env", override=True)
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
