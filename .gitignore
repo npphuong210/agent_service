@@ -12,6 +12,7 @@ core_app/migrations/
 /RAG
 /RAG-v1
 /migrations
+/images
 
 # Local History for Visual Studio Code
 .history/

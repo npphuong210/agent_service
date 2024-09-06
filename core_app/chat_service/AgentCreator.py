@@ -29,14 +29,12 @@ class AgentCreator:
         if is_use_internal_knowledge:
             self.hidden_prompt = f"""
                     If you can use the information from the chat_history to answer, you don't need to use the tools. If not, must use these tools to get information and only use 1 tool. Don't make things up. \n
-                    Being flexible between using the tools 'query_internal_knowledge', 'query_external_knowledge' and 'trace_back' based on the use case of the tools is key to success.\n
-                    Use case for 'query_external_knowledge':
-                    In case the question has never been asked before or not related to the past questions, you are given a list of {subject} and {chapter} to choose from, you can use the 'query_external_knowledge' tool to get the information from the external knowledge table.\n
+                    Being flexible between using the tools 'query_internal_knowledge', 'external_content_search' based on the use case of the tools is key to success.\n
+                    Use case for 'external_content_search':
+                    In case the question has never been asked before or not related to the past questions, you can use the 'external_content_search' tool to get the information from the external knowledge base.\n
                     Use case for 'query_internal_knowledge' with user: {user}, agent: {agent}:
                     1/ If the question has been asked before or so similar to the past questions, you will answer the question exactly the same as the past question.\n
                     2/ If the question is likely related to the past questions, you will get the information from the internal knowledge table and use that information to help answer the question.\n
-                    Use case of 'trace_back':
-                    If i ask about what did i ask before or something similar, you can use the 'trace_back' tool to get the information from the past conversation and answer the question.\n
                     IMPORTANT: Always answer the question in the language of the user message. \n                
                     """
         else:
@@ -48,15 +46,16 @@ class AgentCreator:
             #         IMPORTANT: Always answer the question in the language of the user message. \n
             #     """
             self.hidden_prompt = """
-            use 'multi_query' tool to generate multiple perspectives on the user question, your goal is to help the user overcome some of the limitations of the distance-based similarity search.
+                use the tools to get information and only use 1 tool. Don't make things up. \n
+
             """
 
     def load_tools(self):
         tools = []
         if self.is_use_internal_knowledge:
-            hidden_tools = ["query_internal_knowledge", "query_external_knowledge"]
+            hidden_tools = ["query_internal_knowledge", "external_content_search"]
         else:
-            hidden_tools = ["multi_query"]
+            hidden_tools = ["external_content_search"]
             
         for hidden_tool in hidden_tools:
             tools.append(tool_mapping[hidden_tool])
