@@ -1,4 +1,5 @@
-core_app/migrations/
+!core_app/migrations/__initi__.py
+core_app/migrations/*
 *.ipynb
 ### VisualStudioCode template
 .vscode/*
@@ -9,10 +10,7 @@ core_app/migrations/
 !.vscode/*.code-snippets
 
 # Nonsense files
-/RAG
-/RAG-v1
-/migrations
-/images
+images/*
 
 # Local History for Visual Studio Code
 .history/
