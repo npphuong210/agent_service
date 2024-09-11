@@ -7,6 +7,7 @@ from core_app.models import Conversation, InternalKnowledge
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from core_app.chat_service.AgentCreator import run_chatbot, AgentCreator
 from core_app.extract import extract
+from core_app.embedding.graph_embedding import graph_embedding
 
 def load_llm_model(provider="google"):
     if provider == "google":
@@ -68,7 +69,7 @@ def get_message_from_agent(conversation_id, user_message):
 
     # Chạy agent
     print("run_chatbot")
-    output_message, format_output = run_chatbot(
+    output_message = run_chatbot(
         user_message, chat_history, agent_role=role, llm_id=llm_id, prompt_content=prompt_content, user_tools=user_tools, user=user, agent=agent, is_use_internal_knowledge=is_use_internal_knowledge)
     
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
@@ -76,30 +77,14 @@ def get_message_from_agent(conversation_id, user_message):
 
     conversation_instance.save()
     
-    if not is_use_internal_knowledge:
-        response = {
-            "ai_message": output_message,
-            "human_message": user_message,
-        }
-        return response
-    else:
-        extracted_info = extract(format_output)
-        # Save the extracted information to the database
-        extracted_data = InternalKnowledge(
-            summary=extracted_info['summary'],
-            question=user_message,
-            user = conversation_instance.agent.user,
-            agent = conversation_instance.agent
-            )
+    graph_embedding(user, user_message, output_message)
+    
+    response = {
+        "ai_message": output_message,
+        "human_message": user_message,
+    }
         
-        extracted_data.save()
-        
-        response = {
-            "ai_message": output_message,
-            "human_message": user_message,
-            "summary": extracted_info['summary'],
-        }
-        return response
+    return response
 
 def get_streaming_agent_instance(conversation_id):
 

@@ -22,3 +22,6 @@ pymupdf
 pytesseract
 pdfminer.six
 Pillow
+neo4j
+neomodel
+langchain_experimental

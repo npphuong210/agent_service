@@ -8,8 +8,7 @@ from .agent_tool import tool_mapping
 from core_app.models import ExternalKnowledge, LlmModel
 from langchain_core.output_parsers import StrOutputParser
 from core_app.external.external_tool import retrieve_documents_with_rrf, RouteQuery, CheckValidQuery
-from core_app.models import ExternalKnowledge
-from .FormatChain import format_chain
+from core_app.models import ExternalKnowledge 
 
 class AgentCreator:
     def __init__(self, agent_name: str, llm_id: str, prompt_content: str, tools: list[str], user: int, agent: str, is_use_internal_knowledge: bool = True):
@@ -46,7 +45,6 @@ class AgentCreator:
             #         IMPORTANT: Always answer the question in the language of the user message. \n
             #     """
             self.hidden_prompt = """
-                use the tools to get information and only use 1 tool. Don't make things up. \n
 
             """
 
@@ -122,6 +120,5 @@ def run_chatbot(input_text, chat_history, agent_role, llm_id, prompt_content="",
     agent_instance = AgentCreator(agent_name=agent_role, llm_id=llm_id, prompt_content=prompt_content, tools=user_tools, user=user, agent=agent, is_use_internal_knowledge=is_use_internal_knowledge)
     #input_text = agent_instance.create_multi_queries(input_text)
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
-    format_output = format_chain(output_message)
-
-    return output_message, format_output
+    
+    return output_message
