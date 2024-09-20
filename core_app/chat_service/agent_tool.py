@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 duckduckgosearch = DuckDuckGoSearchRun()
 
-
 class DuckDuckGoSearchInput(BaseModel):
     query: str = Field(description="query to search on duckduckgo")
     
@@ -29,7 +28,6 @@ wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper())
 class QueryInput(BaseModel):
     query: str = Field(description="query to look up on wikipedia")
 
-
 @tool("query_data_from_wikipedia", args_schema=QueryInput)
 def query_data_from_wikipedia(query: str) -> str:
     """Get data from wikipedia."""
@@ -39,7 +37,6 @@ def query_data_from_wikipedia(query: str) -> str:
 class RequestInput(BaseModel):
     url: str = Field(description="URL to request from")
     type: str = Field(description="GET or POST")
-
 
 @tool("request_data_from_url", args_schema=RequestInput)
 def request_data_from_url(url: str, type: str) -> str:
@@ -147,26 +144,22 @@ def external_content_search(query: str, max_results: int = 3) -> str:
 
 class InputQuery(BaseModel):
     """ Input query to search """
-    
     query: str = Field(description="The user query to search",)
     
 @tool("multi_query", args_schema=InputQuery)
 def multi_query(query: str) -> str:
-    """based on the user query, create multiple queries to search"""
-    similar_queries =  create_multi_queries(query)     
-    similar_queries.append(f"\noriginal query. {query}")
-    top_knowledge = retrieve_documents_with_rrf(similar_queries)
-            
-    print(top_knowledge[0])
-    
-    context = "".join([content for content, _ in top_knowledge])
-                
-    context = f"According to the knowledge base, {context}. \n question: {query}"
-            
-    return context
+    try:
+        """based on the user query, create multiple queries to search"""
+        similar_queries =  create_multi_queries(query)     
+        similar_queries.append(f"\noriginal query. {query}")
+        top_knowledge = retrieve_documents_with_rrf(similar_queries)
+        context = "".join([content for content, _ in top_knowledge])       
+        context = f"According to the knowledge base, {context}. \n question: {query}"    
+        return context
+    except Exception as e:
+        return "Don't have any information"
 
-
-
+# list of tool
 tool_mapping = {
     "query_data_from_wikipedia": query_data_from_wikipedia,
     "search_data_from_duckduckgo": search_data_from_duckduckgo,

@@ -20,68 +20,47 @@ class InsightRouterQuery(BaseModel):
 
 def HasInsight(Q, A):
     structure_llm = llm.with_structured_output(InsightRouterQuery)
-    
     system = "You are an expert at deciding a QA pair has insight or not"
-    
     prompt = ChatPromptTemplate.from_messages([
         ('system', system),
         ('human', "{question}")
     ])
     
     router = prompt | structure_llm
-    
     question = f"QA pair: \nQ:{Q} \nA:{A}"
-    
     result = router.invoke({"question": question})
-    
     return result.isinsight
 
 def get_insight_QA(user_message, answer):
     
-    template = "Your role gets important information from QA pair below and add proper context make sure it better for graph embedding: \
+    template = "Your role gets important information from QA pair below and add proper context make sure it better for graph embedding and remember: context you added that it is true from QA. \
         \nQ: {question} \nA: {answer} \
         "
-        
     format_prompt = PromptTemplate(
         template = template,
         input_variables=["question", "answer"],
     )
-    
     chain = format_prompt | llm 
-    
     output = chain.invoke({'question' :  user_message, 'answer': answer})
-    
     return output.content
 
 
 def graph_embedding(user_id, user_message, answer):
-    
     isinsight = HasInsight(user_message, answer)
-    
     if isinsight == 'no':
-        
         insight = get_insight_QA(user_message, answer)
-
         lm_transformer = LLMGraphTransformer(llm=llm)
-
         graph = Neo4jGraph(url=os.getenv("NEO4J_URI"), username=os.getenv("NEO4J_USERNAME"), password=os.getenv("NEO4J_PASSWORD"))
-        
         content = f"""
         user_{user_id} has information: {insight}
         """
-
         doc = [Document(page_content=content)]
-
         graph_doc = lm_transformer.convert_to_graph_documents(doc)
-        
         graph.add_graph_documents(graph_doc)
-        
         print("Has isinsight")
-        
         return True
     
     else:
-        
         print("Do not have insight")
         return False
     
