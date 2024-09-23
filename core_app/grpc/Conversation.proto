@@ -4,6 +4,9 @@ package Conversation;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "Agent.proto";
+import "User.proto";
+import "UUID.proto";
 
 service ConversationController {
     rpc List(ConversationListRequest) returns (stream Conversation) {}
@@ -13,13 +16,18 @@ service ConversationController {
     rpc Destroy(Conversation) returns (google.protobuf.Empty) {}
 }
 
+message Chathistory {
+    string content = 1;
+    string message_type = 2;
+}
+
 message Conversation {
-    string id = 1;
-    string chat_history = 2;
+    UUID id = 1;
+    repeated Chathistory chat_history = 2;
     string meta_data = 3;
     bool is_use_internal_knowledge = 4;
-    string agent = 5;
-    int32 user = 6;
+    Agent agent = 5;
+    User user = 6;
     google.protobuf.Timestamp created_at = 7;
     google.protobuf.Timestamp updated_at = 8;
 }

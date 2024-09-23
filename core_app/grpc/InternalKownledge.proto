@@ -4,6 +4,9 @@ package InternalKownledge;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "UUID.proto";
+import "User.proto";
+import "Agent.proto";
 
 service InternalKnowledgeController {
     rpc List(InternalKnowledgeListRequest) returns (stream InternalKnowledge) {}
@@ -14,12 +17,12 @@ service InternalKnowledgeController {
 }
 
 message InternalKnowledge {
-    string id = 1;
+    UUID id = 1;
     string summary = 2;
     string question = 3;
     repeated float summary_embedding = 4;
-    int32 user = 5;
-    string agent = 6;
+    User user = 5;
+    Agent agent = 6;
     google.protobuf.Timestamp created_at = 7;
     google.protobuf.Timestamp updated_at = 8;
 }

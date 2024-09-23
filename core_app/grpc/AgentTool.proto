@@ -4,6 +4,7 @@ package AgentTool;
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "UUID.proto";
 
 service AgentToolController {
     rpc List(AgentToolListRequest) returns (stream AgentTool) {}
@@ -13,8 +14,9 @@ service AgentToolController {
     rpc Destroy(AgentTool) returns (google.protobuf.Empty) {}
 }
 
+
 message AgentTool {
-    string id = 1;
+    UUID id = 1;
     string tool_name = 2;
     string args_schema = 3;
     string description = 4;
