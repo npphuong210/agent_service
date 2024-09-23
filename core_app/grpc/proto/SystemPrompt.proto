@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/protobuf/timestamp.proto";
+import "UUID.proto";
+
+service SystemPromptController {
+    rpc CreateSystemPrompt(CreateSystemPromptRequest) returns (CreateSystemPromptResponse) {}
+    rpc GetSystemPrompt(GetSystemPromptRequest) returns (GetSystemPromptResponse) {}
+    rpc ListSystemPrompts(ListSystemPromptsRequest) returns (ListSystemPromptsResponse) {}
+    rpc UpdateSystemPrompt(UpdateSystemPromptRequest) returns (UpdateSystemPromptResponse) {}
+    rpc DeleteSystemPrompt(DeleteSystemPromptRequest) returns (DeleteSystemPromptResponse) {}
+}
+
+
+message SystemPrompt {
+    UUID id = 1;
+    google.protobuf.Timestamp created_at = 2;
+    google.protobuf.Timestamp updated_at = 3;
+    string prompt_name = 4;
+    string prompt_content = 5;
+}
+
+message CreateSystemPromptRequest {
+    SystemPrompt systemprompt = 1;
+}
+
+message CreateSystemPromptResponse {
+    UUID id = 1;
+}
+
+message GetSystemPromptRequest {
+    UUID id = 1;
+}
+
+message GetSystemPromptResponse {
+    SystemPrompt systemprompt = 1;
+}
+
+message ListSystemPromptsRequest {
+}
+
+message ListSystemPromptsResponse {
+    repeated SystemPrompt systemprompts = 1;
+}
+
+message UpdateSystemPromptRequest {
+    SystemPrompt systemprompt = 1;
+}
+
+message UpdateSystemPromptResponse {
+}
+
+message DeleteSystemPromptRequest {
+    UUID id = 1;
+}
+
+message DeleteSystemPromptResponse {
+}
