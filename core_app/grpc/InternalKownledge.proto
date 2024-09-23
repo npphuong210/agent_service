@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package InternalKownledge;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service InternalKnowledgeController {
+    rpc List(InternalKnowledgeListRequest) returns (stream InternalKnowledge) {}
+    rpc Create(InternalKnowledge) returns (InternalKnowledge) {}
+    rpc Retrieve(InternalKnowledgeRetrieveRequest) returns (InternalKnowledge) {}
+    rpc Update(InternalKnowledge) returns (InternalKnowledge) {}
+    rpc Destroy(InternalKnowledge) returns (google.protobuf.Empty) {}
+}
+
+message InternalKnowledge {
+    string id = 1;
+    string summary = 2;
+    string question = 3;
+    repeated float summary_embedding = 4;
+    int32 user = 5;
+    string agent = 6;
+    google.protobuf.Timestamp created_at = 7;
+    google.protobuf.Timestamp updated_at = 8;
+}
+
+message InternalKnowledgeListRequest {
+}
+
+message InternalKnowledgeRetrieveRequest {
+    string id = 1;
+}
