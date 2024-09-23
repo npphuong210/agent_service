@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package Agent;
+
+import "google/protobuf/empty.proto";
+
+service SystemPromptController {
+    rpc List(SystemPromptListRequest) returns (stream SystemPrompt) {}
+    rpc Create(SystemPrompt) returns (SystemPrompt) {}
+    rpc Retrieve(SystemPromptRetrieveRequest) returns (SystemPrompt) {}
+    rpc Update(SystemPrompt) returns (SystemPrompt) {}
+    rpc Destroy(SystemPrompt) returns (google.protobuf.Empty) {}
+}
+
+message SystemPrompt {
+    string id = 1;
+    string created_at = 2;
+    string updated_at = 3;
+    string prompt_name = 4;
+    string prompt_content = 5;
+}
+
+message SystemPromptListRequest {
+}
+
+message SystemPromptRetrieveRequest {
+    string id = 1;
+}
