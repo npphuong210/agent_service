@@ -3,7 +3,7 @@ from core_app.embedding.embedding_by_openai import get_vector_from_embedding
 from pgvector.django import L2Distance
 from typing import Literal
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 from langchain_openai import ChatOpenAI
 import os
 from langchain_core.output_parsers import StrOutputParser

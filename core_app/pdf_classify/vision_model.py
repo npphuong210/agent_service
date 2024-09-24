@@ -14,6 +14,9 @@ from PIL import Image
 
 def encode_image(image: Image.Image) -> dict:
     """Encode a PIL image as base64 and return in a dict with a proper format."""
+    if image.mode == 'RGBA':
+        image = image.convert('RGB')
+    
     buffered = BytesIO()
     image.save(buffered, format="JPEG")
     image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
@@ -42,10 +45,9 @@ def image_model(inputs: dict) -> str | list[str] | dict:
 
 def get_image_informations(image: Image.Image) -> dict:
     vision_prompt = """Given the image, extract all visible text from the scanned image. 
-    Ensure that the extraction includes text in any language present in the image.     
-    - Give a full content description of the image. Remember to translate language to language based on the image. 
-    - If the text is in a different language, translate it to Vietnamese.
-    - Output the text clearly and completely as found in the image.
+    Ensure that the extraction includes all text present in the image, regardless of the language.     
+    - Provide the full text found in the image without any translation. 
+    - Output the text clearly and completely as it appears in the image.
     """
     
     # Encode the image
@@ -58,6 +60,4 @@ def get_image_informations(image: Image.Image) -> dict:
     return vision_chain.invoke({
         'image': image_data,
         'prompt': vision_prompt
-
     })
-

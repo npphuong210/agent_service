@@ -1,7 +1,7 @@
 from core_app.models import InternalKnowledge, ExternalKnowledge, Conversation
 from langchain_community.tools import WikipediaQueryRun, tool, DuckDuckGoSearchRun
 from langchain_community.utilities import WikipediaAPIWrapper
-from langchain.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 import requests
 from core_app.embedding.embedding_by_openai import get_vector_from_embedding
 from django.db import connection

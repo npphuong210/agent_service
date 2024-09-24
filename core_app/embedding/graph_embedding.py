@@ -6,7 +6,7 @@ from langchain_openai import ChatOpenAI # type: ignore
 from langchain_core.documents import Document # type: ignore
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser # type: ignore
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate # type: ignore
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
 
 
 llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini", temperature=0)
