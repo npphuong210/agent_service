@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import LlmModel_pb2 as LlmModel__pb2
+import core_app.grpc.pb.LlmModel_pb2 as LlmModel__pb2
 
 
 class LlmModelControllerStub(object):

@@ -13,10 +13,10 @@ _sym_db = _symbol_database.Default()
 
 
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
-import LlmModel_pb2 as LlmModel__pb2
-import SystemPrompt_pb2 as SystemPrompt__pb2
-import User_pb2 as User__pb2
-import UUID_pb2 as UUID__pb2
+import core_app.grpc.pb.LlmModel_pb2 as LlmModel__pb2
+import core_app.grpc.pb.SystemPrompt_pb2 as SystemPrompt__pb2
+import core_app.grpc.pb.User_pb2 as User__pb2
+import core_app.grpc.pb.UUID_pb2 as UUID__pb2
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x41gent.proto\x12\x02pb\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x0eLlmModel.proto\x1a\x12SystemPrompt.proto\x1a\nUser.proto\x1a\nUUID.proto\"\xf5\x01\n\x05\x41gent\x12\x14\n\x02id\x18\x01 \x01(\x0b\x32\x08.pb.UUID\x12\x12\n\nagent_name\x18\x02 \x01(\t\x12\r\n\x05tools\x18\x03 \x03(\t\x12\x19\n\x03llm\x18\x04 \x01(\x0b\x32\x0c.pb.LlmModel\x12 \n\x06prompt\x18\x05 \x01(\x0b\x32\x10.pb.SystemPrompt\x12\x16\n\x04user\x18\x06 \x01(\x0b\x32\x08.pb.User\x12.\n\ncreated_at\x18\x07 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x08 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\".\n\x12\x43reateAgentRequest\x12\x18\n\x05\x61gent\x18\x01 \x01(\x0b\x32\t.pb.Agent\"+\n\x13\x43reateAgentResponse\x12\x14\n\x02id\x18\x01 \x01(\x0b\x32\x08.pb.UUID\"*\n\x0fGetAgentRequest\x12\x17\n\x05\x61gent\x18\x01 \x01(\x0b\x32\x08.pb.UUID\",\n\x10GetAgentResponse\x12\x18\n\x05\x61gent\x18\x01 \x01(\x0b\x32\t.pb.Agent\"\x13\n\x11ListAgentsRequest\"/\n\x12ListAgentsResponse\x12\x19\n\x06\x61gents\x18\x01 \x03(\x0b\x32\t.pb.Agent\".\n\x12UpdateAgentRequest\x12\x18\n\x05\x61gent\x18\x01 \x01(\x0b\x32\t.pb.Agent\"\x15\n\x13UpdateAgentResponse\"*\n\x12\x44\x65leteAgentRequest\x12\x14\n\x02id\x18\x01 \x01(\x0b\x32\x08.pb.UUID\"\x15\n\x13\x44\x65leteAgentResponse2\xcf\x02\n\x0f\x41gentController\x12@\n\x0b\x43reateAgent\x12\x16.pb.CreateAgentRequest\x1a\x17.pb.CreateAgentResponse\"\x00\x12\x37\n\x08GetAgent\x12\x13.pb.GetAgentRequest\x1a\x14.pb.GetAgentResponse\"\x00\x12=\n\nListAgents\x12\x15.pb.ListAgentsRequest\x1a\x16.pb.ListAgentsResponse\"\x00\x12@\n\x0bUpdateAgent\x12\x16.pb.UpdateAgentRequest\x1a\x17.pb.UpdateAgentResponse\"\x00\x12@\n\x0b\x44\x65leteAgent\x12\x16.pb.DeleteAgentRequest\x1a\x17.pb.DeleteAgentResponse\"\x00\x62\x06proto3')

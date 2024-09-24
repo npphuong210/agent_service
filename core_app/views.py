@@ -131,8 +131,8 @@ conversion_retrieve_update_destroy = ConversationRetrieveUpdateDestroy.as_view()
 class SystemPromptListCreate(generics.ListCreateAPIView):
     queryset = SystemPrompt.objects.all().order_by('-updated_at')
     serializer_class = SystemPromptSerializer
-    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    # permission_classes = [IsAuthenticated]
 
 system_prompt_list_create = SystemPromptListCreate.as_view()
 

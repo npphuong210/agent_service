@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import Agent_pb2 as Agent__pb2
+import core_app.grpc.pb.Agent_pb2 as Agent__pb2
 
 
 class AgentControllerStub(object):

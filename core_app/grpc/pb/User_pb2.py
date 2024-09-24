@@ -12,7 +12,7 @@ from google.protobuf.internal import builder as _builder
 _sym_db = _symbol_database.Default()
 
 
-import UUID_pb2 as UUID__pb2
+import core_app.grpc.pb.UUID_pb2 as UUID__pb2
 
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\nUser.proto\x12\x02pb\x1a\nUUID.proto\"O\n\x04User\x12\x14\n\x02id\x18\x01 \x01(\x0b\x32\x08.pb.UUID\x12\x10\n\x08password\x18\x02 \x01(\t\x12\x10\n\x08username\x18\x05 \x01(\t\x12\r\n\x05\x65mail\x18\x08 \x01(\t\"+\n\x11\x43reateUserRequest\x12\x16\n\x04user\x18\x01 \x01(\x0b\x32\x08.pb.User\"*\n\x12\x43reateUserResponse\x12\x14\n\x02id\x18\x01 \x01(\x0b\x32\x08.pb.UUID\"&\n\x0eGetUserRequest\x12\x14\n\x02id\x18\x01 \x01(\x0b\x32\x08.pb.UUID\")\n\x0fGetUserResponse\x12\x16\n\x04user\x18\x01 \x01(\x0b\x32\x08.pb.User\"\x12\n\x10ListUsersRequest\",\n\x11ListUsersResponse\x12\x17\n\x05users\x18\x01 \x03(\x0b\x32\x08.pb.User\"+\n\x11UpdateUserRequest\x12\x16\n\x04user\x18\x01 \x01(\x0b\x32\x08.pb.User\"\x14\n\x12UpdateUserResponse\"\x1f\n\x11\x44\x65leteUserRequest\x12\n\n\x02id\x18\x01 \x01(\t\"\x14\n\x12\x44\x65leteUserResponse2\xbf\x02\n\x0eUserController\x12=\n\nCreateUser\x12\x15.pb.CreateUserRequest\x1a\x16.pb.CreateUserResponse\"\x00\x12\x34\n\x07GetUser\x12\x12.pb.GetUserRequest\x1a\x13.pb.GetUserResponse\"\x00\x12:\n\tListUsers\x12\x14.pb.ListUsersRequest\x1a\x15.pb.ListUsersResponse\"\x00\x12=\n\nUpdateUser\x12\x15.pb.UpdateUserRequest\x1a\x16.pb.UpdateUserResponse\"\x00\x12=\n\nDeleteUser\x12\x15.pb.DeleteUserRequest\x1a\x16.pb.DeleteUserResponse\"\x00\x62\x06proto3')

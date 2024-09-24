@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import SystemPrompt_pb2 as SystemPrompt__pb2
+import core_app.grpc.pb.SystemPrompt_pb2 as SystemPrompt__pb2
 
 
 class SystemPromptControllerStub(object):

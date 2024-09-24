@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import InternalKownledge_pb2 as InternalKownledge__pb2
+import core_app.grpc.pb.InternalKownledge_pb2 as InternalKownledge__pb2
 
 
 class InternalKnowledgeControllerStub(object):

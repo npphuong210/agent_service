@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import User_pb2 as User__pb2
+import core_app.grpc.pb.User_pb2 as User__pb2
 
 
 class UserControllerStub(object):

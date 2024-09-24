@@ -28,3 +28,4 @@ langchain_experimental
 grpcio
 grpcio-tools
 djangogrpcframework
+grpc-django

@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import Conversation_pb2 as Conversation__pb2
+import core_app.grpc.pb.Conversation_pb2 as Conversation__pb2
 
 
 class ConversationControllerStub(object):
