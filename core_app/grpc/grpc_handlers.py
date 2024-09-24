@@ -80,24 +80,24 @@ class SystemPromptControllerServicer(SystemPrompt_pb2_grpc.SystemPromptControlle
 
     def UpdateSystemPrompt(self, request, context):
         try:
-            system_prompt_data = request.system_prompt
-            system_prompt = SystemPromptModel.objects.get(id=system_prompt_data.id.value)
-            
-            system_prompt.prompt_name = system_prompt_data.prompt_name
-            system_prompt.prompt_content = system_prompt_data.prompt_content
-            system_prompt.updated_at = datetime.datetime.now() 
+            system_prompt_dj_qs = SystemPromptModel.objects.filter(id=request.systemprompt.id.value)
+            system_prompt_dj = system_prompt_dj_qs.first()
 
-            system_prompt.save()
+            system_prompt_dj.prompt_content = request.systemprompt.prompt_content
+            system_prompt_dj.prompt_name = request.systemprompt.prompt_name
+            system_prompt_dj.created_at = datetime.datetime.now()
+            
+            system_prompt_dj.save() 
+            
+            return SystemPrompt_pb2.UpdateSystemPromptResponse()
+
         except Exception as e:
             return SystemPrompt_pb2.UpdateSystemPromptResponse()
     
     def DeleteSystemPrompt(self, request, context):
         try:
-            # Find the existing system prompt in the database
-            system_prompt = SystemPromptModel.objects.get(id=request.system_prompt.id.value)
-            
-            # Delete the system prompt
-            system_prompt.delete()
+            system_prompt_dj_qs = SystemPromptModel.objects.filter(id=request.id.value)
+            system_prompt_dj_qs.delete()
 
             return SystemPrompt_pb2.DeleteSystemPromptResponse()
         except Exception as e:

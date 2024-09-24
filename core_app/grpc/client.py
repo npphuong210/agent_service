@@ -47,8 +47,21 @@ def get_list_sp(stub):
     print(a)
     
 def update_sp(stub):
-    
+    system_prompt = SystemPrompt_pb2.SystemPrompt(
+            id=UUID_pb2.UUID(value="bcb23e1d-cf2b-47d1-812a-6262969b4c60"),
+            prompt_name="Updated Prompt",
+            prompt_content="This is the updated content."
+        )
 
+    request = SystemPrompt_pb2.UpdateSystemPromptRequest(systemprompt=system_prompt)
+    stub.UpdateSystemPrompt(request)
+    print('ssuc')
+
+def delete_sp(stub):
+    id = UUID_pb2.UUID(value = "12ec7c30-a4c0-417a-bc47-1ed98d13e69e")
+    a = SystemPrompt_pb2.DeleteSystemPromptRequest(id=id)
+    stub.DeleteSystemPrompt(a)
+    print('deleted')
 
 
 def run():
@@ -56,7 +69,9 @@ def run():
         stub = SystemPrompt_pb2_grpc.SystemPromptControllerStub(channel)
         #create_system_prompt(stub)
         #get_systemprompt_prompt_by_id(stub)
-        get_list_sp(stub)
+        #get_list_sp(stub)
+        #update_sp(stub)
+        delete_sp(stub)
 
 if __name__ == '__main__':
     run()
