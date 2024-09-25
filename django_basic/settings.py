@@ -13,12 +13,18 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
-load_dotenv()
 load_dotenv(".env", override=True)
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+#set up neo4j
+NEO4J_RESOURCE_URI = os.getenv("NEO4J_URI")
+NEO4J_USERNAME = os.getenv("NEO4J_USERNAME")
+NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD")
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -38,6 +44,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = ['https://*.agent.bap.jp', "https://*.bap-software.net", "https://*.bap.jp"]
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
+
 
 # Application definition
 
@@ -53,7 +61,7 @@ INSTALLED_APPS = [
     "rest_framework_swagger", # Django rest framework
     "drf_yasg", # Yet another swagger generator
     "corsheaders",
-    "rest_framework.authtoken"
+    "rest_framework.authtoken",
 ]
 
 ASGI_APPLICATION = "django_basic.asgi.application"
@@ -136,6 +144,8 @@ DATABASES = {
     'HOST': os.environ['DB_HOST'],
     'PORT': os.environ['DB_PORT'],
     },
+
+
 }
 
 

@@ -9,7 +9,7 @@ from .vision_model import get_image_informations  # Import the VisionLLMModel
 # Instantiate the model
 # vision_llm_model = VisionLLMModel()
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 def is_scanned_pdf(pdf_binary):
     # Create a file-like object from the binary data
@@ -18,7 +18,7 @@ def is_scanned_pdf(pdf_binary):
     try:
         text = extract_text(file_like_object)
         if text.strip():
-            return False  # Standard PDF with extractable text
+            return False  # PDF chuẩn với văn bản có thể trích xuất
     except Exception as e:
         print(f"Error using pdfminer to extract text: {e}")
 

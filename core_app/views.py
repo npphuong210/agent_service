@@ -3,6 +3,7 @@ from django.shortcuts import render
 from rest_framework import generics, status, permissions
 from django.core.exceptions import PermissionDenied
 from rest_framework.response import Response
+from core_app.pdf_classify.vision_model import get_image_informations
 from .models import Conversation, SystemPrompt, ExternalKnowledge, InternalKnowledge, Agent, AgentTool, LlmModel
 from .serializers import ConversationSerializer, SystemPromptSerializer, ExternalKnowledgeSerializer, AgentSerializer, AgentToolSerializer, LlmModelSerializer, InternalKnowledgeSerializer, ExternalKnowledgePostSerializer
 from core_app.chat_service.AgentMessage import get_message_from_agent, get_streaming_agent_instance
@@ -21,6 +22,7 @@ from core_app.authentication import BearerTokenAuthentication, get_user_instance
 from django.shortcuts import render
 from rest_framework.parsers import MultiPartParser, FormParser
 from core_app.pdf_classify.pdf_classify import is_scanned_pdf,  process_scanned_pdf_with_llm
+from PIL import Image
 from pdfminer.high_level import extract_text
 
 def home(request):
@@ -129,8 +131,8 @@ conversion_retrieve_update_destroy = ConversationRetrieveUpdateDestroy.as_view()
 class SystemPromptListCreate(generics.ListCreateAPIView):
     queryset = SystemPrompt.objects.all().order_by('-updated_at')
     serializer_class = SystemPromptSerializer
-    authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # authentication_classes = [JWTAuthentication, BearerTokenAuthentication]
+    # permission_classes = [IsAuthenticated]
 
 system_prompt_list_create = SystemPromptListCreate.as_view()
 
@@ -424,14 +426,23 @@ class ExternalKnowledgePost(generics.CreateAPIView):
         subject = request.data.get('subject')
         chapter = request.data.get('chapter')
         file = open(destination_path, 'rb')
+        file_name = file.name
         pdf = file.read()
         
         if is_scanned_pdf(pdf):
             # if scanned PDF => vision LLM model
-            print("Đây là PDF được scan.")
-
-            vision_result = process_scanned_pdf_with_llm(pdf)
-       
+            file_name = file_name.lower()
+            if file_name.endswith('.pdf'):
+                print("Đây là PDF được scan.")
+                vision_result = process_scanned_pdf_with_llm(pdf)
+            elif file_name.endswith(('.png', '.jpg', '.jpeg')):
+                print("Đây là hình ảnh.")
+                image = Image.open(BytesIO(pdf))
+                vision_result = get_image_informations(image)
+            else:
+                print("Định dạng tệp không được hỗ trợ.")
+                return None
+            
             print("#"*50)
             print(vision_result)
             print("#"*50)
@@ -446,7 +457,9 @@ class ExternalKnowledgePost(generics.CreateAPIView):
             print("Đây là PDF chuẩn.")
             file_like_object = BytesIO(pdf)
             text = extract_text(file_like_object)
-            
+            print("#"*50)
+            print(text)
+            print("#"*50)
             knowledge = ExternalKnowledge(subject=subject, chapter=chapter, content=text)
             knowledge.save()
             

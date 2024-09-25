@@ -2,14 +2,13 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_openai import ChatOpenAI
 from ca_vntl_helper import error_tracking_decorator
-import os
 from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from .agent_tool import tool_mapping
 from core_app.models import ExternalKnowledge, LlmModel
 from langchain_core.output_parsers import StrOutputParser
 from core_app.external.external_tool import retrieve_documents_with_rrf, RouteQuery, CheckValidQuery
-from core_app.models import ExternalKnowledge
-from .FormatChain import format_chain
+from core_app.models import ExternalKnowledge 
+import os
 
 class AgentCreator:
     def __init__(self, agent_name: str, llm_id: str, prompt_content: str, tools: list[str], user: int, agent: str, is_use_internal_knowledge: bool = True):
@@ -19,13 +18,10 @@ class AgentCreator:
         self.tools_str = tools
         self.is_use_internal_knowledge = is_use_internal_knowledge
         
-        lecture_qs = ExternalKnowledge.objects.all()
+        # lecture_qs = ExternalKnowledge.objects.all()
+        # subject = lecture_qs.values_list('subject', flat=True)
+        # chapter = lecture_qs.values_list('chapter', flat=True)
         
-        subject = lecture_qs.values_list('subject', flat=True)
-        chapter = lecture_qs.values_list('chapter', flat=True)
-        print("*"*50)
-        print(f"user: {user}, agent: {agent}")
-        print("*"*50)
         if is_use_internal_knowledge:
             self.hidden_prompt = f"""
                     If you can use the information from the chat_history to answer, you don't need to use the tools. If not, must use these tools to get information and only use 1 tool. Don't make things up. \n
@@ -46,14 +42,13 @@ class AgentCreator:
             #         IMPORTANT: Always answer the question in the language of the user message. \n
             #     """
             self.hidden_prompt = """
-                use the tools to get information and only use 1 tool. Don't make things up. \n
 
             """
 
     def load_tools(self):
         tools = []
         if self.is_use_internal_knowledge:
-            hidden_tools = ["query_internal_knowledge", "external_content_search"]
+            hidden_tools = ["external_content_search"]
         else:
             hidden_tools = ["external_content_search"]
             
@@ -69,7 +64,6 @@ class AgentCreator:
     def load_llm(self):
         if self.llm_id:
             try:
-                # Truy vấn LlmModel để lấy thông tin mô hình
                 llm_model = LlmModel.objects.get(id=self.llm_id)
                 api_key = llm_model.api_key
                 model_version = llm_model.model_version
@@ -100,13 +94,11 @@ class AgentCreator:
         system_prompt = self.create_system_prompt_template()
         llm = self.load_llm()
         tools = self.load_tools()
-        
         agent_runnable = create_tool_calling_agent(llm, tools, system_prompt)
         return agent_runnable, tools
 
     def create_agent_executor(self):
         agent, tools = self.create_agent_runnable()
-        # Create a normal agent executor
         agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
         return agent_executor        
 
@@ -122,6 +114,4 @@ def run_chatbot(input_text, chat_history, agent_role, llm_id, prompt_content="",
     agent_instance = AgentCreator(agent_name=agent_role, llm_id=llm_id, prompt_content=prompt_content, tools=user_tools, user=user, agent=agent, is_use_internal_knowledge=is_use_internal_knowledge)
     #input_text = agent_instance.create_multi_queries(input_text)
     output_message = agent_instance.get_message_from_agent(input_text, chat_history)
-    format_output = format_chain(output_message)
-
-    return output_message, format_output
+    return output_message
