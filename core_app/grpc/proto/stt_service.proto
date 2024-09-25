@@ -1,0 +1,26 @@
+syntax = "proto3";
+ 
+package pb;
+ 
+service STTService {
+
+    rpc UploadAudio (AudioFileRequest) returns (TranscriptionResponse);
+    rpc StreamAudio (stream AudioChunkRequest) returns (stream TranscriptionStreamingResponse);
+}
+ 
+message AudioFileRequest {
+    bytes file_data = 1;
+}
+ 
+message TranscriptionResponse {
+    string transcription = 1;
+}
+ 
+message AudioChunkRequest {
+    bytes chunk_data = 1;
+}
+ 
+message TranscriptionStreamingResponse {
+    string transcription = 1;
+}
+ 
