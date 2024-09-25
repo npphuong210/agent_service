@@ -4,7 +4,6 @@ package pb;
 
 import "google/protobuf/timestamp.proto";
 import "Agent.proto";
-import "User.proto";
 import "UUID.proto";
 
 service ConversationController {
@@ -23,12 +22,11 @@ message Chathistory {
 message Conversation {
     UUID id = 1;
     repeated Chathistory chat_history = 2;
-    string meta_data = 3;
-    bool is_use_internal_knowledge = 4;
-    Agent agent = 5;
-    User user = 6;
-    google.protobuf.Timestamp created_at = 7;
-    google.protobuf.Timestamp updated_at = 8;
+    bool is_use_internal_knowledge = 3;
+    Agent agent = 4;
+    UUID user_id = 5;
+    google.protobuf.Timestamp created_at = 6;
+    google.protobuf.Timestamp updated_at = 7;
 }
 
 message CreateConversationRequest {

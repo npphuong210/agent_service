@@ -4,7 +4,6 @@ package pb;
 
 import "google/protobuf/timestamp.proto";
 import "UUID.proto";
-import "User.proto";
 
 service LlmModelController {
     rpc CreateLlmModel(CreateLlmModelRequest) returns (CreateLlmModelResponse) {}
@@ -22,7 +21,7 @@ message LlmModel {
     string provider = 5;
     string model_version = 6;
     string api_key = 7;
-    User user = 8;
+    UUID user_id = 8;
 }
 
 message CreateLlmModelRequest {
