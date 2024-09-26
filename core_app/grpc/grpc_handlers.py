@@ -1,3 +1,4 @@
+import time
 import grpc
 from faster_whisper import WhisperModel
 import pyaudio 
@@ -72,16 +73,23 @@ class OCRSserviceServicer(ocr_service_pb2_grpc.OCRSserviceServicer):
 class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
 
     def UploadAudio(self, request, context):
+        start_time = time.time()
+        
         audio_data = io.BytesIO(request.file_data)
-        result = transcribe_audio(audio_data)
-        return stt_service_pb2.TranscriptionResponse(transcription=result)
+        transcription = transcribe_audio(audio_data)
+        
+        end_time = time.time()
+        total_time = end_time - start_time
+        print(f'Total processing time: {total_time:.2f} seconds')
+        return stt_service_pb2.TranscriptionResponse(transcription=transcription)
 
     def StreamAudio(self, request_iterator, context):
         audio_stream = io.BytesIO()
-        buffer_size = 1024  * 15# Example buffer size (10KB)
+        buffer_size = 1024  * 32# Example buffer size (10KB)
         buffer = bytearray()
         init_prompt = ""
-
+        
+        start_time = time.time()
         try:
             for chunk in request_iterator:
                 if not chunk.chunk_data:
@@ -89,7 +97,6 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
                 
                 buffer.extend(chunk.chunk_data)
                 
-
                 # If the buffer reaches the defined size, process it
                 if len(buffer) >= buffer_size:
                     audio_stream.write(buffer)
@@ -98,7 +105,7 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
                     try:
                         transcription = transcribe_audio(audio_stream, init_prompt)
                         init_prompt += transcription
-                        init_prompt = init_prompt[-50:]
+                        init_prompt = init_prompt[-100:]
                         print('init_prompt: ', init_prompt)
                         print('chunk:', transcription)
                         yield stt_service_pb2.TranscriptionStreamingResponse(transcription=transcription)
@@ -113,11 +120,6 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
 
                     # Move the stream cursor to the end to prepare for more data
                     audio_stream.seek(0, io.SEEK_END)
-                    
-                    
-                    # # Clear the buffer and continue
-                    # buffer.clear()
-                    # audio_stream.seek(0, io.SEEK_END)
 
             # Process any remaining data in the buffer after the stream ends
             if buffer:
@@ -135,4 +137,7 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
         finally:
             audio_stream.close()
 
+        end_time = time.time()
+        total_time = end_time - start_time
+        print(f'Total processing time: {total_time:.2f} seconds')
 

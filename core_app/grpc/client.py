@@ -24,7 +24,7 @@ def upload_file(stub, file_path):
     def file_chunks():
         with open(file_path, 'rb') as f:
             while True:
-                chunk = f.read(1024*5)  # Read in 1KB chunks
+                chunk = f.read(1024*32)  # Read in 1KB chunks
                 if not chunk:
                     break
                 print(f"Sending chunk of size: {len(chunk)}")
@@ -64,8 +64,8 @@ def run():
         stub_ocr = ocr_service_pb2_grpc.OCRSserviceStub(channel)
         stub_stt = stt_service_pb2_grpc.STTServiceStub(channel)
         #get_file(stub)
-        upload_file(stub_stt, audio_file_path)
-        # run_audio(stub_stt, audio_file_path)
+        # upload_file(stub_stt, audio_file_path)
+        run_audio(stub_stt, audio_file_path)
 
 if __name__ == '__main__':
     run()
