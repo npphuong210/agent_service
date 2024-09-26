@@ -5,6 +5,7 @@ import numpy as np
 import io
 import os
 from io import BytesIO
+import torch  # Add this import
 # grpc handlers
 from concurrent import futures
 from core_app.grpc.pb import ocr_service_pb2, ocr_service_pb2_grpc, stt_service_pb2, stt_service_pb2_grpc
@@ -16,14 +17,22 @@ def get_file_extension(file_path):
     _, file_extension = os.path.splitext(file_path)
     return file_extension
 
-def whisper_model(model_size, device='cpu'):
-    model = WhisperModel(model_size, device=device, compute_type="int8")
+def whisper_model(model_size, device=None):
+    if device is None:
+        if torch.cuda.is_available():
+            device = 'cuda'
+            compute_type = 'float16'
+        else:
+            device = 'cpu'
+            compute_type = 'int8' 
+
+    model = WhisperModel(model_size_or_path=model_size, device=device, compute_type=compute_type)
     return model
 
 def transcribe_audio(audio_stream, init_prompt=None):
-    model = whisper_model(model_size='tiny', device='cpu')
+    model = whisper_model(model_size='small')
     try:
-        segments, info = model.transcribe(audio=audio_stream, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True)
+        segments, info = model.transcribe(audio=audio_stream, initial_prompt=init_prompt, beam_size=3, word_timestamps=True, condition_on_previous_text=True)
         transcription = " ".join([segment.text for segment in segments])
         return transcription.strip()
     except Exception as e:
@@ -69,10 +78,10 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
 
     def StreamAudio(self, request_iterator, context):
         audio_stream = io.BytesIO()
-        buffer_size = 1024  * 10# Example buffer size (10KB)
+        buffer_size = 1024  * 15# Example buffer size (10KB)
         buffer = bytearray()
-        init_prompt = None
-        
+        init_prompt = ""
+
         try:
             for chunk in request_iterator:
                 if not chunk.chunk_data:
@@ -88,7 +97,8 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
 
                     try:
                         transcription = transcribe_audio(audio_stream, init_prompt)
-                        init_prompt = transcription[:200]
+                        init_prompt += transcription
+                        init_prompt = init_prompt[-50:]
                         print('init_prompt: ', init_prompt)
                         print('chunk:', transcription)
                         yield stt_service_pb2.TranscriptionStreamingResponse(transcription=transcription)
