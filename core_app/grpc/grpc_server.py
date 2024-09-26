@@ -3,14 +3,13 @@ from concurrent import futures
 
 # Import generated gRPC modules
 from core_app.grpc.pb.ocr_service_pb2_grpc import add_OCRSserviceServicer_to_server
-#from core_app.grpc.pb.stt_service_pb2_grpc import add_STTServiceServicer_to_server
-
+from core_app.grpc.pb.stt_service_pb2_grpc import add_STTServiceServicer_to_server
 
 
 # Import your service implementations
 from .grpc_handlers import (
     OCRSserviceServicer,
-    #STTServiceServicer
+    STTServiceServicer
 )
 
 def serve():
@@ -18,7 +17,7 @@ def serve():
     
     # Register services
     add_OCRSserviceServicer_to_server(OCRSserviceServicer(), server)
-    #add_STTServiceServicer_to_server(STTServiceServicer(), server)
+    add_STTServiceServicer_to_server(STTServiceServicer(), server)
 
     
     # Start the server
