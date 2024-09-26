@@ -38,11 +38,11 @@ DEBUG = True
 # load environment variables
 
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*","https://inherently-mature-collie.ngrok-free.app"]
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = ['https://*.agent.bap.jp', "https://*.bap-software.net", "https://*.bap.jp"]
+CSRF_TRUSTED_ORIGINS = ['https://*.agent.bap.jp', "https://*.bap-software.net", "https://*.bap.jp", 'https://inherently-mature-collie.ngrok-free.app']
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
 
