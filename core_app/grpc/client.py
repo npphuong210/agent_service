@@ -1,77 +1,74 @@
 import grpc
-import uuid
-from pb import SystemPrompt_pb2
-from pb import SystemPrompt_pb2_grpc
-from pb import UUID_pb2
-from google.protobuf.timestamp_pb2 import Timestamp
+import os
+from pb import ocr_service_pb2, ocr_service_pb2_grpc, stt_service_pb2_grpc, stt_service_pb2
 
+def read_file_as_bytes(file_path):
+    with open(file_path, 'rb') as f:
+        file_content = f.read()  # Read the file as bytes
+    return file_content
+            
+def get_file(stub):
 
-
-
-def create_system_prompt(stub):
-    # Generate a new UUID for the SystemPrompt
-    new_prompt_id = str(uuid.uuid4())
-    system_prompt = SystemPrompt_pb2.SystemPrompt()
-    system_prompt.id.value = new_prompt_id
-    system_prompt.prompt_name = "thien122"
-    system_prompt.prompt_content = "Thien.2221"
-    # system_prompt.created_at = current_time.seconds
-    # system_prompt.updated_at = current_time.seconds
-
-    # Create the CreateSystemPromptRequest message
-    create_response = SystemPrompt_pb2.CreateSystemPromptRequest(
-        systemprompt=system_prompt
+    file = read_file_as_bytes("core_app/grpc/data/1.pdf")
+    name = '1.pdf'
+    
+    request = ocr_service_pb2.FileRequest(
+        file_name = name,
+        file = file
     )
-
-    # Call the gRPC method
-    response = stub.CreateSystemPrompt(create_response)
-    
-    print(f"Created SystemPrompt ID: {response.id.value}")
-    
-def get_systemprompt_prompt_by_id(stub):
-    sp = SystemPrompt_pb2.GetSystemPromptRequest()
-    print(sp)
-    id ="bcb23e1d-cf2b-47d1-812a-6262969b4c60"
-    sp.id.value = id
-    system_prompt = stub.GetSystemPrompt(sp)
-    
-    
-    a = system_prompt
-    
+    a = stub.CreateTextFromFile(request)
     print(a)
     
     
-def get_list_sp(stub):
-    a = stub.ListSystemPrompts(SystemPrompt_pb2.ListSystemPromptsRequest())
-    
-    print(a)
-    
-def update_sp(stub):
-    system_prompt = SystemPrompt_pb2.SystemPrompt(
-            id=UUID_pb2.UUID(value="bcb23e1d-cf2b-47d1-812a-6262969b4c60"),
-            prompt_name="Updated Prompt",
-            prompt_content="This is the updated content."
-        )
+def upload_file(stub, file_path):
+    def file_chunks():
+        with open(file_path, 'rb') as f:
+            while True:
+                chunk = f.read(1024)  # Read in 1KB chunks
+                if not chunk:
+                    break
+                print(f"Sending chunk of size: {len(chunk)}")
+                #return iter([].append(ai_service_pb2.AudioChunk(chunk_data=chunk)))
+                yield stt_service_pb2.AudioChunkRequest(chunk_data=chunk)
+                
+    try:
+        response_iterator = stub.StreamAudio(file_chunks())
+        for response in response_iterator:
+            print(f"Received transcription: {response.transcription}")
+    except grpc.RpcError as e:
+        print(f"gRPC error: {e.code()} - {e.details()}")
+        
 
-    request = SystemPrompt_pb2.UpdateSystemPromptRequest(systemprompt=system_prompt)
-    stub.UpdateSystemPrompt(request)
-    print('ssuc')
-
-def delete_sp(stub):
-    id = UUID_pb2.UUID(value = "12ec7c30-a4c0-417a-bc47-1ed98d13e69e")
-    a = SystemPrompt_pb2.DeleteSystemPromptRequest(id=id)
-    stub.DeleteSystemPrompt(a)
-    print('deleted')
-
+def run_audio(stub, audio_file_path):    
+    def read_audio_file(file_path):
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"Audio file {file_path} not found.")
+        with open(file_path, 'rb') as f:
+            return f.read()
+    try:
+        print('1')
+        audio_data = read_audio_file(audio_file_path)
+        print('2')
+        print("Sending UploadAudio request...")
+        response = stub.UploadAudio(stt_service_pb2.AudioFileRequest(file_data=audio_data))
+        print('3')
+        print("Upload Audio Response:", response.transcription)
+        return response
+    except FileNotFoundError as e:
+        print(f"Error: {e}")
+    except grpc.RpcError as e:
+        print(f"Upload Audio RPC error: {e.code()} - {e.details()}")
 
 def run():
+    
+    audio_file_path = "core_app/grpc/data/revolution-road-220375.mp3"
+    
     with grpc.insecure_channel('localhost:50051') as channel:
-        stub = SystemPrompt_pb2_grpc.SystemPromptControllerStub(channel)
-        #create_system_prompt(stub)
-        #get_systemprompt_prompt_by_id(stub)
-        #get_list_sp(stub)
-        #update_sp(stub)
-        delete_sp(stub)
+        stub_ocr = ocr_service_pb2_grpc.OCRSserviceStub(channel)
+        stub_stt = stt_service_pb2_grpc.STTServiceStub(channel)
+        #get_file(stub)
+        upload_file(stub_stt, audio_file_path)
+        #run_audio(stub_stt, audio_file_path)
 
 if __name__ == '__main__':
     run()

@@ -29,3 +29,8 @@ grpcio
 grpcio-tools
 djangogrpcframework
 grpc-django
+faster-whisper
+pyaudio
+librosa
+numpy==2.0
+soundfile

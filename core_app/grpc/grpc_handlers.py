@@ -1,322 +1,128 @@
 import grpc
+from faster_whisper import WhisperModel
+import pyaudio 
+import numpy as np
+import io
+import os
+from io import BytesIO
 # grpc handlers
 from concurrent import futures
-from core_app.grpc.pb import Agent_pb2
-from core_app.grpc.pb import Agent_pb2_grpc
-from core_app.grpc.pb import AgentTool_pb2
-from core_app.grpc.pb import AgentTool_pb2_grpc
-from core_app.grpc.pb import Conversation_pb2
-from core_app.grpc.pb import Conversation_pb2_grpc
-from core_app.grpc.pb import ExternalKownledge_pb2
-from core_app.grpc.pb import ExternalKownledge_pb2_grpc
-from core_app.grpc.pb import InternalKownledge_pb2
-from core_app.grpc.pb import InternalKownledge_pb2_grpc
-from core_app.grpc.pb import LlmModel_pb2
-from core_app.grpc.pb import LlmModel_pb2_grpc
-from core_app.grpc.pb import SystemPrompt_pb2
-from core_app.grpc.pb import SystemPrompt_pb2_grpc
-from core_app.grpc.pb import User_pb2
-from core_app.grpc.pb import User_pb2_grpc
-from core_app.grpc.pb import UUID_pb2
-from core_app.grpc.pb import UUID_pb2_grpc
-# django models
-from core_app.models import SystemPrompt as SystemPromptModel, Agent, AgentTool, Conversation, ExternalKnowledge, InternalKnowledge, LlmModel
-from core_app.views import system_prompt_list_create
-from core_app.serializers import SystemPromptSerializer
-import pytz
-import datetime
-utc7 = pytz.timezone('Asia/Ho_Chi_Minh')
+from core_app.grpc.pb import ocr_service_pb2, ocr_service_pb2_grpc, stt_service_pb2, stt_service_pb2_grpc
+from pdfminer.high_level import extract_text
+from core_app.pdf_classify.pdf_classify import is_scanned_pdf, process_scanned_pdf_with_llm, get_image_informations
+from PIL import Image
 
-class SystemPromptControllerServicer(SystemPrompt_pb2_grpc.SystemPromptControllerServicer):
+def get_file_extension(file_path):
+    _, file_extension = os.path.splitext(file_path)
+    return file_extension
+
+def whisper_model(model_size, device='cpu'):
+    model = WhisperModel(model_size, device=device, compute_type="int8")
+    return model
+
+def transcribe_audio(audio_stream, init_prompt=None):
+    model = whisper_model(model_size='tiny', device='cpu')
+    try:
+        segments, info = model.transcribe(audio=audio_stream, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True)
+        transcription = " ".join([segment.text for segment in segments])
+        return transcription.strip()
+    except Exception as e:
+        return "Error during transcription"
+
+class OCRSserviceServicer(ocr_service_pb2_grpc.OCRSserviceServicer):
+
+    def CreateTextFromFile(self, request, context):
+
+        file_name = request.file_name
+        pdf = request.file
+        text = None
+        print(file_name)
+        #text = extract_text(file)
+
+        if is_scanned_pdf(pdf):
+            # if scanned PDF => vision LLM model
+            file_name = file_name.lower()
+            if file_name.endswith('.pdf'):
+                print("Đây là PDF được scan.")
+                text = process_scanned_pdf_with_llm(pdf)
+            elif file_name.endswith(('.png', '.jpg', '.jpeg')):
+                print("Đây là hình ảnh.")
+                image = Image.open(BytesIO(pdf))
+                text = get_image_informations(image)
+            else:
+                print("Định dạng tệp không được hỗ trợ.")
+                return None
+        
+        else:
+
+            file_like_object = BytesIO(pdf)
+            text = extract_text(file_like_object)
+
+        return ocr_service_pb2.FileResponse(id=text)
     
-    def CreateSystemPrompt(self, request, context):
+class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
+
+    def UploadAudio(self, request, context):
+        audio_data = io.BytesIO(request.file_data)
+        result = transcribe_audio(audio_data)
+        return stt_service_pb2.TranscriptionResponse(transcription=result)
+
+    def StreamAudio(self, request_iterator, context):
+        audio_stream = io.BytesIO()
+        buffer_size = 1024  * 10# Example buffer size (10KB)
+        buffer = bytearray()
+        init_prompt = None
+        
         try:
-            system_prompt = SystemPromptModel.objects.create(
-                id = request.systemprompt.id.value,
-                prompt_name = request.systemprompt.prompt_name,
-                prompt_content = request.systemprompt.prompt_content
-            )
-            system_prompt.save()  
-            return SystemPrompt_pb2.CreateSystemPromptResponse(id=request.systemprompt.id)
-        except Exception as e:
-            return SystemPrompt_pb2.CreateSystemPromptResponse(id=request.systemprompt.id)
-    
-    def GetSystemPrompt(self, request, context):
-        sp = SystemPrompt_pb2.SystemPrompt()
-        try: 
-            system_prompt_qs = SystemPromptModel.objects.filter(id=request.id.value)
-            system_prompt = system_prompt_qs.first()
-            
-            print(system_prompt.id)
-            
-            
-            sp.id.value = str(system_prompt.id)
-            sp.prompt_name = system_prompt.prompt_name
-            sp.prompt_content = system_prompt.prompt_content
-
+            for chunk in request_iterator:
+                if not chunk.chunk_data:
+                    continue
                 
-            print(system_prompt.prompt_content, system_prompt.prompt_name, system_prompt.id)    
-            
-            return SystemPrompt_pb2.GetSystemPromptResponse(systemprompt=sp)
-        except Exception as e:
-            print('dds')
-            return SystemPrompt_pb2.GetSystemPromptResponse(systemprompt=sp)
-    
-    def ListSystemPrompts(self, request, context):
-        list_systemprompt = SystemPrompt_pb2.ListSystemPromptsResponse()
-        try: 
-            system_prompt = SystemPromptModel.objects.all()
-            
-            for sp in system_prompt:
-                temp = list_systemprompt.systemprompts.add()
-                temp.id.value = str(sp.id)
-                temp.prompt_name = sp.prompt_name
-                temp.prompt_content = sp.prompt_content
+                buffer.extend(chunk.chunk_data)
                 
-            return list_systemprompt
+
+                # If the buffer reaches the defined size, process it
+                if len(buffer) >= buffer_size:
+                    audio_stream.write(buffer)
+                    audio_stream.seek(0)
+
+                    try:
+                        transcription = transcribe_audio(audio_stream, init_prompt)
+                        init_prompt = transcription[:200]
+                        print('init_prompt: ', init_prompt)
+                        print('chunk:', transcription)
+                        yield stt_service_pb2.TranscriptionStreamingResponse(transcription=transcription)
+                    except Exception as e:
+                        yield stt_service_pb2.TranscriptionStreamingResponse(transcription="Error during transcription")
+
+                    #offset = -1024 * 2 # Example: move 2KB back for context
+                    #audio_stream.seek(offset, io.SEEK_CUR)
+
+                    # Clear the buffer for the next set of chunks
+                    buffer.clear()
+
+                    # Move the stream cursor to the end to prepare for more data
+                    audio_stream.seek(0, io.SEEK_END)
+                    
+                    
+                    # # Clear the buffer and continue
+                    # buffer.clear()
+                    # audio_stream.seek(0, io.SEEK_END)
+
+            # Process any remaining data in the buffer after the stream ends
+            if buffer:
+                audio_stream.write(buffer)
+                audio_stream.seek(0)
+                try:
+                    transcription = transcribe_audio(audio_stream, init_prompt)
+                    print('chunk:', transcription)
+                    yield stt_service_pb2.TranscriptionStreamingResponse(transcription=transcription)
+                except Exception as e:
+                    yield stt_service_pb2.TranscriptionStreamingResponse(transcription="Error during transcription")
+
         except Exception as e:
-            return list_systemprompt
-    
-
-    def UpdateSystemPrompt(self, request, context):
-        try:
-            system_prompt_dj_qs = SystemPromptModel.objects.filter(id=request.systemprompt.id.value)
-            system_prompt_dj = system_prompt_dj_qs.first()
-
-            system_prompt_dj.prompt_content = request.systemprompt.prompt_content
-            system_prompt_dj.prompt_name = request.systemprompt.prompt_name
-            system_prompt_dj.created_at = datetime.datetime.now()
-            
-            system_prompt_dj.save() 
-            
-            return SystemPrompt_pb2.UpdateSystemPromptResponse()
-
-        except Exception as e:
-            return SystemPrompt_pb2.UpdateSystemPromptResponse()
-    
-    def DeleteSystemPrompt(self, request, context):
-        try:
-            system_prompt_dj_qs = SystemPromptModel.objects.filter(id=request.id.value)
-            system_prompt_dj_qs.delete()
-
-            return SystemPrompt_pb2.DeleteSystemPromptResponse()
-        except Exception as e:
-            return SystemPrompt_pb2.DeleteSystemPromptResponse()
-    
+            return "Error: during the streaming"
+        finally:
+            audio_stream.close()
 
 
-# class LlmModelControllerServicer(object):
-    
-#     def CreateLlmModel(self, request, context):
-
-
-#     def GetLlmModel(self, request, context):
-
-
-#     def ListLlmModels(self, request, context):
-
-
-#     def UpdateLlmModel(self, request, context):
-
-
-#     def DeleteLlmModel(self, request, context):
-
-    
-# class InternalKnowledgeControllerServicer(object):
-#     """Missing associated documentation comment in .proto file."""
-
-#     def CreateInternalKnowledge(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def GetInternalKnowledge(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def ListInternalKnowledges(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def UpdateInternalKnowledge(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def DeleteInternalKnowledge(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-# class ExternalKnowledgeControllerServicer(object):
-#     """Missing associated documentation comment in .proto file."""
-
-#     def CreateExternalKnowledge(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def GetExternalKnowledge(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def ListExternalKnowledges(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def UpdateExternalKnowledge(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def DeleteExternalKnowledge(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-
-# class ConversationControllerServicer(object):
-#     """Missing associated documentation comment in .proto file."""
-
-#     def CreateConversation(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def GetConversation(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def ListConversations(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def UpdateConversation(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def DeleteConversation(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-# class AgentToolControllerServicer(object):
-#     """Missing associated documentation comment in .proto file."""
-
-#     def CreateAgentTool(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def GetAgentTool(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def ListAgentTools(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def UpdateAgentTool(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def DeleteAgentTool(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-# class AgentControllerServicer(object):
-#     """Missing associated documentation comment in .proto file."""
-
-#     def CreateAgent(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def GetAgent(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def ListAgents(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def UpdateAgent(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def DeleteAgent(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-# class UserControllerServicer(object):
-#     """Missing associated documentation comment in .proto file."""
-
-#     def CreateUser(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def GetUser(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def ListUsers(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def UpdateUser(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
-
-#     def DeleteUser(self, request, context):
-#         """Missing associated documentation comment in .proto file."""
-#         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-#         context.set_details('Method not implemented!')
-#         raise NotImplementedError('Method not implemented!')
