@@ -24,7 +24,7 @@ def upload_file(stub, file_path):
     def file_chunks():
         with open(file_path, 'rb') as f:
             while True:
-                chunk = f.read(1024)  # Read in 1KB chunks
+                chunk = f.read(1024*32)  # Read in 1KB chunks
                 if not chunk:
                     break
                 print(f"Sending chunk of size: {len(chunk)}")
@@ -46,12 +46,9 @@ def run_audio(stub, audio_file_path):
         with open(file_path, 'rb') as f:
             return f.read()
     try:
-        print('1')
         audio_data = read_audio_file(audio_file_path)
-        print('2')
         print("Sending UploadAudio request...")
         response = stub.UploadAudio(stt_service_pb2.AudioFileRequest(file_data=audio_data))
-        print('3')
         print("Upload Audio Response:", response.transcription)
         return response
     except FileNotFoundError as e:
@@ -61,14 +58,14 @@ def run_audio(stub, audio_file_path):
 
 def run():
     
-    audio_file_path = "core_app/grpc/data/revolution-road-220375.mp3"
+    audio_file_path = "core_app/grpc/data/clean.mp3"
     
     with grpc.insecure_channel('localhost:50051') as channel:
         stub_ocr = ocr_service_pb2_grpc.OCRSserviceStub(channel)
         stub_stt = stt_service_pb2_grpc.STTServiceStub(channel)
         #get_file(stub)
-        upload_file(stub_stt, audio_file_path)
-        #run_audio(stub_stt, audio_file_path)
+        # upload_file(stub_stt, audio_file_path)
+        run_audio(stub_stt, audio_file_path)
 
 if __name__ == '__main__':
     run()

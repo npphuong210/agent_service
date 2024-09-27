@@ -34,3 +34,4 @@ pyaudio
 librosa
 numpy==2.0
 soundfile
+torch

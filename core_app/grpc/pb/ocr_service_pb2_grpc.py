@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import core_app.grpc.pb.ocr_service_pb2 as ocr__service__pb2
+from . import ocr_service_pb2 as ocr__service__pb2
 
 
 class OCRSserviceStub(object):

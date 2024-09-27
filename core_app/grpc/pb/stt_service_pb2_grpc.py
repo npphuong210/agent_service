@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import core_app.grpc.pb.stt_service_pb2 as stt__service__pb2
+from . import stt_service_pb2 as stt__service__pb2
 
 
 class STTServiceStub(object):
