@@ -136,8 +136,7 @@ Here are the API endpoints available in this project:
     "llm": "",
     "tools": [
        ""
-    ],
-    "prompt": "" \\id
+    ]
   }
   ```
 
@@ -151,8 +150,8 @@ Here are the API endpoints available in this project:
     - Send a POST request with the following JSON structure:
     ```json
     {
-      "agent": "", \\id
-      "chat_history": [] \\[{"", ""}]
+      "agent": "", // id
+      "chat_history": []  // [{"", ""}]
     }
     ```
 
@@ -181,6 +180,68 @@ Here are the API endpoints available in this project:
       "message": ""
     }
     ```
+
+## gRPC
+
+### Project Structure
+
+**Proto Files**: `core_app/grpc/proto`
+- `ocr_service.proto`
+- `stt_service.proto`
+
+**Client File**: `core_app/grpc/client.py`
+- A Python client for testing requests to the gRPC server.
+
+### How to Run the gRPC Server
+
+To run both the REST API and the gRPC services, execute the following command:
+
+```bash
+python manage.py run_grpc_server
+```
+
+### OCRService gRPC API
+
+**Service**: `OCRSservice`
+
+**Method**: `CreateTextFromFile(FileRequest) returns (FileResponse)`
+
+This method processes an OCR request by accepting a file and returning the processed text.
+
+#### Request: `FileRequest`
+- **file_name**: Name of the file being sent (string).
+- **file**: File data (in `bytes` format).
+
+#### Response: `FileResponse`
+- **id**: Unique identifier or text response related to the processed file.
+
+---
+
+### Speech-to-Text Service gRPC API
+
+**Service**: `STTService`
+
+#### Methods:  
+1. **`UploadAudio (AudioFileRequest) returns (TranscriptionResponse)`**  
+   This method transcribes a complete audio file into text.
+
+   ##### Request: `AudioFileRequest`
+   - **file_data**: Full audio file in binary (`bytes`) format.
+
+   ##### Response: `TranscriptionResponse`
+   - **transcription**: Text transcription of the uploaded audio.
+
+2. **`StreamAudio (stream AudioChunkRequest) returns (stream TranscriptionStreamingResponse)`**  
+   This method streams audio chunks in real time and provides live transcription.
+
+   ##### Request: `AudioChunkRequest`
+   - **chunk_data**: A chunk of audio in binary (`bytes`) format.
+
+   ##### Response: `TranscriptionStreamingResponse`
+   - **transcription**: Text transcription of the streamed audio chunk.
+
+---
+
 
 ### Flow
 
