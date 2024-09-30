@@ -1,0 +1,13 @@
+stages:
+    - build
+    - deploy
+
+build:
+    stage: build
+    script:
+        - cat $ENV_FILE > .env
+
+    tags:
+        - agent-service
+    only:
+        - feat/linhvt/cicd
