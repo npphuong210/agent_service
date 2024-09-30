@@ -65,7 +65,7 @@ def get_message_from_agent(conversation_id, user_message):
     conversation_instance.chat_history.append({"message_type": "human_message", "content": user_message})
     conversation_instance.chat_history.append({"message_type": "ai_message", "content": output_message})
     conversation_instance.save()
-    graph_embedding(user, user_message, output_message)
+    #graph_embedding(user, user_message, output_message)
     response = {
         "ai_message": output_message,
         "human_message": user_message,
