@@ -5,7 +5,7 @@ import grpc
 from . import ocr_service_pb2 as ocr__service__pb2
 
 
-class OCRSserviceStub(object):
+class OCRServiceStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -15,13 +15,13 @@ class OCRSserviceStub(object):
             channel: A grpc.Channel.
         """
         self.CreateTextFromFile = channel.unary_unary(
-                '/pb.OCRSservice/CreateTextFromFile',
+                '/pb.OCRService/CreateTextFromFile',
                 request_serializer=ocr__service__pb2.FileRequest.SerializeToString,
                 response_deserializer=ocr__service__pb2.FileResponse.FromString,
                 )
 
 
-class OCRSserviceServicer(object):
+class OCRServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def CreateTextFromFile(self, request, context):
@@ -31,7 +31,7 @@ class OCRSserviceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_OCRSserviceServicer_to_server(servicer, server):
+def add_OCRServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'CreateTextFromFile': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateTextFromFile,
@@ -40,12 +40,12 @@ def add_OCRSserviceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'pb.OCRSservice', rpc_method_handlers)
+            'pb.OCRService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class OCRSservice(object):
+class OCRService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -59,7 +59,7 @@ class OCRSservice(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/pb.OCRSservice/CreateTextFromFile',
+        return grpc.experimental.unary_unary(request, target, '/pb.OCRService/CreateTextFromFile',
             ocr__service__pb2.FileRequest.SerializeToString,
             ocr__service__pb2.FileResponse.FromString,
             options, channel_credentials,

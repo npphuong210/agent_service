@@ -2,7 +2,7 @@ syntax = "proto3";
  
 package pb;
 
-service OCRSservice{
+service OCRService{
     rpc CreateTextFromFile(FileRequest) returns (FileResponse) {}
 }
 
@@ -12,6 +12,6 @@ message FileRequest {
 }
 
 message FileResponse {
-    string id = 1;
+    string text = 1;
 }
 

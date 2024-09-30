@@ -39,7 +39,7 @@ def transcribe_audio(audio_stream, init_prompt=None):
     except Exception as e:
         return "Error during transcription"
 
-class OCRSserviceServicer(ocr_service_pb2_grpc.OCRSserviceServicer):
+class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
 
     def CreateTextFromFile(self, request, context):
 
@@ -68,7 +68,7 @@ class OCRSserviceServicer(ocr_service_pb2_grpc.OCRSserviceServicer):
             file_like_object = BytesIO(pdf)
             text = extract_text(file_like_object)
 
-        return ocr_service_pb2.FileResponse(id=text)
+        return ocr_service_pb2.FileResponse(text=text)
     
 class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
 
