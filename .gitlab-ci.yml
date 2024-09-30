@@ -6,7 +6,18 @@ build:
     stage: build
     script:
         - cat $ENV_FILE > .env
+    tags:
+        - agent-service
+    only:
+        - feat/linhvt/cicd
 
+deploy:
+    stage: deploy
+    variables:
+        GIT_STRATEGY: none
+    script:
+        - rsync -ahrz --delete-after -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" $CI_PROJECT_DIR/ $CI_DEV_USER@$CI_DEV_IP:$CI_DEV_PATH
+        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "cd $CI_DEV_PATH && docker-compose up -d --build"
     tags:
         - agent-service
     only:
