@@ -17,7 +17,7 @@ deploy:
         GIT_STRATEGY: none
     script:
         - rsync -ahrz --delete-after -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" $CI_PROJECT_DIR/ $CI_DEV_USER@$CI_DEV_IP:$CI_DEV_PATH
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_DEV_USER@$CI_DEV_IP "cd $CI_DEV_PATH && pip install -r requirements.txt & python3 manage.py makemigrations && python3 manage.py migrate"
+        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_DEV_USER@$CI_DEV_IP "cd $CI_DEV_PATH && pip install -r stable-requirements.txt & python3 manage.py makemigrations && python3 manage.py migrate"
     tags:
         - agent-service
     only:
