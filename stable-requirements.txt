@@ -28,7 +28,8 @@ djangogrpcframework==0.2.1
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
 drf-yasg==1.21.7
-duckduckgo_search==6.2.11
+#duckduckgo_search==6.2.11
+duckduckgo_search==6.2.13
 exceptiongroup==1.2.2
 faster-whisper==1.0.3
 filelock==3.16.1
@@ -86,7 +87,8 @@ packaging==24.1
 pdfminer.six==20240706
 pgvector==0.2.5
 pillow==10.4.0
-primp==0.6.1
+primp==0.6.3
+#primp==0.6.1
 proto-plus==1.24.0
 protobuf==4.25.4
 psycopg==3.2.1
