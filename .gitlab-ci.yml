@@ -9,7 +9,7 @@ build:
     tags:
         - agent-service
     only:
-        - feat/linhvt/cicd
+        - develop
 
 deploy:
     stage: deploy
@@ -24,4 +24,4 @@ deploy:
     tags:
         - agent-service
     only:
-        - feat/linhvt/cicd
+        - develop
