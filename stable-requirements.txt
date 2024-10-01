@@ -128,3 +128,4 @@ uritemplate==4.1.1
 urllib3==2.2.2
 wikipedia==1.4.0
 yarl==1.11.1
+torch==2.4.1
