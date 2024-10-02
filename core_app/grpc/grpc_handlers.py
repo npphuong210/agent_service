@@ -13,6 +13,11 @@ from core_app.grpc.pb import ocr_service_pb2, ocr_service_pb2_grpc, stt_service_
 from pdfminer.high_level import extract_text
 from core_app.pdf_classify.pdf_classify import is_scanned_pdf, process_scanned_pdf_with_llm, get_image_informations
 from PIL import Image
+import logging
+
+logging.basicConfig(filename='document_processing.log', level=logging.INFO,
+                    format='%(asctime)s:%(levelname)s:%(message)s')
+logger = logging.getLogger(__name__)
 
 def get_file_extension(file_path):
     _, file_extension = os.path.splitext(file_path)
@@ -42,45 +47,61 @@ def transcribe_audio(audio_stream, init_prompt=None):
 class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
 
     def CreateTextFromFile(self, request, context):
+        try:
+            file_name = request.file_name
+            pdf = request.file
+            text = None
 
-        file_name = request.file_name
-        pdf = request.file
-        text = None
-        print(file_name)
-        #text = extract_text(file)
+            logger.info(f"Processing file: {file_name}")
 
-        if is_scanned_pdf(pdf):
-            # if scanned PDF => vision LLM model
-            file_name = file_name.lower()
-            if file_name.endswith('.pdf'):
-                print("Đây là PDF được scan.")
-                text = process_scanned_pdf_with_llm(pdf)
-            elif file_name.endswith(('.png', '.jpg', '.jpeg')):
-                print("Đây là hình ảnh.")
-                image = Image.open(BytesIO(pdf))
-                text = get_image_informations(image)
+            if is_scanned_pdf(pdf):
+                # if scanned PDF => vision LLM model
+                file_name = file_name.lower()
+                if file_name.endswith('.pdf'):
+                    logger.info("The file is a scanned PDF.")
+                    text = process_scanned_pdf_with_llm(pdf)
+                elif file_name.endswith(('.png', '.jpg', '.jpeg')):
+                    logger.info("The file is an image.")
+                    image = Image.open(BytesIO(pdf))
+                    text = get_image_informations(image)
+                else:
+                    logger.warning("Unsupported file format.")
+                    return None
+            
             else:
-                print("Định dạng tệp không được hỗ trợ.")
-                return None
+                logger.info("The file is a regular PDF with extractable text.")
+                file_like_object = BytesIO(pdf)
+                text = extract_text(file_like_object)
+
+            logger.info(f"Successfully processed file: {file_name}")
+            return ocr_service_pb2.FileResponse(text=text)
         
-        else:
+        except Exception as e:
+            logger.error(f"Error during OCR processing for file {file_name}: {e}")
+            return f"Failed to process {file_name}: {str(e)}"
 
-            file_like_object = BytesIO(pdf)
-            text = extract_text(file_like_object)
-
-        return ocr_service_pb2.FileResponse(text=text)
-    
 class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
 
     def UploadAudio(self, request, context):
         start_time = time.time()
-        
+
         audio_data = io.BytesIO(request.file_data)
-        transcription = transcribe_audio(audio_data)
+
+        logger.info("Starting audio transcription for uploaded file.")
+        
+        try:
+            transcription = transcribe_audio(audio_data)
+            logger.info("Successfully transcribed uploaded audio file.")
+        except Exception as e:
+            logger.error(f"Error during audio transcription: {e}")
+            return stt_service_pb2.TranscriptionResponse(transcription="Error during transcription")
         
         end_time = time.time()
         total_time = end_time - start_time
-        print(f'Total processing time: {total_time:.2f} seconds')
+        
+        logger.info(f"Total processing time for uploaded audio: {total_time:.2f} seconds")
+
+
         return stt_service_pb2.TranscriptionResponse(transcription=transcription)
 
     def StreamAudio(self, request_iterator, context):
@@ -90,6 +111,9 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
         init_prompt = ""
         
         start_time = time.time()
+
+        logger.info("Starting streaming audio transcription.")
+
         try:
             for chunk in request_iterator:
                 if not chunk.chunk_data:
@@ -106,14 +130,13 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
                         transcription = transcribe_audio(audio_stream, init_prompt)
                         init_prompt += transcription
                         init_prompt = init_prompt[-100:]
-                        print('init_prompt: ', init_prompt)
-                        print('chunk:', transcription)
+                        
+                        logger.info(f"Transcribed chunk: {transcription}")
+
                         yield stt_service_pb2.TranscriptionStreamingResponse(transcription=transcription)
                     except Exception as e:
+                        logger.error(f"Error during chunk transcription: {e}")
                         yield stt_service_pb2.TranscriptionStreamingResponse(transcription="Error during transcription")
-
-                    #offset = -1024 * 2 # Example: move 2KB back for context
-                    #audio_stream.seek(offset, io.SEEK_CUR)
 
                     # Clear the buffer for the next set of chunks
                     buffer.clear()
@@ -127,17 +150,19 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
                 audio_stream.seek(0)
                 try:
                     transcription = transcribe_audio(audio_stream, init_prompt)
-                    print('chunk:', transcription)
+                    logger.info(f"Final chunk transcription: {transcription}")
                     yield stt_service_pb2.TranscriptionStreamingResponse(transcription=transcription)
                 except Exception as e:
+                    logger.error(f"Error during final transcription: {e}")
                     yield stt_service_pb2.TranscriptionStreamingResponse(transcription="Error during transcription")
 
         except Exception as e:
+            logger.error(f"Error during audio streaming: {e}")
             return "Error: during the streaming"
         finally:
             audio_stream.close()
 
         end_time = time.time()
         total_time = end_time - start_time
-        print(f'Total processing time: {total_time:.2f} seconds')
+        logger.info(f"Total processing time for audio streaming: {total_time:.2f} seconds")
 
