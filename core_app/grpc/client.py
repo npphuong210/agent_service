@@ -63,9 +63,9 @@ def run():
     with grpc.insecure_channel('localhost:50051') as channel:
         stub_ocr = ocr_service_pb2_grpc.OCRServiceStub(channel)
         stub_stt = stt_service_pb2_grpc.STTServiceStub(channel)
-        get_file(stub_ocr)
+        #get_file(stub_ocr)
         #upload_file(stub_stt, audio_file_path)
-        #run_audio(stub_stt, audio_file_path)
+        run_audio(stub_stt, audio_file_path)
 
 if __name__ == '__main__':
     run()

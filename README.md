@@ -192,9 +192,12 @@ Here are the API endpoints available in this project:
 **Client File**: `core_app/grpc/client.py`
 - A Python client for testing requests to the gRPC server.
 
+**Loggings**: `document_processing.log`
+- Check the logs of server.
+
 ### How to Run the gRPC Server
 
-To run both the REST API and the gRPC services, execute the following command:
+To run the gRPC services, execute the following command:
 
 ```bash
 python manage.py run_grpc_server
