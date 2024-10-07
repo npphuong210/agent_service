@@ -1,4 +1,10 @@
-## Getting Started
+# Table of Contents
+- [1. Getting Started](#getting-started)
+- [2. API Endpoints](#api-endpoints)
+- [3. gRPC](#grpc)
+
+
+## 1. Getting Started
 
 To get started with this project, you need to configure your environment variables. Follow the steps below to set up your environment:
 
@@ -245,6 +251,38 @@ This method processes an OCR request by accepting a file and returning the proce
 
 ---
 
+## Configuration Guide
+
+### 1. Add Trusted Origins for CSRF Protection
+To allow your Django application to accept requests from specific domains, update the `settings.py` file:
+
+```python
+# settings.py
+CSRF_TRUSTED_ORIGINS = ['https://your-domain.com']  # Add your trusted domain(s) here
+```
+
+### 2. Running Django on a Custom Port
+By default, Django runs on port 8000. To run the Django development server on a different port, use the following command:
+```bash
+python manage.py runserver <port>
+```
+
+For example, to run the server on port 7000:
+```bash
+python manage.py runserver 7000
+```
+### 3.Adjusting the gRPC Server Port
+To change the gRPC server's port, modify the add_insecure_port method in core_app/grpc/grpc_server.py:
+
+```python
+# core_app/grpc/grpc_server.py
+server.add_insecure_port('0.0.0.0:<port>')  # Replace <port> with your desired port number
+```
+For example, to change the gRPC server to port 60051:
+
+```python
+server.add_insecure_port('0.0.0.0:60051')
+```
 
 ### Flow
 
