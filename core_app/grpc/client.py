@@ -9,7 +9,7 @@ def read_file_as_bytes(file_path):
             
 def get_file(stub):
 
-    file = read_file_as_bytes("core_app/grpc/data/1.pdf")
+    file = read_file_as_bytes("core_app/grpc/data/2.pdf")
     name = '1.pdf'
     
     request = ocr_service_pb2.FileRequest(
@@ -61,10 +61,10 @@ def run():
     audio_file_path = "core_app/grpc/data/clean.mp3"
     
     with grpc.insecure_channel('localhost:50051') as channel:
-        stub_ocr = ocr_service_pb2_grpc.OCRSserviceStub(channel)
+        stub_ocr = ocr_service_pb2_grpc.OCRServiceStub(channel)
         stub_stt = stt_service_pb2_grpc.STTServiceStub(channel)
-        #get_file(stub)
-        # upload_file(stub_stt, audio_file_path)
+        #get_file(stub_ocr)
+        #upload_file(stub_stt, audio_file_path)
         run_audio(stub_stt, audio_file_path)
 
 if __name__ == '__main__':
