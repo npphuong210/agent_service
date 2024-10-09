@@ -58,7 +58,7 @@ def run_audio(stub, audio_file_path):
 
 def run():
     
-    audio_file_path = "core_app/grpc/data/clean.mp3"
+    audio_file_path = "core_app/grpc/data/01.wav"
     
     with grpc.insecure_channel('localhost:50051') as channel:
         stub_ocr = ocr_service_pb2_grpc.OCRServiceStub(channel)

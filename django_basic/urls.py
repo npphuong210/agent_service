@@ -68,7 +68,10 @@ urlpatterns = [
 
     path("streaming/", agent_answer_message_stream, name="agent-answer-message-stream"),
     path("answer/", agent_answer_message, name="agent-answer-message"),
+    
+    path('swagger<format>/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path("swagger/", schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 
     # path('api/chat', quick_answer_message, name='quick-answer-message')
 ]

@@ -36,7 +36,7 @@ def whisper_model(model_size, device=None):
     return model
 
 def transcribe_audio(audio_stream, init_prompt=None):
-    model = whisper_model(model_size='small')
+    model = whisper_model(model_size='base')
     try:
         segments, info = model.transcribe(audio=audio_stream, initial_prompt=init_prompt, beam_size=3, word_timestamps=True, condition_on_previous_text=True)
         transcription = " ".join([segment.text for segment in segments])
