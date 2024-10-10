@@ -1,4 +1,5 @@
 import time
+import face_recognition
 import grpc
 from faster_whisper import WhisperModel
 import pyaudio 
@@ -9,7 +10,7 @@ from io import BytesIO
 import torch  # Add this import
 # grpc handlers
 from concurrent import futures
-from core_app.grpc.pb import ocr_service_pb2, ocr_service_pb2_grpc, stt_service_pb2, stt_service_pb2_grpc
+from core_app.grpc.pb import ocr_service_pb2, ocr_service_pb2_grpc, stt_service_pb2, stt_service_pb2_grpc, face_recognition_pb2, face_recognition_pb2_grpc
 from pdfminer.high_level import extract_text
 from core_app.pdf_classify.pdf_classify import is_scanned_pdf, process_scanned_pdf_with_llm, get_image_informations
 from PIL import Image
@@ -166,3 +167,87 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
         total_time = end_time - start_time
         logger.info(f"Total processing time for audio streaming: {total_time:.2f} seconds")
 
+class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
+
+    known_face_encodings = []
+    known_face_names = []
+    
+    def UploadImage(self, request, context):
+        # Lấy dữ liệu từ request
+        file_data = request.file_data
+        country = request.Country
+        full_name = request.FullName
+        birthday = request.Birthday
+        gender = request.Gender
+        age = request.Age
+        email = request.Email
+        phone_number = request.Phone_number
+        
+        print(f"Received image from {full_name} in {country}")
+        # Đọc ảnh từ file nhị phân
+        image_np = face_recognition.load_image_file(BytesIO(file_data))
+
+        # Tạo mã hóa khuôn mặt từ ảnh
+        face_locations = face_recognition.face_locations(image_np)
+        face_encodings = face_recognition.face_encodings(image_np, face_locations)
+        print("#"*50)
+        print(face_encodings)
+        print("#"*50)
+        print(self.known_face_encodings)
+        print("#"*50)
+        
+        if not face_encodings:
+            return face_recognition_pb2.UploadImageResponse(message=f"No face detected in the image.")
+            
+        for face_encoding in face_encodings:
+            # So sánh mã hóa khuôn mặt với danh sách mã hóa khuôn mặt đã biết
+            matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
+            name = "Unknown"
+
+            face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
+            
+            if matches:
+                best_match_index = np.argmin(face_distances)
+                if matches[best_match_index]:
+                    name = self.known_face_names[best_match_index]
+                    print(name)
+                    return face_recognition_pb2.UploadImageResponse(message=f"Face already exists: {name} in {country}.")
+            
+        # Nếu không tìm thấy khuôn mặt trùng, thêm vào danh sách đã biết và lưu vào DB
+        self.known_face_encodings.append(face_encodings[0])
+        self.known_face_names.append(full_name)
+        
+        # Giả sử xử lý xong, trả về response thành công
+        message = f"Image received from {full_name} in {country}"
+        return face_recognition_pb2.UploadImageResponse(message=message)
+    
+    def RecognizeFace(self, request_iterator, context):
+        # Lấy dữ liệu từ request
+        file_data = request_iterator.file_data
+        
+        # Đọc ảnh từ file nhị phân
+        image_np = face_recognition.load_image_file(BytesIO(file_data))
+        
+        # Tìm khuôn mặt trong ảnh
+        face_locations = face_recognition.face_locations(image_np)
+        face_encodings = face_recognition.face_encodings(image_np, face_locations)
+        
+        if not face_encodings:
+            return face_recognition_pb2.UploadImageResponse(message=f"No face detected in the image.")
+        
+        face_names = []
+        for face_encoding in face_encodings:
+            # So sánh mã hóa khuôn mặt với danh sách mã hóa khuôn mặt đã biết
+            matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
+            name = "Unknown"
+            
+            face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
+            
+            if matches:
+                best_match_index = np.argmin(face_distances)
+                if matches[best_match_index]:
+                    name = self.known_face_names[best_match_index]
+            face_names.append(name)
+        
+        # Trả về danh sách tên khuôn mặt tìm thấy
+        return face_recognition_pb2.RecognizeFaceResponse(face_names=face_names)
