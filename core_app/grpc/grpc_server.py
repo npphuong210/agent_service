@@ -12,7 +12,7 @@ from .grpc_handlers import (
     STTServiceServicer
 )
 
-def serve():
+def serve(port=50051):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     
     # Register services
@@ -21,6 +21,7 @@ def serve():
 
     
     # Start the server
-    server.add_insecure_port('0.0.0.0:6443')
+    server.add_insecure_port(f'0.0.0.0:{port}')
+    print(f'gRPC server started on port {port}')
     server.start()
     server.wait_for_termination()
