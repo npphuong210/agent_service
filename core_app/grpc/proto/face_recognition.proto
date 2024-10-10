@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package pb;
+
+service FaceRecognitionService {
+
+    rpc UploadImage (UploadImageRequest) returns (UploadImageResponse);
+    rpc UploadImageRecognition (ImageRecognition) returns (DetailResponse);
+}
+
+message UploadImageRequest {
+    bytes file_data = 1;
+    string Country = 2;
+    string FullName = 3;
+    string Birthday = 4;
+    string Gender = 5;
+    string Age = 6;
+    string Email = 7;
+    string Phone_number = 8;
+}
+
+message UploadImageResponse {
+    string message = 1;
+    int32 status_code = 2;
+}
+
+message ImageRecognition {
+    bytes file_data = 1;
+}
+
+message DetailResponse {
+    string message = 1;
+    int32 status_code = 2;
+    string Country = 3;
+    string FullName = 4;
+    string Birthday = 5;
+    string Gender = 6;
+    string Age = 7;
+    string Email = 8;
+    string Phone_number = 9;
+}
+    

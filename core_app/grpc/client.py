@@ -1,6 +1,6 @@
 import grpc
 import os
-from pb import ocr_service_pb2, ocr_service_pb2_grpc, stt_service_pb2_grpc, stt_service_pb2
+from pb import ocr_service_pb2, ocr_service_pb2_grpc, stt_service_pb2_grpc, stt_service_pb2, face_recognition_pb2, face_recognition_pb2_grpc
 
 def read_file_as_bytes(file_path):
     with open(file_path, 'rb') as f:
@@ -55,17 +55,50 @@ def run_audio(stub, audio_file_path):
         print(f"Error: {e}")
     except grpc.RpcError as e:
         print(f"Upload Audio RPC error: {e.code()} - {e.details()}")
+    
+def add_Face(stub, file_image):
+    
+    image = read_file_as_bytes(file_image)
+    
+    request = face_recognition_pb2.UploadImageRequest(
+        file_data=image,
+        Country="Vietnam",
+        FullName="thuytien1",
+        Birthday="1990-01-01",
+        Gender="Male",
+        Age="34",
+        Email="nguyenvana@example.com",
+        Phone_number="0123456789"
+    )    
+    
+    # Gửi request và nhận response
+    response = stub.UploadImage(request)
+    
+    # In ra thông báo từ server
+    print(f"Response: {response.message}, Status Code: {response.status_code}")
+
+# def recognize_face(stub, file_image):
+    
+#     image = read_file_as_bytes(file_image)
+    
+#     response =  
 
 def run():
     
     audio_file_path = "core_app/grpc/data/clean.mp3"
+    image_file_path = "core_app/grpc/data/thuytien1.png"
     
     with grpc.insecure_channel('localhost:50051') as channel:
         stub_ocr = ocr_service_pb2_grpc.OCRServiceStub(channel)
         stub_stt = stt_service_pb2_grpc.STTServiceStub(channel)
-        #get_file(stub_ocr)
-        #upload_file(stub_stt, audio_file_path)
-        run_audio(stub_stt, audio_file_path)
+        stub_face = face_recognition_pb2_grpc.FaceRecognitionServiceStub(channel)
+        
+        # get_file(stub_ocr)
+        # upload_file(stub_stt, audio_file_path)
+        # run_audio(stub_stt, audio_file_path)
+        
+        add_Face(stub_face, image_file_path)
+        # recognize_face(stub_face, image_file_path)
 
 if __name__ == '__main__':
     run()
