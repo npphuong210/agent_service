@@ -6,9 +6,21 @@ import threading
 
 class Command(BaseCommand):
     help = 'Starts the gRPC server'
+    
+    def add_arguments(self, parser):
+        
+        #Optional port argument (default to 50051 if not provided)
+        
+        parser.add_argument(
+            'port', type=int, nargs='?', default=50051,
+            help='Port number to run the gRPC server on (default:50051)'
+        )
 
     def handle(self, *args, **options):
-        serve()
+        port = options['port']
+        self.stdout.write(self.style.SUCCESS(f'Starting gRPC server on port {port}'))
+        
+        serve(port=port)
 
 
 # class Command(BaseCommand):

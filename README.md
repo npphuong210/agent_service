@@ -206,7 +206,7 @@ Here are the API endpoints available in this project:
 To run the gRPC services, execute the following command:
 
 ```bash
-python manage.py run_grpc_server
+python3 manage.py run_grpc_server <port> # default: 50051, python3 manage.py run_grpc_server 6443
 ```
 
 ### OCRService gRPC API
