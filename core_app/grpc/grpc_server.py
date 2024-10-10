@@ -21,6 +21,6 @@ def serve():
 
     
     # Start the server
-    server.add_insecure_port('0.0.0.0:50051')
+    server.add_insecure_port('0.0.0.0:6443')
     server.start()
     server.wait_for_termination()

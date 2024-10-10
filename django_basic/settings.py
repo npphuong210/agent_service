@@ -39,12 +39,60 @@ DEBUG = True
 
 
 ALLOWED_HOSTS = ["*"]
-CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = ['https://*.agent.bap.jp', "https://*.bap-software.net", "https://*.bap.jp", 'https://*.bappartners.com']
+CSRF_TRUSTED_ORIGINS = ['https://*.agent.bap.jp', 
+                        "https://*.bap-software.net", 
+                        "https://*.bap.jp", 
+                        'https://*.bappartners.com',
+                        ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
+
+CORS_ALLOWED_ORIGINS = [
+    'https://*.bappartners.com',
+    'https://localhost:8000'
+]
+
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': True,
+    'SECURITY_DEFINITIONS': {
+        'basic': {
+            'type': 'basic'
+        }
+    },
+    # 'LOGIN_URL': 'rest_framework:login',  # Configuring login URL for Swagger
+    # 'LOGOUT_URL': 'rest_framework:logout',  # Configuring logout URL for Swagger
+}
+
+REDOC_SETTINGS = {
+    'LAZY_RENDERING': False,
+}
 
 
 # Application definition
@@ -97,10 +145,6 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME_LATE_USER': timedelta(days=30),
 }
 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://127.0.0.1:3000",  # URL của frontend React
-# ]
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
