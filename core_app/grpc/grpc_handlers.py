@@ -221,9 +221,9 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
         message = f"Image received from {full_name} in {country}"
         return face_recognition_pb2.UploadImageResponse(message=message)
     
-    def RecognizeFace(self, request_iterator, context):
+    def UploadImageRecognition(self, request, context):
         # Lấy dữ liệu từ request
-        file_data = request_iterator.file_data
+        file_data = request.file_data
         
         # Đọc ảnh từ file nhị phân
         image_np = face_recognition.load_image_file(BytesIO(file_data))
@@ -233,8 +233,11 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
         face_encodings = face_recognition.face_encodings(image_np, face_locations)
         
         if not face_encodings:
-            return face_recognition_pb2.UploadImageResponse(message=f"No face detected in the image.")
-        
+            return face_recognition_pb2.DetailResponse(
+                message="No face detected in the image.",
+                status_code=400
+            )
+       
         face_names = []
         for face_encoding in face_encodings:
             # So sánh mã hóa khuôn mặt với danh sách mã hóa khuôn mặt đã biết
@@ -250,4 +253,14 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             face_names.append(name)
         
         # Trả về danh sách tên khuôn mặt tìm thấy
-        return face_recognition_pb2.RecognizeFaceResponse(face_names=face_names)
+        return face_recognition_pb2.DetailResponse(
+        message=f"Found faces: {', '.join(face_names)}",
+        status_code=200,
+        Country="N/A",
+        FullName=", ".join(face_names),
+        Birthday="N/A", 
+        Gender="N/A",  
+        Age="N/A",
+        Email="N/A",  
+        Phone_number="N/A"  
+        )

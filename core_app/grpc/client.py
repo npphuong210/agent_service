@@ -63,7 +63,7 @@ def add_Face(stub, file_image):
     request = face_recognition_pb2.UploadImageRequest(
         file_data=image,
         Country="Vietnam",
-        FullName="thuytien1",
+        FullName="thuytien",
         Birthday="1990-01-01",
         Gender="Male",
         Age="34",
@@ -77,11 +77,13 @@ def add_Face(stub, file_image):
     # In ra thông báo từ server
     print(f"Response: {response.message}, Status Code: {response.status_code}")
 
-# def recognize_face(stub, file_image):
+def recognize_face(stub, file_image):
     
-#     image = read_file_as_bytes(file_image)
+    image = read_file_as_bytes(file_image)
     
-#     response =  
+    response = stub.UploadImageRecognition(face_recognition_pb2.ImageRecognition(file_data=image))
+    
+    print(f"Response: {response.message}, Status Code: {response.status_code}")
 
 def run():
     audio_file_path = "core_app/grpc/data/clean.mp3"
@@ -97,8 +99,8 @@ def run():
         # upload_file(stub_stt, audio_file_path)
         # run_audio(stub_stt, audio_file_path)
         
-        add_Face(stub_face, image_file_path)
-        # recognize_face(stub_face, image_file_path)
+        # add_Face(stub_face, image_file_path)
+        recognize_face(stub_face, image_file_path)
 
 if __name__ == '__main__':
     run()
