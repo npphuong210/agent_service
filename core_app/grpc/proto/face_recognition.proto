@@ -28,15 +28,19 @@ message ImageRecognition {
     bytes file_data = 1;
 }
 
+// Thông tin chi tiết về một cá nhân
+message PersonDetails {
+    string Country = 1;
+    string FullName = 2;
+    string Birthday = 3;
+    string Gender = 4;
+    string Age = 5;
+    string Email = 6;
+    string Phone_number = 7;
+}
+
 message DetailResponse {
     string message = 1;
     int32 status_code = 2;
-    string Country = 3;
-    string FullName = 4;
-    string Birthday = 5;
-    string Gender = 6;
-    string Age = 7;
-    string Email = 8;
-    string Phone_number = 9;
+    repeated PersonDetails persons = 3;
 }
-    

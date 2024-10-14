@@ -138,3 +138,17 @@ class InternalKnowledge(CommonModel):
         ]
     def __str__(self):
         return f"{self.summary}"
+    
+class FaceData(models.Model):
+    image = models.ImageField(upload_to='faces/')  # Trường lưu ảnh
+    encoding = models.BinaryField()  # Trường lưu encoding của khuôn mặt dưới dạng nhị phân
+    full_name = models.CharField(max_length=255)
+    country = models.CharField(max_length=255)
+    birthday = models.DateField()
+    gender = models.CharField(max_length=10)
+    age = models.CharField(max_length=3)
+    email = models.EmailField(max_length=255)
+    phone_number = models.CharField(max_length=15)
+    
+    def __str__(self):
+        return self.full_name
