@@ -1,26 +1,13 @@
 stages:
-    - build
     - deploy
-
-build-dev:
-    stage: build
-    script:
-        - cat $ENV_FILE > .env
-    tags:
-        - agent-service
-    only:
-        - develop
 
 deploy-dev:
     stage: deploy
     variables:
         GIT_STRATEGY: none
     script:
+        - cat $ENV_FILE > .env
         - rsync -ahrz --delete-after -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" $CI_PROJECT_DIR/ $CI_DEV_USER@$CI_DEV_IP:$CI_DEV_PATH
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_DEV_USER@$CI_DEV_IP "cd $CI_DEV_PATH && pip install -r stable-requirements.txt && python3 manage.py makemigrations && python3 manage.py migrate"
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_DEV_USER@$CI_DEV_IP "cd $CI_DEV_PATH && kill -9 $(ps -ef | grep "/usr/bin/python3 manage.py runserver" | grep -v grep | awk '{print $2}') || true" 
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_DEV_USER@$CI_DEV_IP "cd $CI_DEV_PATH && kill -9 $(ps -ef | grep "python3 manage.py runserver" | grep -v grep | awk '{print $2}') || true"
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_DEV_USER@$CI_DEV_IP "cd $CI_DEV_PATH && kill -9 $(ps -ef | grep "python3 manage.py run_grpc_server" | grep -v grep | awk '{print $2}') || true"
         - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_DEV_USER@$CI_DEV_IP "cd $SOURCE_PATH && bash deploy-agent.sh"
 
     tags:
@@ -28,26 +15,14 @@ deploy-dev:
     only:
         - develop
 
-build-prod:
-    stage: build
-    script:
-        - cat $PRO_ENV_FILE > .env
-    tags:
-        - prod
-    only:
-        - main
-
 deploy-prod:
     stage: deploy
     variables:
         GIT_STRATEGY: none
     script:
+        - cat $PRD_ENV_FILE > .env
         - rsync -ahrz --delete-after -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" $CI_PROJECT_DIR/ $CI_PRD_USER@$CI_PRD_IP:$CI_PRD_PATH
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_PRD_USER@$CI_PRD_IP "cd $CI_PRD_PATH && pip install -r stable-requirements.txt && python3 manage.py makemigrations && python3 manage.py migrate"
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_PRD_USER@$CI_PRD_IP "cd $CI_PRD_PATH && kill -9 $(ps -ef | grep "/usr/bin/python3 manage.py runserver" | grep -v grep | awk '{print $2}') || true" 
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_PRD_USER@$CI_PRD_IP "cd $CI_PRD_PATH && kill -9 $(ps -ef | grep "python3 manage.py runserver" | grep -v grep | awk '{print $2}') || true"
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_PRD_USER@$CI_PRD_IP "cd $CI_PRD_PATH && kill -9 $(ps -ef | grep "python3 manage.py run_grpc_server" | grep -v grep | awk '{print $2}') || true"
-        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_PRD_USER@$CI_PRD_IP "cd $SOURCE_PATH && bash deploy-agent.sh"
+        - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_PRD_USER@$CI_PRD_IP "cd $SOURCE_PATH && bash agent.sh"
 
     tags:
         - prod
