@@ -303,7 +303,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             if matched_faces:
                 logger.info(f"Total recognized faces: {len(matched_faces)}")
                 return face_recognition_pb2.DetailResponse(
-                    message="Faces recognized.",
+                    message=f"Faces recognized: {matched_face.full_name}",
                     status_code=200,
                     persons=matched_faces
                 )
