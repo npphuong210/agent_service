@@ -1,0 +1,17 @@
+syntax = "proto3";
+ 
+package pb;
+
+service OCRService{
+    rpc CreateTextFromFile(FileRequest) returns (FileResponse) {}
+}
+
+message FileRequest {
+    string file_name = 1;
+    bytes file = 2;
+}
+
+message FileResponse {
+    string text = 1;
+}
+

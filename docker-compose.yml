@@ -1,0 +1,52 @@
+version: '3.11'
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"  
+
+  db-init:
+    image: pgvector/pgvector:pg16
+    depends_on:
+      - db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_HOST_AUTH_METHOD: md5
+    command: >
+      bash -c "
+        until PGPASSWORD=${DB_PASSWORD} psql -h db -U ${DB_USERNAME} -d ${DB_NAME} -c 'SELECT 1'; do
+          echo 'Waiting for PostgreSQL to be ready...';
+          sleep 5;
+        done;
+        PGPASSWORD=${DB_PASSWORD} psql -h db -U ${DB_USERNAME} -d ${DB_NAME} -c 'CREATE EXTENSION IF NOT EXISTS vector;'"
+
+  web:
+    build:
+      context: .
+    command: bash -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - db-init
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db 
+      DB_PORT: 5432
+
+volumes:
+  postgres_data:
