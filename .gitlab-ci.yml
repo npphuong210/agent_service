@@ -31,7 +31,7 @@ deploy-dev:
 build-prod:
     stage: build
     script:
-        - cat $ENV_FILE > .env
+        - cat $PRO_ENV_FILE > .env
     tags:
         - prod
     only:
