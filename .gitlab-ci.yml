@@ -37,7 +37,7 @@ build-prod:
     only:
         - main
 
-deploy-dev:
+deploy-prod:
     stage: deploy
     variables:
         GIT_STRATEGY: none
