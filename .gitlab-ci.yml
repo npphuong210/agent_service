@@ -29,14 +29,14 @@ deploy-dev:
     only:
         - develop
 
-build-prod:
-    stage: build
-    script:
-        - cat $PRO_ENV_FILE > .env
-    tags:
-        - prod
-    only:
-        - main
+#build-prod:
+#    stage: build
+#    script:
+#        - cat $PRO_ENV_FILE > .env
+#    tags:
+#        - prod
+#    only:
+#        - main
 
 deploy-prod:
     stage: deploy
