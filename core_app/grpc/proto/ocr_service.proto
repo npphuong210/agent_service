@@ -12,6 +12,6 @@ message FileRequest {
 }
 
 message FileResponse {
-    string text = 1;
+    string message = 1;
+    string text = 2;
 }
-

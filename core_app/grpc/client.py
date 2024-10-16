@@ -88,7 +88,6 @@ def recognize_face(stub, file_image):
 def run():
     audio_file_path = "core_app/grpc/data/clean.mp3"
     image_file_path = "core_app/grpc/data/thuytien1.png"
-
     
     with grpc.insecure_channel('localhost:50051') as channel:
         stub_ocr = ocr_service_pb2_grpc.OCRServiceStub(channel)

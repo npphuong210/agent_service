@@ -138,7 +138,7 @@ class InternalKnowledge(CommonModel):
         ]
     def __str__(self):
         return f"{self.summary}"
-    
+
 class FaceData(models.Model):
     image = models.ImageField(upload_to='faces/')  # Trường lưu ảnh
     encoding = models.BinaryField()  # Trường lưu encoding của khuôn mặt dưới dạng nhị phân
