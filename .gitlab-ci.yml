@@ -4,7 +4,7 @@ stages:
 deploy-dev:
     stage: deploy
     variables:
-        GIT_STRATEGY: none
+        GIT_STRATEGY: fetch
     script:
         - cat $ENV_FILE > .env
         - rsync -ahrz --delete-after -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" $CI_PROJECT_DIR/ $CI_DEV_USER@$CI_DEV_IP:$CI_DEV_PATH
@@ -18,7 +18,7 @@ deploy-dev:
 deploy-prod:
     stage: deploy
     variables:
-        GIT_STRATEGY: none
+        GIT_STRATEGY: fetch
     script:
         - cat $PRD_ENV_FILE > .env
         - rsync -ahrz --delete-after -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" $CI_PROJECT_DIR/ $CI_PRD_USER@$CI_PRD_IP:$CI_PRD_PATH
