@@ -80,6 +80,7 @@ Finally, start the development server to run your application:
 python manage.py runserver
 ```
 
+
 ### 6. Create super user
 
 ```python
