@@ -110,7 +110,6 @@ INSTALLED_APPS = [
     "drf_yasg", # Yet another swagger generator
     "corsheaders",
     "rest_framework.authtoken",
-    'storages',
 ]
 
 ASGI_APPLICATION = "django_basic.asgi.application"
@@ -239,14 +238,3 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SWAGGER_SETTINGS = {
    'USE_SESSION_AUTH': True
 }
-
-# Setting for S3 storage
-AWS_ACCESS_KEY_ID = 'YOUR_ACCESS_KEY'
-AWS_SECRET_ACCESS_KEY = 'YOUR_SECRET_KEY'
-AWS_STORAGE_BUCKET_NAME = 'your_bucket_name'
-AWS_S3_REGION_NAME = 'your_region'  # Ví dụ: 'us-east-1'
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-
-# Sử dụng S3 làm backend lưu trữ cho các file media
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
