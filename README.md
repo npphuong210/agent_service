@@ -23,7 +23,7 @@ Next, create and activate a Python virtual environment to isolate your project d
 
 ```python
 # create a python environment
-python -m venv venv
+python3 -m venv venv
 
 # activate
 venv/Scripts/activate (windows)
@@ -32,11 +32,23 @@ source venv/Scripts/activate (linux)
 
 ### 3. Install Project Dependencies
 
+Make sure install PortAudio. Unless You will encounter the error from pip install requirement below
+
+```bash
+sudo apt install portaudio19-dev 
+```
+
 With the virtual environment activated, install the necessary dependencies using pip:
 
 ```python
 # Install dependencies
-pip install -r requirements.txt
+pip install -r stable-requirements.txt # this is a freeze requirements which work smoothly dev environment
+```
+
+If Makefile is available. (Linux only)
+
+```bash
+Make setup # to install all the dependencies above
 ```
 
 ### 4. Configure the Database
@@ -45,8 +57,8 @@ Run the following commands to create and apply the database migrations:
 
 ```python
 # Run database migrations
-python manage.py makemigrations
-python manage.py migrate
+python3 manage.py makemigrations
+python3 manage.py migrate
 ```
 
 ```bash
@@ -67,6 +79,7 @@ Finally, start the development server to run your application:
 ```python
 python manage.py runserver
 ```
+
 
 ### 6. Create super user
 
@@ -222,7 +235,8 @@ This method processes an OCR request by accepting a file and returning the proce
 - **file**: File data (in `bytes` format).
 
 #### Response: `FileResponse`
-- **id**: Unique identifier or text response related to the processed file.
+- **message**: Text response notifies error or success message.
+- **text**: Text response related to the processed file.
 
 ---
 
@@ -448,5 +462,5 @@ Ví dụ chi tiết:
    - Sử dụng lệnh `query_from_wikipedia("Chiến tranh thế giới thứ hai")` để truy vấn thông tin trên Wikipedia.
 
 3. Trả lời người dùng:
-   - Cung cấp thông tin liên quan đến chủ đề Chiến tranh thế giới thứ hai: `Here is the information related to Chiến tranh thế giới thứ hai: [Extracted Information]`
+   - Cung cấp thông tin liên quan đến chủ đề Chiến tranh thế giới thứ hai: `Here is the information related to Chiến tranh thế giới thứ hai: [Extracted Information]` - huynn2
 ```

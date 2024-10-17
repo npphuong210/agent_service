@@ -1,13 +1,16 @@
 pythonproto:
 	rm -f grpc/pb/*.py
 	python3 -m grpc_tools.protoc --proto_path=core_app/grpc/proto --python_out=core_app/grpc/pb --grpc_python_out=core_app/grpc/pb core_app/grpc/proto/*.proto
-runserver:
+grpcrun:
 	python3 manage.py run_grpc_server
 setup:
+	sudo apt install portaudio19-dev
 	pip install -r stable-requirements.txt
 dj_makemigrations:
 	python3 manage.py makemigrations
 dj_migrate:
 	python3 manage.py migrate
+dj_run:
+	python3 manage.py runserver
 
-.PHONY: pythonproto runserver setup dj_makemigrations dj_migrate
+.PHONY: pythonproto grpcrun setup dj_makemigrations dj_migrate dj_run
