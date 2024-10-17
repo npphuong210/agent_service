@@ -92,9 +92,24 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                         text = text
                         )
                     
+
+            if text.startswith("ERROR:"):
+                if "too small" in text.lower() or "unclear" in text.lower():
+                    logger.warning(f"Problem: {text}")
+                    return ocr_service_pb2.FileResponse(
+                        message = "error.image-too-small-or-unclear",
+                        text = ""
+                        )
+                else:
+                    logger.warning(f"Error during OCR processing: {text}")
+                    return ocr_service_pb2.FileResponse(
+                        message = "error.can-not-read-file",
+                        text = text
+                        )
+                    
             logger.info(f"Successfully processed file: {file_name}")
             return ocr_service_pb2.FileResponse(
-                message = "", 
+                message = "success", 
                 text = text
                 )
         
@@ -102,7 +117,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
             logger.error(f"Error during OCR processing for file {file_name}: {e}")
             return ocr_service_pb2.FileResponse(
                 message = "error.unknown-error",
-                text = "noooo"
+                text = ""
                 )
 
 class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
