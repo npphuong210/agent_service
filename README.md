@@ -462,5 +462,5 @@ Ví dụ chi tiết:
    - Sử dụng lệnh `query_from_wikipedia("Chiến tranh thế giới thứ hai")` để truy vấn thông tin trên Wikipedia.
 
 3. Trả lời người dùng:
-   - Cung cấp thông tin liên quan đến chủ đề Chiến tranh thế giới thứ hai: `Here is the information related to Chiến tranh thế giới thứ hai: [Extracted Information]`
+   - Cung cấp thông tin liên quan đến chủ đề Chiến tranh thế giới thứ hai: `Here is the information related to Chiến tranh thế giới thứ hai: [Extracted Information]` - huynn2
 ```
