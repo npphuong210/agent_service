@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 def encode_image(image: Image.Image) -> dict:
     """Encode a PIL image as base64 and return in a dict with a proper format."""
-    if image.mode == 'RGBA':
+    if image.mode in ['RGBA', 'P']:
         image = image.convert('RGB')
     
     buffered = BytesIO()
@@ -29,7 +29,7 @@ def encode_image(image: Image.Image) -> dict:
 @chain
 def image_model(inputs: dict) -> str | list[str] | dict:
     """Invoke model with image and prompt."""
-    model = ChatOpenAI(temperature=0.5, model="gpt-4-turbo", max_tokens=1024)
+    model = ChatOpenAI(temperature=0, model="gpt-4-turbo", max_tokens=1024)
     
     # Create a HumanMessage with both text and image content
     msg = model.invoke(
@@ -47,11 +47,19 @@ def image_model(inputs: dict) -> str | list[str] | dict:
 def get_image_informations(image: Image.Image) -> dict:
     logger.info("Starting text extraction from image.")
 
-    vision_prompt = """Given the image, extract all visible text from the scanned image. 
-    Ensure that the extraction includes all text present in the image, regardless of the language.     
-    - Provide the full text found in the image without any translation. 
-    - Output the text clearly and completely as it appears in the image.
-    """
+    vision_prompt = """Given the image, extract all visible text, including any text present in the image.
+         Make sure to include every piece of text visible in the image, regardless of its position or context.
+        - Provide the text exactly as it appears, without any modifications or translations.
+        
+        However, if the text is unclear, unreadable, or if the image lacks clarity, you must respond with "ERROR: " followed by an appropriate message, for example:
+        "ERROR: The image is too small or blurry to extract readable text."
+
+        Rules:
+        1. Only extract text if it is visible and readable.
+        2. If the image or file is unclear, use the "ERROR: " prefix in your response.
+        3. Do not invent or add text that isn't present.
+        """
+    
     try:
         logger.info("Encoding image for Vision LLM processing.")
         # Encode the image
@@ -66,10 +74,7 @@ def get_image_informations(image: Image.Image) -> dict:
             'image': image_data,
             'prompt': vision_prompt
         })
-
-        logger.info("Text extraction from image completed successfully.")
-        return result
     
     except Exception as e:
         logger.error(f"Error during Vision LLLM processing: {e}")
-        return {}
+        raise e

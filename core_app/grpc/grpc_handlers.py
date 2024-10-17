@@ -66,19 +66,41 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                     text = get_image_informations(image)
                 else:
                     logger.warning("Unsupported file format.")
-                    return None
-            
+                    return ocr_service_pb2.FileResponse(
+                        message = "Unsupported file format",
+                        text = ""
+                        )
             else:
                 logger.info("The file is a regular PDF with extractable text.")
                 file_like_object = BytesIO(pdf)
                 text = extract_text(file_like_object)
 
+            if text.startswith("ERROR:"):
+                if "too small" in text.lower() or "unclear" in text.lower():
+                    logger.warning(f"Problem: {text}")
+                    return ocr_service_pb2.FileResponse(
+                        message = "error.image-too-small-or-unclear",
+                        text = ""
+                        )
+                else:
+                    logger.warning(f"Error during OCR processing: {text}")
+                    return ocr_service_pb2.FileResponse(
+                        message = "error.can-not-read-file",
+                        text = text
+                        )
+                    
             logger.info(f"Successfully processed file: {file_name}")
-            return ocr_service_pb2.FileResponse(text=text)
+            return ocr_service_pb2.FileResponse(
+                message = "", 
+                text = text
+                )
         
         except Exception as e:
             logger.error(f"Error during OCR processing for file {file_name}: {e}")
-            return f"Failed to process {file_name}: {str(e)}"
+            return ocr_service_pb2.FileResponse(
+                message = "error.unknown-error",
+                text = ""
+                )
 
 class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
 
