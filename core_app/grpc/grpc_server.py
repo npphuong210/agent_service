@@ -15,7 +15,10 @@ from .grpc_handlers import (
 )
 
 def serve(port=50051):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    
+    # config message size
+    channel_opt = [('grpc.max_send_message_length', 10 * 1024 * 1024), ('grpc.max_receive_message_length', 10 * 1024 * 1024)]
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10), options=channel_opt)
     
     # Register services
     add_OCRServiceServicer_to_server(OCRServiceServicer(), server)
