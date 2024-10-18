@@ -1,6 +1,7 @@
 !core_app/migrations/__init__.py
 core_app/migrations/*
 *.ipynb
+core_app/grpc/data/*
 ### VisualStudioCode template
 .vscode/*
 !.vscode/settings.json
