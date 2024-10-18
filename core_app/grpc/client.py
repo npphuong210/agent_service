@@ -95,11 +95,11 @@ def run():
         stub_face = face_recognition_pb2_grpc.FaceRecognitionServiceStub(channel)
         
         # get_file(stub_ocr)
-        # upload_file(stub_stt, audio_file_path)
-        # run_audio(stub_stt, audio_file_path)
+        #upload_file(stub_stt, audio_file_path)
+        run_audio(stub_stt, audio_file_path)
         
         # add_Face(stub_face, image_file_path)
-        recognize_face(stub_face, image_file_path)
+        #recognize_face(stub_face, image_file_path)
 
 if __name__ == '__main__':
     run()

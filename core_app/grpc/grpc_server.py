@@ -1,6 +1,6 @@
 import grpc
 from concurrent import futures
-
+from config import Config 
 # Import generated gRPC modules
 from core_app.grpc.pb.face_recognition_pb2_grpc import add_FaceRecognitionServiceServicer_to_server
 from core_app.grpc.pb.ocr_service_pb2_grpc import add_OCRServiceServicer_to_server
@@ -17,7 +17,8 @@ from .grpc_handlers import (
 def serve(port=50051):
     
     # config message size
-    channel_opt = [('grpc.max_send_message_length', 10 * 1024 * 1024), ('grpc.max_receive_message_length', 10 * 1024 * 1024)]
+    config = Config()
+    channel_opt = [('grpc.max_send_message_length', config.MAX_SEND_MESSAGE_LENGTH), ('grpc.max_receive_message_length', config.MAX_RECEIVE_MESSAGE_LENGTH)]
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10), options=channel_opt)
     
     # Register services
