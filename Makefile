@@ -5,6 +5,7 @@ grpcrun:
 	python3 manage.py run_grpc_server
 setup:
 	sudo apt install portaudio19-dev
+	sudo apt install cmake
 	pip install -r stable-requirements.txt
 dj_makemigrations:
 	python3 manage.py makemigrations

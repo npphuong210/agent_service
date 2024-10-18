@@ -38,6 +38,11 @@ Make sure install PortAudio. Unless You will encounter the error from pip instal
 sudo apt install portaudio19-dev 
 ```
 
+Make sure install cmake for face recognition.
+```bash
+sudo apt install cmake
+```
+
 With the virtual environment activated, install the necessary dependencies using pip:
 
 ```python
