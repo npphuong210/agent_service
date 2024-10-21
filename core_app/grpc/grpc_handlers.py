@@ -94,7 +94,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                     
             logger.info(f"Successfully processed file: {file_name}")
             return ocr_service_pb2.FileResponse(
-                message = "", 
+                message = "success", 
                 text = text
                 )
         
@@ -102,7 +102,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
             logger.error(f"Error during OCR processing for file {file_name}: {e}")
             return ocr_service_pb2.FileResponse(
                 message = "error.unknown-error",
-                text = ""
+                text = str(e)
                 )
 
 class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
