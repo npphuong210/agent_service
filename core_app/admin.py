@@ -1,5 +1,5 @@
 from django.contrib import admin
-from core_app.models import Conversation, SystemPrompt, ExternalKnowledge, Agent, AgentTool, InternalKnowledge, LlmModel
+from core_app.models import Conversation, SystemPrompt, ExternalKnowledge, Agent, AgentTool, InternalKnowledge, LlmModel, FaceData
 from django.contrib.auth.models import User
 # Register your models here.
 
@@ -13,3 +13,4 @@ admin.site.register(ExternalKnowledge)
 admin.site.register(Agent)
 admin.site.register(AgentTool)
 admin.site.register(LlmModel)
+admin.site.register(FaceData)
