@@ -140,15 +140,15 @@ class InternalKnowledge(CommonModel):
         return f"{self.summary}"
 
 class FaceData(models.Model):
-    # image = models.ImageField(upload_to='faces/')  # Trường lưu ảnh
-    face_encoding = models.BinaryField()  # Trường lưu encoding của khuôn mặt dưới dạng nhị phân
-    full_name = models.CharField(max_length=255, unique=True)
-    country = models.CharField(max_length=255)
-    birthday = models.DateField()
-    gender = models.CharField(max_length=10)
-    age = models.CharField(max_length=3)
-    email = models.EmailField(max_length=255)
-    phone_number = models.CharField(max_length=15)
+    #image = models.ImageField(upload_to='faces/', null=True, blank=True)  # Trường lưu ảnh
+    face_encoding = models.BinaryField(null=True, blank=True)  # Trường lưu encoding của khuôn mặt dưới dạng nhị phân
+    full_name = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    country = models.CharField(max_length=255, null=True, blank=True)
+    birthday = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=10, null=True, blank=True)
+    age = models.CharField(max_length=3, null=True, blank=True)
+    email = models.EmailField(max_length=255, null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
     
     def __str__(self):
         return self.full_name
