@@ -94,7 +94,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                     
             logger.info(f"Successfully processed file: {file_name}")
             return ocr_service_pb2.FileResponse(
-                message = "success", 
+                message = "", 
                 text = text
                 )
         
@@ -207,7 +207,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             
             if FaceData.objects.filter(full_name=full_name).exists():
                 logger.info(f"Face already exists: {full_name}.")
-                return face_recognition_pb2.UploadImageResponse(message= f"Full name: {full_name} already exists in the database.")
+                return face_recognition_pb2.UploadImageResponse(message= f"Full name: {full_name} already exists in the database.", status_code=400)
 
             logger.info(f"Received image from {full_name} in {country}.")
 
@@ -217,13 +217,13 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
 
             if not face_encodings:
                 logger.info("No face detected in the image.")
-                return face_recognition_pb2.UploadImageResponse(message="No face detected in the image.")
+                return face_recognition_pb2.UploadImageResponse(message="No face detected in the image.", status_code=400)
 
             face_encoding = face_encodings[0]
 
             # Lấy tất cả các mã hóa khuôn mặt đã biết từ database và tên tương ứng    
             existing_faces = FaceData.objects.all()
-            known_face_encodings = [np.frombuffer(face.encoding) for face in existing_faces]
+            known_face_encodings = [np.frombuffer(face.face_encoding) for face in existing_faces]
             known_face_names = [face.full_name for face in existing_faces]
             
             # So sánh với danh sách khuôn mặt đã biết
@@ -235,7 +235,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                 if matches[best_match_index]:
                     name = known_face_names[best_match_index]
                     logger.info(f"Face recognized: {name}")
-                    return face_recognition_pb2.UploadImageResponse(message=f"Face already exists: {name} in {country}.")
+                    return face_recognition_pb2.UploadImageResponse(message=f"Face already exists: {name} in {country}.", status_code=400)
 
             face_record = FaceData(
                 full_name=full_name,
@@ -245,18 +245,18 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                 age = age,
                 email = email,
                 phone_number = phone_number,
-                encoding=face_encoding.tobytes(),
+                face_encoding=face_encoding.tobytes(),
             )
-            face_record.image.save(f"{full_name}.png", BytesIO(file_data))
+            # face_record.image.save(f"{full_name}.png", BytesIO(file_data))
             face_record.save()
                 
             logger.info(f"New face added: {full_name}")
 
-            return face_recognition_pb2.UploadImageResponse(message=f"Image received from {full_name} in {country}.")
+            return face_recognition_pb2.UploadImageResponse(message=f"Image received from {full_name} in {country}", status_code=200)
 
         except Exception as e:
             logger.error(f"Error processing image from {full_name}: {e}")
-            return face_recognition_pb2.UploadImageResponse(message="Error occurred during image processing.")
+            return face_recognition_pb2.UploadImageResponse(message="Error occurred during image processing.", status_code=500)
     
     def UploadImageRecognition(self, request, context):
         """Nhận ảnh và trả về danh sách khuôn mặt đã nhận dạng được cùng thông tin chi tiết."""
@@ -291,7 +291,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
 
             # Chuyển các khuôn mặt từ database thành danh sách và mã hóa
             existing_faces_list = list(existing_faces)
-            known_face_encodings = [np.frombuffer(face.encoding) for face in existing_faces]
+            known_face_encodings = [np.frombuffer(face.face_encoding) for face in existing_faces]
             logger.info(f"Loaded {len(existing_faces)} existing faces from the database.")
 
             matched_faces = []
