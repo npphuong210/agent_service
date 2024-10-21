@@ -53,7 +53,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
 
 CORS_ALLOWED_ORIGINS = [
     'https://*.bappartners.com',
-    'https://localhost:8000'
+    'https://localhost:8000',
+    'https://*.bap.jp'
 ]
 
 CORS_ALLOW_METHODS = (
