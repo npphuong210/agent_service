@@ -140,7 +140,7 @@ class InternalKnowledge(CommonModel):
         return f"{self.summary}"
 
 class FaceData(models.Model):
-    image = models.ImageField(upload_to='faces/')  # Trường lưu ảnh
+    # image = models.ImageField(upload_to='faces/')  # Trường lưu ảnh
     encoding = models.BinaryField()  # Trường lưu encoding của khuôn mặt dưới dạng nhị phân
     full_name = models.CharField(max_length=255, unique=True)
     country = models.CharField(max_length=255)

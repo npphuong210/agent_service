@@ -247,7 +247,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                 phone_number = phone_number,
                 encoding=face_encoding.tobytes(),
             )
-            face_record.image.save(f"{full_name}.png", BytesIO(file_data))
+            # face_record.image.save(f"{full_name}.png", BytesIO(file_data))
             face_record.save()
                 
             logger.info(f"New face added: {full_name}")
