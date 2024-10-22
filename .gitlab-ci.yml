@@ -46,6 +46,6 @@ migrate-prod:
     - echo "Running migrations..."
     - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_PRD_USER@$CI_PRD_IP "cd $CI_PRD_PATH && python3 manage.py migrate"
   tags:
-    - agent-service
+    - prod
   only:
     - main
