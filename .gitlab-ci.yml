@@ -25,6 +25,7 @@ migrate-dev:
     - agent-service
   only:
     - develop
+  when: manual
 
 deploy-prod:
     stage: deploy
@@ -49,3 +50,4 @@ migrate-prod:
     - prod
   only:
     - main
+  when: manual
