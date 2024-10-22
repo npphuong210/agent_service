@@ -7,12 +7,10 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 import pytz
 
-# Create your models here.
-
 # create a array that have dimension of 1536
 empty_vector = [0.0]*1536
 
-
+# Create your models here.
 class CommonModel(models.Model):
     class Meta:
         abstract = True
@@ -30,10 +28,13 @@ class CommonModel(models.Model):
         super(CommonModel, self).save(*args, **kwargs)
         
 # expose
-class SystemPrompt(CommonModel):
+class SystemPrompt(CommonModel): 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     prompt_name = models.CharField(max_length=100, unique=True)
     prompt_content = models.TextField()
+    
+    class Meta:
+        db_table = 'agent_systemprompt'
 
     def __str__(self):
         return self.prompt_name
@@ -48,14 +49,20 @@ class LlmModel(CommonModel):
 
     def __str__(self):
         return self.llm_name
+    
     class Meta:
         unique_together = ['llm_name', 'user']
+        db_table = 'agent_llmmodel'
 
 class AgentTool(CommonModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tool_name = models.CharField(max_length=100)
     args_schema = ArrayField(models.JSONField(default=dict, null=True, blank=True), default=list, null=True, blank=True)
     description = models.TextField()
+    
+    class Meta:
+        db_table = 'agent_tool'
+        
     def __str__(self):
         return f"{self.tool_name}"
 
@@ -66,12 +73,14 @@ class Agent(CommonModel):
     prompt = models.ForeignKey(SystemPrompt, on_delete=models.DO_NOTHING)
     tools = ArrayField(models.CharField(max_length=100), default=list, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
+    
     def __str__(self):
         return self.agent_name
+    
     class Meta:
         unique_together = ['agent_name', 'user']
-
-# expose
+        db_table = 'agent'
+        
 class Conversation(CommonModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     agent = models.ForeignKey(Agent, on_delete=models.DO_NOTHING)
@@ -79,6 +88,9 @@ class Conversation(CommonModel):
     meta_data = models.JSONField(default=dict, null=True, blank=True) # tool id
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
     is_use_internal_knowledge = models.BooleanField(default=True)
+    
+    class Meta:
+        db_table = 'agent_conversation'
     
     def __str__(self):
         return f"{self.id} - with agent: {self.agent.agent_name}"
@@ -91,7 +103,9 @@ class ExternalKnowledge(CommonModel):
     content_embedding = VectorField(dimensions=1536, default=empty_vector)
     subject_embedding = VectorField(dimensions=1536, default=empty_vector)
     chapter_embedding = VectorField(dimensions=1536, default=empty_vector)   
-    class Meta:
+    
+    class Meta: 
+        db_table = 'agent_external_knowledge'
         indexes = [
             HnswIndex(
                 name='content_embedding_hnsw_idx',
@@ -126,7 +140,9 @@ class InternalKnowledge(CommonModel):
     summary_embedding = VectorField(dimensions=1536, default=empty_vector)
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True)
     agent = models.ForeignKey(Agent, on_delete=models.DO_NOTHING, null=True, blank=True)
+   
     class Meta:
+        db_table = 'agent_internal_knowledge'
         indexes = [
             HnswIndex(
                 name='summary_embedding_hnsw_idx',
@@ -136,11 +152,11 @@ class InternalKnowledge(CommonModel):
                 opclasses=['vector_l2_ops']
             ),
         ]
+        
     def __str__(self):
         return f"{self.summary}"
 
-class FaceData(models.Model):
-    #image = models.ImageField(upload_to='faces/', null=True, blank=True)  # Trường lưu ảnh
+class FaceData(CommonModel): 
     face_encoding = models.BinaryField(null=True, blank=True)  # Trường lưu encoding của khuôn mặt dưới dạng nhị phân
     full_name = models.CharField(max_length=255, unique=True, null=True, blank=True)
     country = models.CharField(max_length=255, null=True, blank=True)
@@ -152,3 +168,8 @@ class FaceData(models.Model):
     
     def __str__(self):
         return self.full_name
+    
+    class Meta:
+        db_table = 'agent_face_data'
+        
+        

@@ -58,11 +58,10 @@ Make setup # to install all the dependencies above
 
 ### 4. Configure the Database
 
-Run the following commands to create and apply the database migrations:
+Run the following commands to apply the database migrations:
 
 ```python
-# Run database migrations
-python3 manage.py makemigrations
+# Apply database migrations
 python3 manage.py migrate
 ```
 
