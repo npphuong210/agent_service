@@ -1,5 +1,6 @@
 stages:
     - deploy
+    - migrate
 
 deploy-dev:
     stage: deploy
@@ -15,6 +16,16 @@ deploy-dev:
     only:
         - develop
 
+migrate-dev:
+  stage: migrate
+  script:
+    - echo "Running migrations..."
+    - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_DEV_USER@$CI_DEV_IP "cd $CI_DEV_PATH && python3 manage.py migrate"
+  tags:
+    - agent-service
+  only:
+    - develop
+
 deploy-prod:
     stage: deploy
     variables:
@@ -28,3 +39,13 @@ deploy-prod:
         - prod
     only:
         - main
+
+migrate-prod:
+  stage: migrate
+  script:
+    - echo "Running migrations..."
+    - ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $CI_PRD_USER@$CI_PRD_IP "cd $CI_PRD_PATH && python3 manage.py migrate"
+  tags:
+    - agent-service
+  only:
+    - main
