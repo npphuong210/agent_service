@@ -204,6 +204,29 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             age = request.Age
             email = request.Email
             phone_number = request.Phone_number
+
+            #check request data
+            if not file_data:
+                logger.info("Image data is required.")
+                return face_recognition_pb2.UploadImageResponse(message="Image data is required.", status_code=400)
+            if not full_name:
+                logger.info("Full name is required.")
+                return face_recognition_pb2.UploadImageResponse(message="Full name is required.", status_code=400)
+            if not country:
+                logger.info("Country is required.")
+                return face_recognition_pb2.UploadImageResponse(message="Country is required.", status_code=400)
+            if not birthday:
+                logger.info("Birthday is required.")
+                return face_recognition_pb2.UploadImageResponse(message="Birthday is required.", status_code=400)
+            if not age:
+                logger.info("Age is required.")
+                return face_recognition_pb2.UploadImageResponse(message="Age is required.", status_code=400)
+            if not email:
+                logger.info("Email is required.")
+                return face_recognition_pb2.UploadImageResponse(message="Email is required.", status_code=400)
+            if not phone_number:
+                logger.info("Phone number is required.")
+                return face_recognition_pb2.UploadImageResponse(message="Phone number is required.", status_code=400)
             
             if FaceData.objects.filter(full_name=full_name).exists():
                 logger.info(f"Face already exists: {full_name}.")
@@ -213,7 +236,9 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
 
             # Đọc và mã hóa ảnh
             image_np = face_recognition.load_image_file(BytesIO(file_data))
-            face_encodings = face_recognition.face_encodings(image_np, num_jitters=20)
+            face_locations = face_recognition.face_locations(image_np, model="cnn")
+            logger.info(f"Detected {len(face_locations)} face(s) in the image.")
+            face_encodings = face_recognition.face_encodings(image_np, face_locations, num_jitters=50, model="large")
 
             if not face_encodings:
                 logger.info("No face detected in the image.")
@@ -227,11 +252,14 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             known_face_names = [face.full_name for face in existing_faces]
             
             # So sánh với danh sách khuôn mặt đã biết
-            matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+            matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=0.45)
+            logger.info(f"Matches: {matches}")
             face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-
+            logger.info(f"Face distances: {face_distances}")
+            
             if matches:
                 best_match_index = np.argmin(face_distances)
+                logger.info(f"Best match index: {best_match_index}, Distance: {face_distances[best_match_index]}")
                 if matches[best_match_index]:
                     name = known_face_names[best_match_index]
                     logger.info(f"Face recognized: {name}")
@@ -268,8 +296,8 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             # Đọc và mã hóa ảnh
             logger.info("Loading image from request data.")
             image_np = face_recognition.load_image_file(BytesIO(file_data))
-            face_locations = face_recognition.face_locations(image_np)
-            face_encodings = face_recognition.face_encodings(image_np, face_locations)
+            face_locations = face_recognition.face_locations(image_np, model="cnn")
+            face_encodings = face_recognition.face_encodings(image_np, face_locations, model="large")
             logger.info(f"Detected {len(face_locations)} face(s) in the image.")
             
             # Kiểm tra nếu không phát hiện được khuôn mặt nào
@@ -297,7 +325,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             matched_faces = []
             for face_encoding in face_encodings:
                 logger.info("Comparing detected face with known faces.")
-                matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=0.5)
+                matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=0.45)
                 name_with_matches = list(zip(existing_faces_list, matches))
                 logger.info(f"Matches: {name_with_matches}")
                 face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
