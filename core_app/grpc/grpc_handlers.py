@@ -213,7 +213,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
 
             # Đọc và mã hóa ảnh
             image_np = face_recognition.load_image_file(BytesIO(file_data))
-            face_encodings = face_recognition.face_encodings(image_np)
+            face_encodings = face_recognition.face_encodings(image_np, num_jitters=20)
 
             if not face_encodings:
                 logger.info("No face detected in the image.")
@@ -297,8 +297,11 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             matched_faces = []
             for face_encoding in face_encodings:
                 logger.info("Comparing detected face with known faces.")
-                matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+                matches = face_recognition.compare_faces(known_face_encodings, face_encoding, tolerance=0.5)
+                name_with_matches = list(zip(existing_faces_list, matches))
+                logger.info(f"Matches: {name_with_matches}")
                 face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
+                logger.info(f"Face distances: {face_distances}")
                 
                 if True in matches:
                     best_match_index = np.argmin(face_distances)
