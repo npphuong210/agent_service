@@ -13,5 +13,10 @@ dj_migrate:
 	python3 manage.py migrate
 dj_run:
 	python3 manage.py runserver
+create_vector:
+	sudo psql -U postgres -d agent_service -c"CREATE VECTOR EXTENSION";
+schema_rm:
+	sudo su - postgres
+	psql -U postgres -d agent_service -c"DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
 .PHONY: pythonproto grpcrun setup dj_makemigrations dj_migrate dj_run
