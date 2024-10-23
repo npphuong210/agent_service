@@ -131,3 +131,4 @@ structlog==24.4.0
 python-json-logger==2.0.7
 face_recognition==1.3.0
 opencv-python==4.10.0.84
+django-crontab==0.7.1

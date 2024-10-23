@@ -63,12 +63,13 @@ def add_Face(stub, file_image):
     request = face_recognition_pb2.UploadImageRequest(
         file_data=image,
         Country="Vietnam",
-        FullName="2thuytien",
-        Birthday="1990-01-01",
+        FullName="quang linh vlog",
+        Birthday="1992-01-01",
         Gender="Male",
         Age="34",
         Email="nguyenvana@example.com",
-        Phone_number="0123456789"
+        Phone_number="0123456789",
+        subsystem="DemoHUB"
     )    
     
     # Gửi request và nhận response
@@ -87,7 +88,7 @@ def recognize_face(stub, file_image):
 
 def run():
     audio_file_path = "core_app/grpc/data/Why does JavaScript's fetch make me wait TWICE_.mp3"
-    image_file_path = "core_app/grpc/data/thuytien2.png"
+    image_file_path = "core_app/grpc/data/hieupc.jpeg"
     
     with grpc.insecure_channel('localhost:50051') as channel:
         stub_ocr = ocr_service_pb2_grpc.OCRServiceStub(channel)
@@ -96,9 +97,9 @@ def run():
         
         #get_file(stub_ocr)
         #upload_file(stub_stt, audio_file_path)
-        run_audio(stub_stt, audio_file_path)
+        #run_audio(stub_stt, audio_file_path)
         
-        #add_Face(stub_face, image_file_path)
+        add_Face(stub_face, image_file_path)
         #recognize_face(stub_face, image_file_path)
 
 if __name__ == '__main__':

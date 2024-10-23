@@ -204,6 +204,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             age = request.Age
             email = request.Email
             phone_number = request.Phone_number
+            subsystem = request.subsystem
 
             #check request data
             if not file_data:
@@ -227,6 +228,9 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             if not phone_number:
                 logger.info("Phone number is required.")
                 return face_recognition_pb2.UploadImageResponse(message="Phone number is required.", status_code=400)
+            if not subsystem:
+                logger.info("subsystem is required.")
+                return face_recognition_pb2.UploadImageResponse(message="subsystem is required.", status_code=400)
             
             if FaceData.objects.filter(full_name=full_name).exists():
                 logger.info(f"Face already exists: {full_name}.")
@@ -274,6 +278,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                 email = email,
                 phone_number = phone_number,
                 face_encoding=face_encoding.tobytes(),
+                subsystem=subsystem,
             )
             # face_record.image.save(f"{full_name}.png", BytesIO(file_data))
             face_record.save()
@@ -349,7 +354,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                                 Gender=matched_face_instance.gender,
                                 Age=matched_face_instance.age,
                                 Email=matched_face_instance.email,
-                                Phone_number=matched_face_instance.phone_number
+                                Phone_number=matched_face_instance.phone_number,
                             )
                             logger.info(f"Face recognized details: {person_details}")
                             matched_faces.append(person_details)

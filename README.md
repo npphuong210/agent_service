@@ -91,6 +91,25 @@ python manage.py runserver
 python manage.py createsuperuser
 ```
 
+### 7. Crontab
+When django server runs, crontab automatically runs along. Check crontab log `/tmp/django_crontab_log.log`
+
+A current task is deleting image that expires after 24 hours.
+
+Setting crontab django
+```bash
+crontab -e
+
+# remember to add these configurations
+# DB_NAME=''
+# DB_USERNAME=''
+# DB_PASSWORD=''
+# DB_HOST=''
+# DB_PORT=''
+# OPENAI_API_KEY=""
+# OPENAI_API_BASE=""
+```
+
 ## API Endpoints
 
 Here are the API endpoints available in this project:

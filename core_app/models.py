@@ -12,19 +12,29 @@ empty_vector = [0.0]*1536
 
 # Create your models here.
 class CommonModel(models.Model):
-    class Meta:
-        abstract = True
-    
+
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True, db_index=True)
     
+    class Meta:
+        abstract = True
+    
     def save(self, *args, **kwargs):
-        utc7 = pytz.timezone('Asia/Ho_Chi_Minh')
+        # Define the timezone you want to use (Asia/Ho_Chi_Minh)
+        #utc7 = pytz.timezone('Asia/Ho_Chi_Minh')
+
+        # Get the current time in UTC+7
+        #now_utc7 = timezone.now().astimezone(utc7)
+        now_utc7 = timezone.now()
+        
         if not self.created_at:
-            self.created_at = timezone.now()
-        self.updated_at = timezone.now()
-        self.created_at = self.created_at.astimezone(utc7)
-        self.updated_at = self.updated_at.astimezone(utc7)
+            self.created_at = now_utc7
+        self.updated_at = now_utc7
+
+        # Convert to naive datetime (strip timezone info)
+        self.created_at = self.created_at
+        self.updated_at = self.updated_at
+
         super(CommonModel, self).save(*args, **kwargs)
         
 # expose
@@ -165,6 +175,7 @@ class FaceData(CommonModel):
     age = models.CharField(max_length=3, null=True, blank=True)
     email = models.EmailField(max_length=255, null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
+    subsystem = models.CharField(max_length=255, null=True, blank=True)
     
     def __str__(self):
         return self.full_name
