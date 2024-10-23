@@ -96,6 +96,19 @@ When django server runs, crontab automatically runs along. Check crontab log `/t
 
 A current task is deleting image that expires after 24 hours.
 
+Setting crontab django
+```bash
+crontab -e
+
+# remember to add these configurations
+# DB_NAME=''
+# DB_USERNAME=''
+# DB_PASSWORD=''
+# DB_HOST=''
+# DB_PORT=''
+# OPENAI_API_KEY=""
+# OPENAI_API_BASE=""
+```
 
 ## API Endpoints
 
