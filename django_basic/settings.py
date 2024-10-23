@@ -111,6 +111,7 @@ INSTALLED_APPS = [
     "drf_yasg", # Yet another swagger generator
     "corsheaders",
     "rest_framework.authtoken",
+    "django_crontab", # cron job
 ]
 
 ASGI_APPLICATION = "django_basic.asgi.application"
@@ -218,11 +219,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "Etc/GMT-7"
-
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -239,3 +238,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SWAGGER_SETTINGS = {
    'USE_SESSION_AUTH': True
 }
+
+
+CRONJOBS = [
+    ('*/1 * * * *', 'core_app.tasks.delete_old_facedata', '>> /tmp/django_crontab_log.log 2>&1'),
+    # Add more cron jobs as needed
+]
+

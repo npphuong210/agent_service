@@ -17,6 +17,7 @@ message UploadImageRequest {
     string Age = 6;
     string Email = 7;
     string Phone_number = 8;
+    string subsystem = 9;
 }
 
 message UploadImageResponse {
