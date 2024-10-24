@@ -43,6 +43,12 @@ Make sure install cmake for face recognition.
 sudo apt install cmake
 ```
 
+Make sure install tessaract-ocr for OCR
+```bash
+sudo apt-get install tesseract-ocr -y
+sudo apt-get install tesseract-ocr-all -y
+```
+
 With the virtual environment activated, install the necessary dependencies using pip:
 
 ```python
@@ -98,16 +104,9 @@ A current task is deleting image that expires after 24 hours.
 
 Setting crontab django
 ```bash
-crontab -e
-
-# remember to add these configurations
-# DB_NAME=''
-# DB_USERNAME=''
-# DB_PASSWORD=''
-# DB_HOST=''
-# DB_PORT=''
-# OPENAI_API_KEY=""
-# OPENAI_API_BASE=""
+set -a
+source .env
+set +a
 ```
 
 ## API Endpoints
