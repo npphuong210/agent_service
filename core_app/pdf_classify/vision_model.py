@@ -50,7 +50,8 @@ def get_image_informations(image: Image.Image) -> dict:
     vision_prompt = """Given the image, extract all visible text, including any text present in the image.
          Make sure to include every piece of text visible in the image, regardless of its position or context.
         - Provide the text exactly as it appears, without any modifications or translations.
-        
+        - If handwriting is present, extract handwriting as accurately as possible.
+
         However, if the text is unclear, unreadable, or if the image lacks clarity, you must respond with "ERROR: " followed by an appropriate message, for example:
         "ERROR: The image is too small or blurry to extract readable text."
 

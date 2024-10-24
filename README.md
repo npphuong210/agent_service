@@ -43,6 +43,12 @@ Make sure install cmake for face recognition.
 sudo apt install cmake
 ```
 
+Make sure install tessaract-ocr for OCR
+```bash
+sudo apt-get install tesseract-ocr -y
+sudo apt-get install tesseract-ocr-all -y
+```
+
 With the virtual environment activated, install the necessary dependencies using pip:
 
 ```python

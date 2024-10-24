@@ -16,11 +16,11 @@ from pdfminer.high_level import extract_text
 from core_app.pdf_classify.pdf_classify import is_scanned_pdf, process_scanned_pdf_with_llm, get_image_informations
 from PIL import Image
 import pytesseract
-from langdetect import detect
+from langdetect import detect, detect_langs
 import logging
 from core_app.models import FaceData
 
-logging.basicConfig(filename='document_processing.log', filemode="w" ,level=logging.DEBUG,
+logging.basicConfig(filename='document_processing.log',level=logging.INFO,
                     format='%(asctime)s:%(levelname)s:%(message)s')
 
 logger = logging.getLogger(__name__)
@@ -63,36 +63,49 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
             # Process image files
             if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
                 logger.info("The file is an image, extracting text using Tesseract.")
+                
+                # Load the image
                 image = Image.open(io.BytesIO(pdf))
-                text = pytesseract.image_to_string(image)
+                
+                # Extract initial text using Tesseract without specifying language
+                text = pytesseract.image_to_string(image, lang='vie+eng+jpn+kor')
 
-                # Detect language in the extracted text
-                detected_lang = detect(text)
-                logger.info(f"Detected language: {detected_lang}")
+                # Detect multiple languages in the extracted text
+                detected_langs = detect_langs(text)
+                print(detected_langs)
+
+                # Check if language > 0.8 
+                detected_langs = [lang for lang in detected_langs if lang.prob > 0.9]                
+
+                # Combine detected languages into a single string
+                detected_langs_str = '+'.join([lang.lang for lang in detected_langs])
+                logger.info(f"Detected languages: {detected_langs_str}")
 
                 # Language map for Tesseract
                 tesseract_lang_map = {
                     'vi': 'vie',  # Vietnamese
                     'en': 'eng',  # English
-                    'jp': 'jpn',  # French
-                    'ko': 'kor',  # Spanish
+                    'ja': 'jpn',  # Japanese
+                    'ko': 'kor',  # Korean
+                    'fr': 'fra',  # French
+                    'es': 'spa',  # Spanish
+                    'de': 'deu',  # German
+                    'ru': 'rus',  # Russian
                     # Add other languages as needed
                 }
 
-                # Set appropriate Tesseract language
-                if detected_lang in tesseract_lang_map:
-                    lang = tesseract_lang_map[detected_lang]
-                    logger.info(f"Using Tesseract with language: {lang}")
-                    text = pytesseract.image_to_string(image, lang=lang)
-                else:
-                    text = get_image_informations(image)
+                # Convert detected languages to Tesseract format
+                tesseract_langs = '+'.join([tesseract_lang_map[lang.lang] for lang in detected_langs if lang.lang in tesseract_lang_map])
+                logger.info(f"Tesseract languages: {tesseract_langs}")
 
-                return ocr_service_pb2.FileResponse(
-                    message="success",
-                    text=text
-                )
+                if tesseract_langs:
+                    logger.info(f"Using Tesseract with languages: {tesseract_langs}")
+                    text = pytesseract.image_to_string(image, lang=tesseract_langs)
+                else:
+                    logger.info("Using LLM for image text extraction.")
+                    text = get_image_informations(image)
                 
-            if is_scanned_pdf(pdf):
+            elif is_scanned_pdf(pdf):
                 # if scanned PDF => vision LLM model
                 file_name = file_name.lower()
                 if file_name.endswith('.pdf'):
