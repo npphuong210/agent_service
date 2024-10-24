@@ -15,11 +15,14 @@ from core_app.grpc.pb import ocr_service_pb2, ocr_service_pb2_grpc, stt_service_
 from pdfminer.high_level import extract_text
 from core_app.pdf_classify.pdf_classify import is_scanned_pdf, process_scanned_pdf_with_llm, get_image_informations
 from PIL import Image
+import pytesseract
+from langdetect import detect
 import logging
 from core_app.models import FaceData
 
-logging.basicConfig(filename='document_processing.log', level=logging.INFO,
+logging.basicConfig(filename='document_processing.log', filemode="w" ,level=logging.DEBUG,
                     format='%(asctime)s:%(levelname)s:%(message)s')
+
 logger = logging.getLogger(__name__)
 
 def get_file_extension(file_path):
@@ -46,27 +49,55 @@ def transcribe_audio(audio_stream, init_prompt=None):
         return transcription.strip()
     except Exception as e:
         return "Error during transcription"
-
+    
 class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
-
     def CreateTextFromFile(self, request, context):
+        logger.info("Received file for text extraction.")
         try:
             file_name = request.file_name
             pdf = request.file
             text = None
 
             logger.info(f"Processing file: {file_name}")
+            
+            # Process image files
+            if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+                logger.info("The file is an image, extracting text using Tesseract.")
+                image = Image.open(io.BytesIO(pdf))
+                text = pytesseract.image_to_string(image)
 
+                # Detect language in the extracted text
+                detected_lang = detect(text)
+                logger.info(f"Detected language: {detected_lang}")
+
+                # Language map for Tesseract
+                tesseract_lang_map = {
+                    'vi': 'vie',  # Vietnamese
+                    'en': 'eng',  # English
+                    'jp': 'jpn',  # French
+                    'ko': 'kor',  # Spanish
+                    # Add other languages as needed
+                }
+
+                # Set appropriate Tesseract language
+                if detected_lang in tesseract_lang_map:
+                    lang = tesseract_lang_map[detected_lang]
+                    logger.info(f"Using Tesseract with language: {lang}")
+                    text = pytesseract.image_to_string(image, lang=lang)
+                else:
+                    text = get_image_informations(image)
+
+                return ocr_service_pb2.FileResponse(
+                    message="success",
+                    text=text
+                )
+                
             if is_scanned_pdf(pdf):
                 # if scanned PDF => vision LLM model
                 file_name = file_name.lower()
                 if file_name.endswith('.pdf'):
                     logger.info("The file is a scanned PDF.")
                     text = process_scanned_pdf_with_llm(pdf)
-                elif file_name.endswith(('.png', '.jpg', '.jpeg')):
-                    logger.info("The file is an image.")
-                    image = Image.open(BytesIO(pdf))
-                    text = get_image_informations(image)
                 else:
                     logger.warning("Unsupported file format.")
                     return ocr_service_pb2.FileResponse(
@@ -123,7 +154,6 @@ class STTServiceServicer(stt_service_pb2_grpc.STTServiceServicer):
         
         end_time = time.time()
         total_time = end_time - start_time
-        
         logger.info(f"Total processing time for uploaded audio: {total_time:.2f} seconds")
 
 
