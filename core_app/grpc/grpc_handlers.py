@@ -19,6 +19,7 @@ import pytesseract
 from langdetect import detect, detect_langs
 import logging
 from core_app.models import FaceData
+from core_app.pdf_classify.vision_model import support_informations_LLM
 
 logging.basicConfig(filename='document_processing.log',level=logging.INFO,
                     format='%(asctime)s:%(levelname)s:%(message)s')
@@ -72,7 +73,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
 
                 # Detect multiple languages in the extracted text
                 detected_langs = detect_langs(text)
-                print(detected_langs)
+                logger.info(f"Detected languages: {detected_langs}")
 
                 # Check if language > 0.8 
                 detected_langs = [lang for lang in detected_langs if lang.prob > 0.9]                
@@ -101,6 +102,8 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                 if tesseract_langs:
                     logger.info(f"Using Tesseract with languages: {tesseract_langs}")
                     text = pytesseract.image_to_string(image, lang=tesseract_langs)
+                    # logger.info(f"Extracted text: {text}")
+                    text = support_informations_LLM(text, image)
                 else:
                     logger.info("Using LLM for image text extraction.")
                     text = get_image_informations(image)
