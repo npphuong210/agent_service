@@ -54,6 +54,7 @@ def get_image_informations(image: Image.Image) -> dict:
 
         However, if the text is unclear, unreadable, or if the image lacks clarity, you must respond with "ERROR: " followed by an appropriate message, for example:
         "ERROR: The image is too small or blurry to extract readable text."
+        "ERROR: No visible text in image."
 
         Rules:
         1. Only extract text if it is visible and readable.
@@ -84,6 +85,7 @@ def support_informations_LLM(text:str ,image: Image.Image) -> dict:
     logger.info("Starting text extraction from image.")
 
     vision_prompt = f"""Given the extracted text from the image below, please review the image and improve it by correcting any spelling, grammar, or formatting issues without adding any new information.
+            - Correct any spelling, grammar, or formatting errors and structure the text properly.
             Do not add or infer anything that is not already present in the extracted text. 
             Here is the text extracted from the image:
             {text}

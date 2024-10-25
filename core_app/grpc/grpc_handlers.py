@@ -67,63 +67,59 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                 
                 # Load the image
                 image = Image.open(io.BytesIO(pdf))
-                
-                # Extract initial text using Tesseract without specifying language
-                text = pytesseract.image_to_string(image, lang='vie+eng+jpn+kor')
 
-                # Detect multiple languages in the extracted text
-                detected_langs = detect_langs(text)
-                logger.info(f"Detected languages: {detected_langs}")
+                try:
+                    # Extract initial text using Tesseract without specifying language
+                    text = pytesseract.image_to_string(image, lang='vie+eng+jpn+kor')
 
-                # Check if language > 0.8 
-                detected_langs = [lang for lang in detected_langs if lang.prob > 0.9]                
+                    logger.info("Extracted text using Tesseract.")
+                    # Detect multiple languages in the extracted text
+                    detected_langs = detect_langs(text)
 
-                # Combine detected languages into a single string
-                detected_langs_str = '+'.join([lang.lang for lang in detected_langs])
-                logger.info(f"Detected languages: {detected_langs_str}")
+                    logger.info(f"Detected languages: {detected_langs}")
 
-                # Language map for Tesseract
-                tesseract_lang_map = {
-                    'vi': 'vie',  # Vietnamese
-                    'en': 'eng',  # English
-                    'ja': 'jpn',  # Japanese
-                    'ko': 'kor',  # Korean
-                    'fr': 'fra',  # French
-                    'es': 'spa',  # Spanish
-                    'de': 'deu',  # German
-                    'ru': 'rus',  # Russian
-                    # Add other languages as needed
-                }
+                    # Check if language > 0.8 
+                    detected_langs = [lang for lang in detected_langs if lang.prob > 0.9]   
 
-                # Convert detected languages to Tesseract format
-                tesseract_langs = '+'.join([tesseract_lang_map[lang.lang] for lang in detected_langs if lang.lang in tesseract_lang_map])
-                logger.info(f"Tesseract languages: {tesseract_langs}")
+                    # Combine detected languages into a single string
+                    detected_langs_str = '+'.join([lang.lang for lang in detected_langs])
+                    logger.info(f"Detected languages: {detected_langs_str}")
 
-                if tesseract_langs:
-                    logger.info(f"Using Tesseract with languages: {tesseract_langs}")
-                    text = pytesseract.image_to_string(image, lang=tesseract_langs)
-                    # logger.info(f"Extracted text: {text}")
-                    text = support_informations_LLM(text, image)
-                else:
-                    logger.info("Using LLM for image text extraction.")
+                    # Language map for Tesseract
+                    tesseract_lang_map = {
+                        'vi': 'vie',  # Vietnamese
+                        'en': 'eng',  # English
+                        'ja': 'jpn',  # Japanese
+                        'ko': 'kor',  # Korean
+                        'fr': 'fra',  # French
+                        'es': 'spa',  # Spanish
+                        'de': 'deu',  # German
+                        'ru': 'rus',  # Russian
+                        # Add other languages as needed
+                    }
+
+                    # Convert detected languages to Tesseract format
+                    tesseract_langs = '+'.join([tesseract_lang_map[lang.lang] for lang in detected_langs if lang.lang in tesseract_lang_map])
+                    logger.info(f"Tesseract languages: {tesseract_langs}")
+
+                    if tesseract_langs:
+                        logger.info(f"Using Tesseract with languages: {tesseract_langs}")
+                        text = pytesseract.image_to_string(image, lang=tesseract_langs)
+                        logger.info(f"Extracted text using LLM (support_informations_LLM).")
+                        text = support_informations_LLM(text, image)
+
+                except Exception as e:
+                    logger.info("Using LLM for image text extraction (get_image_informations).")
                     text = get_image_informations(image)
-                
-            elif is_scanned_pdf(pdf):
-                # if scanned PDF => vision LLM model
-                file_name = file_name.lower()
-                if file_name.endswith('.pdf'):
+            
+            if file_name.lower().endswith(('.pdf')):
+                if is_scanned_pdf(pdf):
                     logger.info("The file is a scanned PDF.")
                     text = process_scanned_pdf_with_llm(pdf)
                 else:
-                    logger.warning("Unsupported file format.")
-                    return ocr_service_pb2.FileResponse(
-                        message = "Unsupported file format",
-                        text = ""
-                        )
-            else:
-                logger.info("The file is a regular PDF with extractable text.")
-                file_like_object = BytesIO(pdf)
-                text = extract_text(file_like_object)
+                    logger.info("The file is a regular PDF with extractable text.")
+                    file_like_object = BytesIO(pdf)
+                    text = extract_text(file_like_object)
 
             if text.startswith("ERROR:"):
                 if "too small" in text.lower() or "unclear" in text.lower():
@@ -133,22 +129,23 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                         text = ""
                         )
                 else:
-                    logger.warning(f"Error during OCR processing: {text}")
+                    text = text.replace("ERROR:", "").strip()
+                    logger.warning(f"Unknow error: {text}")
                     return ocr_service_pb2.FileResponse(
-                        message = "error.can-not-read-file",
+                        message = "error.unknown-error",
                         text = text
                         )
-                    
-            logger.info(f"Successfully processed file: {file_name}")
-            return ocr_service_pb2.FileResponse(
-                message = "success", 
-                text = text
-                )
-        
+            else:       
+                logger.info(f"Successfully processed file: {file_name}")
+                return ocr_service_pb2.FileResponse(
+                    message = "success", 
+                    text = text
+                    )
+            
         except Exception as e:
             logger.error(f"Error during OCR processing for file {file_name}: {e}")
             return ocr_service_pb2.FileResponse(
-                message = "error.unknown-error",
+                message = "error",
                 text = str(e)
                 )
 
