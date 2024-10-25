@@ -10,7 +10,9 @@ def delete_old_facedata():
     threshold_time = now - timedelta(hours=24)
 
     # Filter and delete records older than 24 hours
-    old_records = FaceData.objects.filter(created_at__lt=threshold_time)
+    old_records = FaceData.objects.filter(
+                        created_at__lt=threshold_time,
+                        subsystem='DemoHUB')
     count, _ = old_records.delete()  # This deletes the records
 
     print(f'{count} FaceData records older than 24 hours were deleted.')
