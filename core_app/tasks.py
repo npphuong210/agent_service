@@ -1,13 +1,9 @@
 from datetime import timedelta
 from django.utils import timezone
 from core_app.models import FaceData
-from enum import Enum
+from core_app.enum.sub_system import SubSystems
 
 
-# Enum to represent the available subsystems
-class SubSystems(Enum):
-    """Enum to represent different application subsystems."""
-    DEMO_HUB = "DemoHUB"
 
 
 def delete_old_facedata():
