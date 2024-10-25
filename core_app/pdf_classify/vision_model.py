@@ -79,3 +79,32 @@ def get_image_informations(image: Image.Image) -> dict:
     except Exception as e:
         logger.error(f"Error during Vision LLLM processing: {e}")
         raise e
+    
+def support_informations_LLM(text:str ,image: Image.Image) -> dict:
+    logger.info("Starting text extraction from image.")
+
+    vision_prompt = f"""Given the extracted text from the image below, please review the image and improve it by correcting any spelling, grammar, or formatting issues without adding any new information.
+            Do not add or infer anything that is not already present in the extracted text. 
+            Here is the text extracted from the image:
+            {text}
+            IMPORTANT: output only the corrected text, do not include the original text in your response.
+        """
+    
+    try:
+        logger.info("Encoding image for Vision LLM processing.")
+        # Encode the image
+        image_data = encode_image(image)
+        
+        # Combine encoding, processing, and parsing into a single chain
+        vision_chain = image_model
+        
+        logger.info("Invoking Vision LLM model with prompt.")
+        # Execute the chain with the encoded image and prompt
+        return vision_chain.invoke({
+            'image': image_data,
+            'prompt': vision_prompt
+        })
+    
+    except Exception as e:
+        logger.error(f"Error during Vision LLLM processing: {e}")
+        raise e

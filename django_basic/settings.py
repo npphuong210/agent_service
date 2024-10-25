@@ -240,8 +240,17 @@ SWAGGER_SETTINGS = {
 }
 
 
+CRONTAB_COMMAND_PREFIX = f"DB_NAME={os.getenv('DB_NAME')} \
+                        DB_HOST={os.getenv('DB_HOST')} \
+                        DB_USERNAME={os.getenv('DB_USERNAME')} \
+                        DB_PASSWORD={os.getenv('DB_PASSWORD')} \
+                        DB_PORT={os.getenv('DB_PORT')} \
+                        OPENAI_API_KEY={os.getenv('OPENAI_API_KEY')} \
+                        OPENAI_API_BASE={os.getenv('OPENAI_API_BASE')}"
+
 CRONJOBS = [
     ('*/1 * * * *', 'core_app.tasks.delete_old_facedata', '>> /tmp/django_crontab_log.log 2>&1'),
     # Add more cron jobs as needed
 ]
+
 
