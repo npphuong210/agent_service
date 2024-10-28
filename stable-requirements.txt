@@ -134,3 +134,6 @@ opencv-python==4.10.0.84
 django-crontab==0.7.1
 langdetect==1.0.9
 pytesseract==0.3.13
+django-celery-beat==2.7.0
+celery==5.4.0
+redis==5.2.0

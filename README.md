@@ -97,17 +97,32 @@ python manage.py runserver
 python manage.py createsuperuser
 ```
 
-### 7. Crontab
-When django server runs, crontab automatically runs along. Check crontab log `/tmp/django_crontab_log.log`
-
+### 7. Celery setup
 A current task is deleting image that expires after 24 hours.
 
-Setting crontab django
+If you do not have Redis installed, you can install it using the following command:
 ```bash
-set -a
-source .env
-set +a
+sudo apt-get install redis-server
 ```
+
+To verify that Redis is running properly, you can use the Redis CLI:
+```bash
+redis-cli ping # You should receive a response of "PONG".
+```
+Update Environment Variables (.env)
+```bash
+# Celery broker URL
+CELERY_BROKER_URL='redis://localhost:6379/0'
+```
+
+In separate terminal windows, start the Celery worker and the Celery Beat scheduler:
+```bash
+celery -A django_basic worker --loglevel=info
+```
+```bash
+celery -A django_basic beat --loglevel=info
+```
+
 
 ## API Endpoints
 

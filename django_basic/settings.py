@@ -111,7 +111,7 @@ INSTALLED_APPS = [
     "drf_yasg", # Yet another swagger generator
     "corsheaders",
     "rest_framework.authtoken",
-    "django_crontab", # cron job
+    "django_celery_beat", 
 ]
 
 ASGI_APPLICATION = "django_basic.asgi.application"
@@ -240,17 +240,11 @@ SWAGGER_SETTINGS = {
 }
 
 
-CRONTAB_COMMAND_PREFIX = f"DB_NAME={os.getenv('DB_NAME')} \
-                        DB_HOST={os.getenv('DB_HOST')} \
-                        DB_USERNAME={os.getenv('DB_USERNAME')} \
-                        DB_PASSWORD={os.getenv('DB_PASSWORD')} \
-                        DB_PORT={os.getenv('DB_PORT')} \
-                        OPENAI_API_KEY={os.getenv('OPENAI_API_KEY')} \
-                        OPENAI_API_BASE={os.getenv('OPENAI_API_BASE')}"
-
-CRONJOBS = [
-    ('*/1 * * * *', 'core_app.tasks.delete_old_facedata', '>> /tmp/django_crontab_log.log 2>&1'),
-    # Add more cron jobs as needed
-]
-
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')  # or RabbitMQ URL if you're using RabbitMQ
+CELERY_BEAT_SCHEDULE = {
+    'delete-old-facedata-every-24-hours': {
+        'task': 'core_app.tasks.delete_old_facedata',
+        'schedule': 60.0,  # 24 hours in seconds
+    },
+}
 
