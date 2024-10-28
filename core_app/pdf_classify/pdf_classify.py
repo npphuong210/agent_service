@@ -45,7 +45,7 @@ def is_scanned_pdf(pdf_binary):
 
 
 
-def process_scanned_pdf_with_llm(pdf_binary):
+def process_scanned_pdf_with_llm(pdf_binary, lang_key):
     """
     Process a scanned PDF using the Vision LLM model.
 
@@ -77,7 +77,9 @@ def process_scanned_pdf_with_llm(pdf_binary):
                 logger.info(f"Processing image {img_index + 1} on page {page_num}.")
         
                 # Process the image using the get_image_informations function
-                result = get_image_informations(img)
+                result = get_image_informations(img, lang_key)
+                # result = pytesseract.image_to_string(img)
+
                 results.append(result)
 
                 logger.info(f"Successfully processed image {img_index + 1} on page {page_num}.")
