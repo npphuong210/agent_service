@@ -3,7 +3,8 @@ import pytesseract
 from pdfminer.high_level import extract_text
 from PIL import Image
 from io import BytesIO
-from .vision_model import get_image_informations
+from .vision_model import get_image_informations, support_informations_LLM
+from langdetect import detect, detect_langs
 import logging
 logger = logging.getLogger(__name__)
 
@@ -77,10 +78,59 @@ def process_scanned_pdf_with_llm(pdf_binary, lang_key):
                 logger.info(f"Processing image {img_index + 1} on page {page_num}.")
         
                 # Process the image using the get_image_informations function
-                result = get_image_informations(img, lang_key)
-                # result = pytesseract.image_to_string(img)
+                try:
+                    text = pytesseract.image_to_string(img, lang='vie+eng+jpn+kor')
 
-                results.append(result)
+                    logger.info("Extracted text using Tesseract.")
+                    # Detect multiple languages in the extracted text
+                    detected_langs = detect_langs(text)
+
+                    logger.info(f"Detected languages: {detected_langs}")
+
+                    # Check if language > 0.8 
+                    detected_langs = [lang for lang in detected_langs if lang.prob > 0.9]   
+
+                    # Combine detected languages into a single string
+                    detected_langs_str = '+'.join([lang.lang for lang in detected_langs])
+                    logger.info(f"Detected languages: {detected_langs_str}")
+
+                    # Language map for Tesseract
+                    tesseract_lang_map = {
+                        'vi': 'vie',  # Vietnamese
+                        'en': 'eng',  # English
+                        'ja': 'jpn',  # Japanese
+                        'ko': 'kor',  # Korean
+                        'fr': 'fra',  # French
+                        'es': 'spa',  # Spanish
+                        'de': 'deu',  # German
+                        'ru': 'rus',  # Russian
+                        # Add other languages as needed
+                    }
+
+                    # Convert detected languages to Tesseract format
+                    tesseract_langs = '+'.join([tesseract_lang_map[lang.lang] for lang in detected_langs if lang.lang in tesseract_lang_map])
+                    logger.info(f"Tesseract languages: {tesseract_langs}")
+
+                    if tesseract_langs:
+                        logger.info(f"Using Tesseract with languages: {tesseract_langs}")
+                        text = pytesseract.image_to_string(img, lang=tesseract_langs)
+                        logger.info("Text improved using Tesseract.")
+                        try:
+                            result = support_informations_LLM(text, img)
+                            logger.info("Text improved using support_informations_LLM.")
+                        except Exception as e:
+                            logger.error(f"Error processing text with Vision LLM model: {e}")
+
+                except Exception as e:
+                    logger.info("Using LLM for image text extraction (get_image_informations).")
+                    try:
+                        text = get_image_informations(img, lang_key)
+                        logger.info("Text extracted using Vision LLM model.")
+                    except Exception as llm_error:
+                        logger.error(f"LLM extraction also failed: {llm_error}")
+                        text = str(llm_error)
+
+                results.append(text)
 
                 logger.info(f"Successfully processed image {img_index + 1} on page {page_num}.")
         
