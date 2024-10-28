@@ -118,6 +118,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                     logger.info("Using LLM for image text extraction (get_image_informations).")
                     try:
                         text = get_image_informations(image, lang_key)
+                        logger.info("Text extracted using Vision LLM model.")
                     except Exception as llm_error:
                         logger.error(f"LLM extraction also failed: {llm_error}")
                         text = str(llm_error)
@@ -152,7 +153,9 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                         message = "error.can-not-read-content-file",
                         text = text
                         )
-            else:       
+            else:
+                if text.endswith("\014"):
+                    text = text[:-4]
                 logger.info(f"Successfully processed file: {file_name}")
                 return ocr_service_pb2.FileResponse(
                     message = "success", 

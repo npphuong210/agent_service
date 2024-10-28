@@ -9,12 +9,13 @@ def read_file_as_bytes(file_path):
             
 def get_file(stub):
 
-    file = read_file_as_bytes("core_app/grpc/data/image copy.png")
-    name = '1.png'
+    file = read_file_as_bytes("core_app/grpc/data/image.png")
+    name = '2.png'
     
     request = ocr_service_pb2.FileRequest(
         file_name = name,
-        file = file
+        file = file,
+        lang_key = 'en'
     )
     a = stub.CreateTextFromFile(request)
     print(a)
