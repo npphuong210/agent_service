@@ -44,21 +44,21 @@ def image_model(inputs: dict) -> str | list[str] | dict:
 
 # parser = JsonOutputParser(pydantic_object=ImageInformation)
 
-def get_image_informations(image: Image.Image) -> dict:
+def get_image_informations(image: Image.Image, lang_key:str) -> dict:
     logger.info("Starting text extraction from image.")
 
-    vision_prompt = """Given the image, extract all visible text, including any text present in the image.
+    vision_prompt = f"""Given the image, extract all visible text, including any text present in the image.
          Make sure to include every piece of text visible in the image, regardless of its position or context.
         - Provide the text exactly as it appears, without any modifications or translations.
         - If handwriting is present, extract handwriting as accurately as possible.
 
         However, if the text is unclear, unreadable, or if the image lacks clarity, you must respond with "ERROR: " followed by an appropriate message, for example:
         "ERROR: The image is too small or blurry to extract readable text."
-        "ERROR: No visible text in image."
+        "ERROR: The image does not contain visible text to extract."
 
         Rules:
         1. Only extract text if it is visible and readable.
-        2. If the image or file is unclear, use the "ERROR: " prefix in your response.
+        2. If the image or file is unclear, use the "ERROR: " prefix in your response and translate the error message according language key: {lang_key}
         3. Do not invent or add text that isn't present.
         """
     
@@ -81,7 +81,7 @@ def get_image_informations(image: Image.Image) -> dict:
         logger.error(f"Error during Vision LLLM processing: {e}")
         raise e
     
-def support_informations_LLM(text:str ,image: Image.Image) -> dict:
+def support_informations_LLM(text:str, image: Image.Image) -> dict:
     logger.info("Starting text extraction from image.")
 
     vision_prompt = f"""Given the extracted text from the image below, please review the image and improve it by correcting any spelling, grammar, or formatting issues without adding any new information.

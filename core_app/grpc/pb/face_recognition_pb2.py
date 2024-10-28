@@ -14,7 +14,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x66\x61\x63\x65_recognition.proto\x12\x02pb\"\xb1\x01\n\x12UploadImageRequest\x12\x11\n\tfile_data\x18\x01 \x01(\x0c\x12\x0f\n\x07\x43ountry\x18\x02 \x01(\t\x12\x10\n\x08\x46ullName\x18\x03 \x01(\t\x12\x10\n\x08\x42irthday\x18\x04 \x01(\t\x12\x0e\n\x06Gender\x18\x05 \x01(\t\x12\x0b\n\x03\x41ge\x18\x06 \x01(\t\x12\r\n\x05\x45mail\x18\x07 \x01(\t\x12\x14\n\x0cPhone_number\x18\x08 \x01(\t\x12\x11\n\tsubsystem\x18\t \x01(\t\";\n\x13UploadImageResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x13\n\x0bstatus_code\x18\x02 \x01(\x05\"%\n\x10ImageRecognition\x12\x11\n\tfile_data\x18\x01 \x01(\x0c\"\x86\x01\n\rPersonDetails\x12\x0f\n\x07\x43ountry\x18\x01 \x01(\t\x12\x10\n\x08\x46ullName\x18\x02 \x01(\t\x12\x10\n\x08\x42irthday\x18\x03 \x01(\t\x12\x0e\n\x06Gender\x18\x04 \x01(\t\x12\x0b\n\x03\x41ge\x18\x05 \x01(\t\x12\r\n\x05\x45mail\x18\x06 \x01(\t\x12\x14\n\x0cPhone_number\x18\x07 \x01(\t\"Z\n\x0e\x44\x65tailResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x13\n\x0bstatus_code\x18\x02 \x01(\x05\x12\"\n\x07persons\x18\x03 \x03(\x0b\x32\x11.pb.PersonDetails2\x9c\x01\n\x16\x46\x61\x63\x65RecognitionService\x12>\n\x0bUploadImage\x12\x16.pb.UploadImageRequest\x1a\x17.pb.UploadImageResponse\x12\x42\n\x16UploadImageRecognition\x12\x14.pb.ImageRecognition\x1a\x12.pb.DetailResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x16\x66\x61\x63\x65_recognition.proto\x12\x02pb\"\xb1\x01\n\x12UploadImageRequest\x12\x11\n\tfile_data\x18\x01 \x01(\x0c\x12\x0f\n\x07\x43ountry\x18\x02 \x01(\t\x12\x10\n\x08\x46ullName\x18\x03 \x01(\t\x12\x10\n\x08\x42irthday\x18\x04 \x01(\t\x12\x0e\n\x06Gender\x18\x05 \x01(\t\x12\x0b\n\x03\x41ge\x18\x06 \x01(\t\x12\r\n\x05\x45mail\x18\x07 \x01(\t\x12\x14\n\x0cPhone_number\x18\x08 \x01(\t\x12\x11\n\tsubsystem\x18\t \x01(\t\"O\n\x13UploadImageResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x13\n\x0bstatus_code\x18\x02 \x01(\x05\x12\x12\n\nerror_code\x18\x03 \x01(\t\"%\n\x10ImageRecognition\x12\x11\n\tfile_data\x18\x01 \x01(\x0c\"\x86\x01\n\rPersonDetails\x12\x0f\n\x07\x43ountry\x18\x01 \x01(\t\x12\x10\n\x08\x46ullName\x18\x02 \x01(\t\x12\x10\n\x08\x42irthday\x18\x03 \x01(\t\x12\x0e\n\x06Gender\x18\x04 \x01(\t\x12\x0b\n\x03\x41ge\x18\x05 \x01(\t\x12\r\n\x05\x45mail\x18\x06 \x01(\t\x12\x14\n\x0cPhone_number\x18\x07 \x01(\t\"n\n\x0e\x44\x65tailResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x13\n\x0bstatus_code\x18\x02 \x01(\x05\x12\"\n\x07persons\x18\x03 \x03(\x0b\x32\x11.pb.PersonDetails\x12\x12\n\nerror_code\x18\x04 \x01(\t2\x9c\x01\n\x16\x46\x61\x63\x65RecognitionService\x12>\n\x0bUploadImage\x12\x16.pb.UploadImageRequest\x1a\x17.pb.UploadImageResponse\x12\x42\n\x16UploadImageRecognition\x12\x14.pb.ImageRecognition\x1a\x12.pb.DetailResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -24,13 +24,13 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _globals['_UPLOADIMAGEREQUEST']._serialized_start=31
   _globals['_UPLOADIMAGEREQUEST']._serialized_end=208
   _globals['_UPLOADIMAGERESPONSE']._serialized_start=210
-  _globals['_UPLOADIMAGERESPONSE']._serialized_end=269
-  _globals['_IMAGERECOGNITION']._serialized_start=271
-  _globals['_IMAGERECOGNITION']._serialized_end=308
-  _globals['_PERSONDETAILS']._serialized_start=311
-  _globals['_PERSONDETAILS']._serialized_end=445
-  _globals['_DETAILRESPONSE']._serialized_start=447
-  _globals['_DETAILRESPONSE']._serialized_end=537
-  _globals['_FACERECOGNITIONSERVICE']._serialized_start=540
-  _globals['_FACERECOGNITIONSERVICE']._serialized_end=696
+  _globals['_UPLOADIMAGERESPONSE']._serialized_end=289
+  _globals['_IMAGERECOGNITION']._serialized_start=291
+  _globals['_IMAGERECOGNITION']._serialized_end=328
+  _globals['_PERSONDETAILS']._serialized_start=331
+  _globals['_PERSONDETAILS']._serialized_end=465
+  _globals['_DETAILRESPONSE']._serialized_start=467
+  _globals['_DETAILRESPONSE']._serialized_end=577
+  _globals['_FACERECOGNITIONSERVICE']._serialized_start=580
+  _globals['_FACERECOGNITIONSERVICE']._serialized_end=736
 # @@protoc_insertion_point(module_scope)

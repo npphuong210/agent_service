@@ -23,6 +23,7 @@ message UploadImageRequest {
 message UploadImageResponse {
     string message = 1;
     int32 status_code = 2;
+    string error_code = 3;
 }
 
 message ImageRecognition {
@@ -43,4 +44,5 @@ message DetailResponse {
     string message = 1;
     int32 status_code = 2;
     repeated PersonDetails persons = 3;
+    string error_code = 4;
 }

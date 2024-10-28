@@ -57,6 +57,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
         try:
             file_name = request.file_name
             pdf = request.file
+            lang_key = request.lang_key
             text = None
 
             logger.info(f"Processing file: {file_name}")
@@ -106,16 +107,32 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                         logger.info(f"Using Tesseract with languages: {tesseract_langs}")
                         text = pytesseract.image_to_string(image, lang=tesseract_langs)
                         logger.info(f"Extracted text using LLM (support_informations_LLM).")
-                        text = support_informations_LLM(text, image)
+                        try:
+                            text = support_informations_LLM(text, image)
+                            logger.info("Text improved using support_informations_LLM.")
+                        except Exception as e:
+                            logger.error(f"Error during LLM processing: {e}")
+                            logger.info("Returning original extracted text due to LLM error.")
 
                 except Exception as e:
                     logger.info("Using LLM for image text extraction (get_image_informations).")
-                    text = get_image_informations(image)
-            
+                    try:
+                        text = get_image_informations(image, lang_key)
+                    except Exception as llm_error:
+                        logger.error(f"LLM extraction also failed: {llm_error}")
+                        text = str(llm_error)
+
             if file_name.lower().endswith(('.pdf')):
                 if is_scanned_pdf(pdf):
                     logger.info("The file is a scanned PDF.")
-                    text = process_scanned_pdf_with_llm(pdf)
+                    try:
+                        text = process_scanned_pdf_with_llm(pdf, lang_key)
+                    except Exception as e:
+                        logger.error(f"Error processing scanned PDF: {e}")
+                        return ocr_service_pb2.FileResponse(
+                            message = "error.scanned-pdf-processing-error",
+                            text = str(e)
+                            )
                 else:
                     logger.info("The file is a regular PDF with extractable text.")
                     file_like_object = BytesIO(pdf)
@@ -132,7 +149,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                     text = text.replace("ERROR:", "").strip()
                     logger.warning(f"Unknow error: {text}")
                     return ocr_service_pb2.FileResponse(
-                        message = "error.unknown-error",
+                        message = "error.can-not-read-content-file",
                         text = text
                         )
             else:       
@@ -145,7 +162,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
         except Exception as e:
             logger.error(f"Error during OCR processing for file {file_name}: {e}")
             return ocr_service_pb2.FileResponse(
-                message = "error",
+                message = "error.unknown-error",
                 text = str(e)
                 )
 
@@ -252,32 +269,36 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             #check request data
             if not file_data:
                 logger.info("Image data is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Image data is required.", status_code=400)
+                return face_recognition_pb2.UploadImageResponse(message="Image data is required.", status_code=400, error_code="IMAGE_DATA_REQUIRED")
             if not full_name:
                 logger.info("Full name is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Full name is required.", status_code=400)
+                return face_recognition_pb2.UploadImageResponse(message="Full name is required.", status_code=400, error_code="FULL_NAME_REQUIRED")
             if not country:
                 logger.info("Country is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Country is required.", status_code=400)
+                return face_recognition_pb2.UploadImageResponse(message="Country is required.", status_code=400, error_code="COUNTRY_REQUIRED")
             if not birthday:
                 logger.info("Birthday is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Birthday is required.", status_code=400)
+                return face_recognition_pb2.UploadImageResponse(message="Birthday is required.", status_code=400, error_code="BIRTHDAY_REQUIRED")
             if not age:
                 logger.info("Age is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Age is required.", status_code=400)
+                return face_recognition_pb2.UploadImageResponse(message="Age is required.", status_code=400, error_code="AGE_REQUIRED")
             if not email:
                 logger.info("Email is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Email is required.", status_code=400)
+                return face_recognition_pb2.UploadImageResponse(message="Email is required.", status_code=400, error_code="EMAIL_REQUIRED")
             if not phone_number:
                 logger.info("Phone number is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Phone number is required.", status_code=400)
+                return face_recognition_pb2.UploadImageResponse(message="Phone number is required.", status_code=400, error_code="PHONE_NUMBER_REQUIRED")
             if not subsystem:
                 logger.info("subsystem is required.")
-                return face_recognition_pb2.UploadImageResponse(message="subsystem is required.", status_code=400)
+                return face_recognition_pb2.UploadImageResponse(message="subsystem is required.", status_code=400, error_code="SUBSYSTEM_REQUIRED")
             
             if FaceData.objects.filter(full_name=full_name).exists():
-                logger.info(f"Face already exists: {full_name}.")
-                return face_recognition_pb2.UploadImageResponse(message= f"Full name: {full_name} already exists in the database.", status_code=400)
+                logger.info(f"Full name already exists: {full_name}.")
+                return face_recognition_pb2.UploadImageResponse(
+                    message= f"Full name: {full_name} already exists in the database.", 
+                    status_code=400, 
+                    error_code="FULL_NAME_ALREADY_EXISTS"
+                    )
 
             logger.info(f"Received image from {full_name} in {country}.")
 
@@ -289,7 +310,11 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
 
             if not face_encodings:
                 logger.info("No face detected in the image.")
-                return face_recognition_pb2.UploadImageResponse(message="No face detected in the image.", status_code=400)
+                return face_recognition_pb2.UploadImageResponse(
+                    message="No face detected in the image.", 
+                    status_code=400,
+                    error_code="NO_FACE_DETECTED"
+                    )
 
             face_encoding = face_encodings[0]
 
@@ -310,7 +335,11 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                 if matches[best_match_index]:
                     name = known_face_names[best_match_index]
                     logger.info(f"Face recognized: {name}")
-                    return face_recognition_pb2.UploadImageResponse(message=f"Face already exists: {name} in {country}.", status_code=400)
+                    return face_recognition_pb2.UploadImageResponse(
+                        message=f"Face already exists: {name} in {country}.", 
+                        status_code=400,
+                        error_code="FACE_ALREADY_EXISTS"
+                        )
 
             face_record = FaceData(
                 full_name=full_name,
@@ -328,11 +357,18 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                 
             logger.info(f"New face added: {full_name}")
 
-            return face_recognition_pb2.UploadImageResponse(message=f"Image received from {full_name} in {country}", status_code=200)
+            return face_recognition_pb2.UploadImageResponse(
+                message=f"Image received from {full_name} in {country}", 
+                status_code=200,
+                )
 
         except Exception as e:
             logger.error(f"Error processing image from {full_name}: {e}")
-            return face_recognition_pb2.UploadImageResponse(message="Error occurred during image processing.", status_code=500)
+            return face_recognition_pb2.UploadImageResponse(
+                message="Error occurred during image processing.",
+                status_code=500,
+                error_code="IMAGE_PROCESSING_ERROR"
+                )
     
     def UploadImageRecognition(self, request, context):
         """Nhận ảnh và trả về danh sách khuôn mặt đã nhận dạng được cùng thông tin chi tiết."""
@@ -353,7 +389,8 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                 logger.warning("No face encodings found for the detected faces.")
                 return face_recognition_pb2.DetailResponse(
                     message="No face detected in the image.",
-                    status_code=400
+                    status_code=400,
+                    error_code="NO_FACE_DETECTED"
                 )
 
             # Lấy danh sách khuôn mặt đã lưu trong cơ sở dữ liệu
@@ -362,7 +399,8 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                 logger.warning("No faces found in the database.")
                 return face_recognition_pb2.DetailResponse(
                     message="No faces available in the database for comparison.",
-                    status_code=404
+                    status_code=404,
+                    error_code="NO_FACES_IN_DATABASE"
                 )
 
             # Chuyển các khuôn mặt từ database thành danh sách và mã hóa
@@ -407,14 +445,15 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                 return face_recognition_pb2.DetailResponse(
                     message=f"Faces recognized: {matched_face.full_name}",
                     status_code=200,
-                    persons=matched_faces
+                    persons=matched_faces,
                 )
             else:
                 # Nếu không có khuôn mặt nào khớp
                 logger.warning("No matching faces found in the database.")
                 return face_recognition_pb2.DetailResponse(
                     message="No matching faces found.",
-                    status_code=404
+                    status_code=404,
+                    error_code="NO_MATCHING_FACES"
                 )
 
         except Exception as e:
@@ -422,5 +461,6 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             logger.error(traceback.format_exc())
             return face_recognition_pb2.DetailResponse(
                 message="Error occurred during face recognition.",
-                status_code=500
+                status_code=500,
+                error_code="FACE_RECOGNITION_ERROR"
             )
