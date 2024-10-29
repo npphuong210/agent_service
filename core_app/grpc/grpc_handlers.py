@@ -121,7 +121,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                         logger.info("Text extracted using Vision LLM model.")
                     except Exception as llm_error:
                         logger.error(f"LLM extraction also failed: {llm_error}")
-                        text = str(llm_error)
+                        #text = str(llm_error)
 
             if file_name.lower().endswith(('.pdf')):
                 if is_scanned_pdf(pdf):
