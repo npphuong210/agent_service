@@ -9,7 +9,7 @@ from core_app.enum.sub_system import SubSystems
 def delete_old_facedata():
     now = timezone.now()
     subsystems = SubSystems.DEMO_HUB.value
-    threshold_time = now - timedelta(minutes=1)
+    threshold_time = now - timedelta(hours=24)
 
     old_records = FaceData.objects.filter(
         created_at__lt=threshold_time,
