@@ -9,7 +9,7 @@ def read_file_as_bytes(file_path):
             
 def get_file(stub):
 
-    file = read_file_as_bytes("core_app/grpc/data/image.png")
+    file = read_file_as_bytes("core_app/grpc/data/image (2).png")
     name = '2.png'
     
     request = ocr_service_pb2.FileRequest(
@@ -96,11 +96,11 @@ def run():
         stub_stt = stt_service_pb2_grpc.STTServiceStub(channel)
         stub_face = face_recognition_pb2_grpc.FaceRecognitionServiceStub(channel)
         
-        get_file(stub_ocr)
+        #get_file(stub_ocr)
         #upload_file(stub_stt, audio_file_path)
         #run_audio(stub_stt, audio_file_path)
         
-        # add_Face(stub_face, image_file_path)
+        add_Face(stub_face, image_file_path)
         #recognize_face(stub_face, image_file_path)
 
 if __name__ == '__main__':
