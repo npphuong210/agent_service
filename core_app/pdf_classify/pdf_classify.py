@@ -116,11 +116,11 @@ def process_scanned_pdf_with_llm(pdf_binary, lang_key):
                         text = pytesseract.image_to_string(img, lang=tesseract_langs)
                         logger.info("Text improved using Tesseract.")
                         try:
-                            result = support_informations_LLM(text, img)
+                            text = support_informations_LLM(text, img)
                             logger.info("Text improved using support_informations_LLM.")
                         except Exception as e:
                             logger.error(f"Error processing text with Vision LLM model: {e}")
-
+                        
                 except Exception as e:
                     logger.info("Using LLM for image text extraction (get_image_informations).")
                     try:
@@ -128,7 +128,7 @@ def process_scanned_pdf_with_llm(pdf_binary, lang_key):
                         logger.info("Text extracted using Vision LLM model.")
                     except Exception as llm_error:
                         logger.error(f"LLM extraction also failed: {llm_error}")
-                        text = str(llm_error)
+                        text = ""
 
                 results.append(text)
 

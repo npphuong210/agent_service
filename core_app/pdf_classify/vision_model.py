@@ -62,24 +62,19 @@ def get_image_informations(image: Image.Image, lang_key:str) -> dict:
         3. Do not invent or add text that isn't present.
         """
     
-    try:
-        logger.info("Encoding image for Vision LLM processing.")
-        # Encode the image
-        image_data = encode_image(image)
-        
-        # Combine encoding, processing, and parsing into a single chain
-        vision_chain = image_model
-        
-        logger.info("Invoking Vision LLM model with prompt.")
-        # Execute the chain with the encoded image and prompt
-        return vision_chain.invoke({
-            'image': image_data,
-            'prompt': vision_prompt
-        })
+    logger.info("Encoding image for Vision LLM processing.")
+    # Encode the image
+    image_data = encode_image(image)
     
-    except Exception as e:
-        logger.error(f"Error during Vision LLLM processing: {e}")
-        raise e
+    # Combine encoding, processing, and parsing into a single chain
+    vision_chain = image_model
+    
+    logger.info("Invoking Vision LLM model with prompt.")
+    # Execute the chain with the encoded image and prompt
+    return vision_chain.invoke({
+        'image': image_data,
+        'prompt': vision_prompt
+    })
     
 def support_informations_LLM(text:str, image: Image.Image) -> dict:
     logger.info("Starting text extraction from image.")
@@ -92,21 +87,16 @@ def support_informations_LLM(text:str, image: Image.Image) -> dict:
             IMPORTANT: output only the corrected text, do not include the original text in your response.
         """
     
-    try:
-        logger.info("Encoding image for Vision LLM processing.")
-        # Encode the image
-        image_data = encode_image(image)
-        
-        # Combine encoding, processing, and parsing into a single chain
-        vision_chain = image_model
-        
-        logger.info("Invoking Vision LLM model with prompt.")
-        # Execute the chain with the encoded image and prompt
-        return vision_chain.invoke({
-            'image': image_data,
-            'prompt': vision_prompt
-        })
+    logger.info("Encoding image for Vision LLM processing.")
+    # Encode the image
+    image_data = encode_image(image)
     
-    except Exception as e:
-        logger.error(f"Error during Vision LLLM processing: {e}")
-        raise e
+    # Combine encoding, processing, and parsing into a single chain
+    vision_chain = image_model
+    
+    logger.info("Invoking Vision LLM model with prompt.")
+    # Execute the chain with the encoded image and prompt
+    return vision_chain.invoke({
+        'image': image_data,
+        'prompt': vision_prompt
+    })
