@@ -58,7 +58,6 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
             file_name = request.file_name
             pdf = request.file
             lang_key = request.lang_key
-            text = None
 
             logger.info(f"Processing file: {file_name}")
             
@@ -113,7 +112,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                         except Exception as e:
                             logger.error(f"Error during LLM processing: {e}")
                             logger.info("Returning original extracted text due to LLM error.")
-
+        
                 except Exception as e:
                     logger.info("Using LLM for image text extraction (get_image_informations).")
                     try:
@@ -121,23 +120,32 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                         logger.info("Text extracted using Vision LLM model.")
                     except Exception as llm_error:
                         logger.error(f"LLM extraction also failed: {llm_error}")
-                        text = str(llm_error)
+                        return ocr_service_pb2.FileResponse(
+                            message = "error.ocr-processing-error",
+                            text = ""
+                            )
 
             if file_name.lower().endswith(('.pdf')):
                 if is_scanned_pdf(pdf):
                     logger.info("The file is a scanned PDF.")
                     try:
                         text = process_scanned_pdf_with_llm(pdf, lang_key)
+                        if text == "":
+                            return ocr_service_pb2.FileResponse(
+                                message = "error.ocr-processing-error",
+                                text = ""
+                                )
                     except Exception as e:
                         logger.error(f"Error processing scanned PDF: {e}")
-                        return ocr_service_pb2.FileResponse(
-                            message = "error.scanned-pdf-processing-error",
-                            text = str(e)
-                            )
+
                 else:
                     logger.info("The file is a regular PDF with extractable text.")
                     file_like_object = BytesIO(pdf)
                     text = extract_text(file_like_object)
+                    return ocr_service_pb2.FileResponse(
+                        message = "success",
+                        text = text
+                        )
 
             if text.startswith("ERROR:"):
                 if "too small" in text.lower() or "unclear" in text.lower():
@@ -155,7 +163,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                         )
             else:
                 if text.endswith("\014"):
-                    text = text[:-4]
+                    text = text[:-2]
                 logger.info(f"Successfully processed file: {file_name}")
                 return ocr_service_pb2.FileResponse(
                     message = "success", 
