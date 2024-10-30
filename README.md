@@ -118,9 +118,13 @@ CELERY_BROKER_URL='redis://localhost:6379/0'
 In separate terminal windows, start the Celery worker and the Celery Beat scheduler:
 ```bash
 celery -A django_basic worker --loglevel=info
+#detach mode
+celery -A django_basic worker -l info -f /tmp/celery_worker.log --detach
 ```
 ```bash
 celery -A django_basic beat --loglevel=info
+#detach mode
+celery -A django_basic beat -l info -f /tmp/celery_beat.log --detach
 ```
 
 

@@ -44,11 +44,11 @@ def image_model(inputs: dict) -> str | list[str] | dict:
 
 # parser = JsonOutputParser(pydantic_object=ImageInformation)
 
-def get_image_informations(image: Image.Image, lang_key:str) -> dict:
+def get_image_informations(image: Image.Image) -> dict:
     logger.info("Starting text extraction from image.")
 
     vision_prompt = f"""Given the image, extract all visible text, including any text present in the image.
-         Make sure to include every piece of text visible in the image, regardless of its position or context.
+        Make sure to include every piece of text visible in the image, regardless of its position or context.
         - Provide the text exactly as it appears, without any modifications or translations.
         - If handwriting is present, extract handwriting as accurately as possible.
 
@@ -58,7 +58,7 @@ def get_image_informations(image: Image.Image, lang_key:str) -> dict:
 
         Rules:
         1. Only extract text if it is visible and readable.
-        2. If the image or file is unclear, use the "ERROR: " prefix in your response and translate the error message according language key: {lang_key}
+        2. If the image or file is unclear, use the "ERROR: " prefix in your response.
         3. Do not invent or add text that isn't present.
         """
     
@@ -79,12 +79,15 @@ def get_image_informations(image: Image.Image, lang_key:str) -> dict:
 def support_informations_LLM(text:str, image: Image.Image) -> dict:
     logger.info("Starting text extraction from image.")
 
-    vision_prompt = f"""Given the extracted text from the image below, please review the image and improve it by correcting any spelling, grammar, or formatting issues without adding any new information.
-            - Correct any spelling, grammar, or formatting errors and structure the text properly.
-            Do not add or infer anything that is not already present in the extracted text. 
-            Here is the text extracted from the image:
+    vision_prompt = f"""Given the image, extract all visible text, including any text present in the image.
+            Make sure to include every piece of text visible in the image, regardless of its position or context.
+            - Provide the text exactly as it appears, without any modifications or translations.
+            - Check spelling and grammar to ensure accuracy.
+            - If handwriting is present, extract handwriting as accurately as possible.
+
+            Here is the text extracted from the image using pytesseract, you can use this text to support your answer:
             {text}
-            IMPORTANT: output only the corrected text, do not include the original text in your response.
+            IMPORTANT: output all the text that is visible in the image and make sure accuracy is maintained.
         """
     
     logger.info("Encoding image for Vision LLM processing.")
