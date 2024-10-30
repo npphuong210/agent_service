@@ -46,7 +46,7 @@ def is_scanned_pdf(pdf_binary):
 
 
 
-def process_scanned_pdf_with_llm(pdf_binary, lang_key):
+def process_scanned_pdf_with_llm(pdf_binary):
     """
     Process a scanned PDF using the Vision LLM model.
 
@@ -124,7 +124,7 @@ def process_scanned_pdf_with_llm(pdf_binary, lang_key):
                 except Exception as e:
                     logger.info("Using LLM for image text extraction (get_image_informations).")
                     try:
-                        text = get_image_informations(img, lang_key)
+                        text = get_image_informations(img)
                         logger.info("Text extracted using Vision LLM model.")
                     except Exception as llm_error:
                         logger.error(f"LLM extraction also failed: {llm_error}")

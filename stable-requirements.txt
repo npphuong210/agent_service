@@ -137,3 +137,4 @@ pytesseract==0.3.13
 django-celery-beat==2.7.0
 celery==5.4.0
 redis==5.2.0
+translate==3.6.1

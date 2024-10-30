@@ -8,6 +8,7 @@ import numpy as np
 import io
 import os
 from io import BytesIO
+from translate import Translator
 import torch  # Add this import
 # grpc handlers
 from concurrent import futures
@@ -51,13 +52,29 @@ def transcribe_audio(audio_stream, init_prompt=None):
     except Exception as e:
         return "Error during transcription"
     
+def translation_from_text(text):
+    if text == "":
+        return ocr_service_pb2.translate(vi="",ko="",ja="")
+    
+    translator_vie = Translator(to_lang="vi")
+    vi = translator_vie.translate(text)
+
+    translator_ko = Translator(to_lang="ko")
+    ko = translator_ko.translate(text)
+
+    translator_ja = Translator(to_lang="ja")
+    ja = translator_ja.translate(text)
+
+    translate_details = ocr_service_pb2.translate(en=text,vi=vi,ko=ko,ja=ja)
+
+    return translate_details
+
 class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
     def CreateTextFromFile(self, request, context):
         logger.info("Received file for text extraction.")
         try:
             file_name = request.file_name
             pdf = request.file
-            lang_key = request.lang_key
 
             logger.info(f"Processing file: {file_name}")
             
@@ -116,7 +133,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                 except Exception as e:
                     logger.info("Using LLM for image text extraction (get_image_informations).")
                     try:
-                        text = get_image_informations(image, lang_key)
+                        text = get_image_informations(image)
                         logger.info("Text extracted using Vision LLM model.")
                     except Exception as llm_error:
                         logger.error(f"LLM extraction also failed: {llm_error}")
@@ -129,7 +146,7 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                 if is_scanned_pdf(pdf):
                     logger.info("The file is a scanned PDF.")
                     try:
-                        text = process_scanned_pdf_with_llm(pdf, lang_key)
+                        text = process_scanned_pdf_with_llm(pdf)
                         if text == "":
                             return ocr_service_pb2.FileResponse(
                                 message = "error.ocr-processing-error",
@@ -142,6 +159,8 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                     logger.info("The file is a regular PDF with extractable text.")
                     file_like_object = BytesIO(pdf)
                     text = extract_text(file_like_object)
+                    if text.endswith("\014"):
+                        text = text[:-2]
                     return ocr_service_pb2.FileResponse(
                         message = "success",
                         text = text
@@ -155,12 +174,15 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                         text = ""
                         )
                 else:
-                    text = text.replace("ERROR:", "").strip()
+                    text = text.replace("ERROR:", "")
                     logger.warning(f"Unknow error: {text}")
+                    
+                    translate_details = translation_from_text(text)
+                    
                     return ocr_service_pb2.FileResponse(
                         message = "error.can-not-read-content-file",
-                        text = text
-                        )
+                        translate = translate_details
+                    )
             else:
                 if text.endswith("\014"):
                     text = text[:-2]
