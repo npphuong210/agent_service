@@ -102,33 +102,45 @@ class OCRServiceServicer(ocr_service_pb2_grpc.OCRServiceServicer):
                     detected_langs_str = '+'.join([lang.lang for lang in detected_langs])
                     logger.info(f"Detected languages: {detected_langs_str}")
 
-                    # Language map for Tesseract
-                    tesseract_lang_map = {
-                        'vi': 'vie',  # Vietnamese
-                        'en': 'eng',  # English
-                        'ja': 'jpn',  # Japanese
-                        'ko': 'kor',  # Korean
-                        'fr': 'fra',  # French
-                        'es': 'spa',  # Spanish
-                        'de': 'deu',  # German
-                        'ru': 'rus',  # Russian
-                        # Add other languages as needed
-                    }
+                    if detected_langs:
+                        # Language map for Tesseract
+                        tesseract_lang_map = {
+                            'vi': 'vie',  # Vietnamese
+                            'en': 'eng',  # English
+                            'ja': 'jpn',  # Japanese
+                            'ko': 'kor',  # Korean
+                            'fr': 'fra',  # French
+                            'es': 'spa',  # Spanish
+                            'de': 'deu',  # German
+                            'ru': 'rus',  # Russian
+                            # Add other languages as needed
+                        }
 
-                    # Convert detected languages to Tesseract format
-                    tesseract_langs = '+'.join([tesseract_lang_map[lang.lang] for lang in detected_langs if lang.lang in tesseract_lang_map])
-                    logger.info(f"Tesseract languages: {tesseract_langs}")
+                        # Convert detected languages to Tesseract format
+                        tesseract_langs = '+'.join([tesseract_lang_map[lang.lang] for lang in detected_langs if lang.lang in tesseract_lang_map])
+                        logger.info(f"Tesseract languages: {tesseract_langs}")
 
-                    if tesseract_langs:
-                        logger.info(f"Using Tesseract with languages: {tesseract_langs}")
-                        text = pytesseract.image_to_string(image, lang=tesseract_langs)
-                        logger.info(f"Extracted text using LLM (support_informations_LLM).")
-                        try:
-                            text = support_informations_LLM(text, image)
-                            logger.info("Text improved using support_informations_LLM.")
+                        if tesseract_langs:
+                            logger.info(f"Using Tesseract with languages: {tesseract_langs}")
+                            text = pytesseract.image_to_string(image, lang=tesseract_langs)
+                            logger.info(f"Extracted text using LLM (support_informations_LLM).")
+                            try:
+                                text = support_informations_LLM(text, image)
+                                logger.info("Text improved using support_informations_LLM.")
+                            except Exception as e:
+                                logger.error(f"Error during LLM processing: {e}")
+                                logger.info("Returning original extracted text due to LLM error.")
+                    else:
+                        logger.info("No languages detected in the text.")
+                        try:  
+                            text = get_image_informations(image)
+                            logger.info("Text extracted using get_image_informations.")
                         except Exception as e:
-                            logger.error(f"Error during LLM processing: {e}")
-                            logger.info("Returning original extracted text due to LLM error.")
+                            logger.error(f"Error during get_image_informations: {e}")
+                            return ocr_service_pb2.FileResponse(
+                            message = "error.ocr-processing-error",
+                            text = ""
+                            )
         
                 except Exception as e:
                     logger.info("Using LLM for image text extraction (get_image_informations).")

@@ -60,6 +60,7 @@ def get_image_informations(image: Image.Image) -> dict:
         1. Only extract text if it is visible and readable.
         2. If the image or file is unclear, use the "ERROR: " prefix in your response.
         3. Do not invent or add text that isn't present.
+        4. If readable text is found, extract it as accurately as possible without adding any additional responses.
         """
     
     logger.info("Encoding image for Vision LLM processing.")
@@ -87,7 +88,9 @@ def support_informations_LLM(text:str, image: Image.Image) -> dict:
 
             Here is the text extracted from the image using pytesseract, you can use this text to support your answer:
             {text}
-            IMPORTANT: output all the text that is visible in the image and make sure accuracy is maintained.
+            IMPORTANT: output all the text that is visible in the image and make sure accuracy is maintained. Do not invent or add text that isn't present.
+            
+            Please provide the extracted text only, without any additional phrasing or context.
         """
     
     logger.info("Encoding image for Vision LLM processing.")
