@@ -171,7 +171,7 @@ class FaceData(CommonModel):
     full_name = models.CharField(max_length=255, unique=True, null=True, blank=True)
     country = models.CharField(max_length=255, null=True, blank=True)
     birthday = models.DateField(null=True, blank=True)
-    gender = models.CharField(max_length=10, null=True, blank=True)
+    gender = models.CharField(max_length=20, null=True, blank=True)
     age = models.CharField(max_length=3, null=True, blank=True)
     email = models.EmailField(max_length=255, null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
