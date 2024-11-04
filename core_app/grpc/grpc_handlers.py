@@ -302,13 +302,8 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
         try:
             # Lấy dữ liệu từ request
             file_data = request.file_data
-            country = request.Country
             full_name = request.FullName
-            birthday = request.Birthday
             gender = request.Gender
-            age = request.Age
-            email = request.Email
-            phone_number = request.Phone_number
             subsystem = request.subsystem
 
             #check request data
@@ -318,21 +313,9 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             if not full_name:
                 logger.info("Full name is required.")
                 return face_recognition_pb2.UploadImageResponse(message="Full name is required.", status_code=400, error_code="FULL_NAME_REQUIRED")
-            if not country:
-                logger.info("Country is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Country is required.", status_code=400, error_code="COUNTRY_REQUIRED")
-            if not birthday:
-                logger.info("Birthday is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Birthday is required.", status_code=400, error_code="BIRTHDAY_REQUIRED")
-            if not age:
-                logger.info("Age is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Age is required.", status_code=400, error_code="AGE_REQUIRED")
-            if not email:
-                logger.info("Email is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Email is required.", status_code=400, error_code="EMAIL_REQUIRED")
-            if not phone_number:
-                logger.info("Phone number is required.")
-                return face_recognition_pb2.UploadImageResponse(message="Phone number is required.", status_code=400, error_code="PHONE_NUMBER_REQUIRED")
+            if not gender:
+                logger.info("Gender is required.")
+                return face_recognition_pb2.UploadImageResponse(message="Gender is required.", status_code=400, error_code="GENDER_REQUIRED")
             if not subsystem:
                 logger.info("subsystem is required.")
                 return face_recognition_pb2.UploadImageResponse(message="subsystem is required.", status_code=400, error_code="SUBSYSTEM_REQUIRED")
@@ -345,7 +328,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                     error_code="FULL_NAME_ALREADY_EXISTS"
                     )
 
-            logger.info(f"Received image from {full_name} in {country}.")
+            logger.info(f"Received image from {full_name}.")
 
             # Đọc và mã hóa ảnh
             image_np = face_recognition.load_image_file(BytesIO(file_data))
@@ -381,19 +364,14 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                     name = known_face_names[best_match_index]
                     logger.info(f"Face recognized: {name}")
                     return face_recognition_pb2.UploadImageResponse(
-                        message=f"Face already exists: {name} in {country}.", 
+                        message=f"Face already exists: {name}.", 
                         status_code=400,
                         error_code="FACE_ALREADY_EXISTS"
                         )
 
             face_record = FaceData(
                 full_name=full_name,
-                country=country,
-                birthday=birthday,
                 gender = gender,
-                age = age,
-                email = email,
-                phone_number = phone_number,
                 face_encoding=face_encoding.tobytes(),
                 subsystem=subsystem,
             )
@@ -403,7 +381,7 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
             logger.info(f"New face added: {full_name}")
 
             return face_recognition_pb2.UploadImageResponse(
-                message=f"Image received from {full_name} in {country}", 
+                message=f"Image received from {full_name}", 
                 status_code=200,
                 )
 
@@ -474,13 +452,8 @@ class FaceRecognitionService(face_recognition_pb2_grpc.FaceRecognitionService):
                         
                         if matched_face_instance:
                             person_details = face_recognition_pb2.PersonDetails(
-                                Country=matched_face_instance.country,
                                 FullName=matched_face_instance.full_name,
-                                Birthday=matched_face_instance.birthday.isoformat(),
                                 Gender=matched_face_instance.gender,
-                                Age=matched_face_instance.age,
-                                Email=matched_face_instance.email,
-                                Phone_number=matched_face_instance.phone_number,
                             )
                             logger.info(f"Face recognized details: {person_details}")
                             matched_faces.append(person_details)

@@ -10,14 +10,9 @@ service FaceRecognitionService {
 
 message UploadImageRequest {
     bytes file_data = 1;
-    string Country = 2;
-    string FullName = 3;
-    string Birthday = 4;
-    string Gender = 5;
-    string Age = 6;
-    string Email = 7;
-    string Phone_number = 8;
-    string subsystem = 9;
+    string FullName = 2;
+    string Gender = 3;
+    string subsystem = 4;
 }
 
 message UploadImageResponse {
@@ -31,13 +26,8 @@ message ImageRecognition {
 }
 
 message PersonDetails {
-    string Country = 1;
-    string FullName = 2;
-    string Birthday = 3;
-    string Gender = 4;
-    string Age = 5;
-    string Email = 6;
-    string Phone_number = 7;
+    string FullName = 1;
+    string Gender = 2;
 }
 
 message DetailResponse {
