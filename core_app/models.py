@@ -169,12 +169,7 @@ class InternalKnowledge(CommonModel):
 class FaceData(CommonModel): 
     face_encoding = models.BinaryField(null=True, blank=True)  # Trường lưu encoding của khuôn mặt dưới dạng nhị phân
     full_name = models.CharField(max_length=255, unique=True, null=True, blank=True)
-    country = models.CharField(max_length=255, null=True, blank=True)
-    birthday = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=20, null=True, blank=True)
-    age = models.CharField(max_length=3, null=True, blank=True)
-    email = models.EmailField(max_length=255, null=True, blank=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True)
     subsystem = models.CharField(max_length=255, null=True, blank=True)
     
     def __str__(self):
