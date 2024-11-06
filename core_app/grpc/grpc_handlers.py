@@ -21,6 +21,9 @@ from langdetect import detect, detect_langs
 import logging
 from core_app.models import FaceData
 from core_app.pdf_classify.vision_model import support_informations_LLM
+from config import Config 
+
+config = Config()
 
 logging.basicConfig(filename='document_processing.log',level=logging.INFO,
                     format='%(asctime)s:%(levelname)s:%(message)s')
@@ -44,9 +47,9 @@ def whisper_model(model_size, device=None):
     return model
 
 def transcribe_audio(audio_stream, init_prompt=None):
-    model = whisper_model(model_size='base')
+    model = whisper_model(model_size=config.STT_MODEL_NAME)
     try:
-        segments, info = model.transcribe(audio=audio_stream, initial_prompt=init_prompt, beam_size=3, word_timestamps=True, condition_on_previous_text=True)
+        segments, info = model.transcribe(audio=audio_stream, initial_prompt=init_prompt, beam_size=config.STT_MODEL_BEAM_SIZE, word_timestamps=True, condition_on_previous_text=True)
         transcription = " ".join([segment.text for segment in segments])
         return transcription.strip()
     except Exception as e:
